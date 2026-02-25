@@ -1,23 +1,26 @@
 document.addEventListener("DOMContentLoaded", () => {
-    loadComponent('header.html', 'header-placeholder', initHeader);
+    // Load header and menu in parallel, then initialize functionality
+    Promise.all([
+        loadComponent('header.html', 'header-placeholder'),
+        loadComponent('menu.html', 'menu-placeholder')
+    ]).then(initHeader);
+
     loadComponent('footer.html', 'footer-placeholder');
 });
 
 /**
  * Loads an HTML file into a target element.
- * @param {string} file - The path to the HTML file.
- * @param {string} elementId - The ID of the target element.
- * @param {function} callback - Optional callback to run after loading.
+ * Returns a Promise that resolves when the content is loaded.
  */
-function loadComponent(file, elementId, callback) {
-    fetch(file)
+function loadComponent(file, elementId) {
+    return fetch(file)
         .then(response => {
             if (!response.ok) throw new Error(`Failed to load ${file}`);
             return response.text();
         })
         .then(data => {
-            document.getElementById(elementId).innerHTML = data;
-            if (callback) callback();
+            const element = document.getElementById(elementId);
+            if (element) element.innerHTML = data;
         })
         .catch(error => console.error(error));
 }
