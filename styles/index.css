@@ -1,12 +1,11 @@
 .hero-section {
-    background-image: url('../images/hero1.jpg');
+    background-image: url('../images/hero1.jpg'); /* default fallback */
     background-size: cover;
     background-position: center;
     height: 500px;
     display: flex;
     align-items: center; /* Vertically center the content */
     justify-content: flex-start; /* Align content to the left */
-    padding-left: 5%; /* Distance from the left edge */
     position: relative;
     color: white;
     margin: 20px;
@@ -53,7 +52,100 @@
     background-color: var(--theme-color, #eabeb0);
 }
 
+/* ── Carousel ──────────────────────────────────────────────── */
+.carousel-section {
+    padding: 0 0 20px;
+    margin: 0 20px;
+}
+
+.carousel-wrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.carousel-btn {
+    position: absolute;
+    z-index: 10;
+    top: 40%;
+    transform: translateY(-50%);
+    background: white;
+    border: 1px solid #ddd;
+    border-radius: 50%;
+    width: 44px;
+    height: 44px;
+    font-size: 1.1rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.12);
+    transition: background-color 0.2s;
+}
+
+.carousel-btn:hover {
+    background-color: var(--theme-color);
+}
+
+.carousel-btn--prev {
+    left: 8px;
+}
+
+.carousel-btn--next {
+    right: 8px;
+}
+
 .product-grid {
-    margin: 20px;
-    border-radius: 20px;
+    display: flex;
+    overflow: hidden;
+    gap: 20px;
+    padding: 5px 0 20px;
+}
+
+.product-card {
+    flex: 0 0 calc((100% - 40px) / 3 - 2px);
+    min-width: 0;
+}
+
+/* ── Product Image ─────────────────────────────────────────── */
+.product-image-wrapper {
+    position: relative;
+    border-radius: 8px 8px 0 0;
+    overflow: hidden;
+}
+
+.product-image-wrapper img {
+    display: block;
+    width: 100%;
+}
+
+.product-image-wrapper .card-cover {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    opacity: 0;
+    transition: opacity 0.4s ease;
+}
+
+.product-card:hover .card-cover {
+    opacity: 1;
+}
+
+/* ── Product Badge ─────────────────────────────────────────── */
+.product-badge {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    z-index: 1;
+    background: #2a2320;
+    color: white;
+    font-size: 0.65rem;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    padding: 4px 10px;
+    border-radius: 100px;
 }
