@@ -99,7 +99,7 @@
     display: flex;
     overflow: hidden;
     gap: 20px;
-    padding: 5px 0 20px;
+    padding: 10px 0 15px;
 }
 
 .product-card {
@@ -132,6 +132,160 @@
 
 .product-card:hover .card-cover {
     opacity: 1;
+}
+
+/* ── Product Badge ─────────────────────────────────────────── */
+/* ── Split: Image + Accordion ─────────────────────────────── */
+.split-section {
+    display: flex;
+    margin: 20px;
+    border-radius: 16px;
+    background: #f5f3f1;
+    padding: 14px;
+    gap: 14px;
+    height: 520px;
+    box-sizing: border-box;
+}
+
+.split-image {
+    flex: 0 0 auto;
+    aspect-ratio: 1;
+    border-radius: 10px;
+    overflow: hidden;
+}
+
+.split-image img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+}
+
+.split-content {
+    flex: 1;
+    border-radius: 10px;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    padding: 24px 36px;
+}
+
+.accordion-item {
+    border-bottom: 1px solid #ddd;
+}
+
+.accordion-item:first-of-type {
+    border-top: 1px solid #ddd;
+}
+
+.accordion-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 18px 0;
+    font-size: 1rem;
+    font-weight: 500;
+    color: #2a2320;
+    cursor: pointer;
+    list-style: none;
+}
+
+.accordion-header::-webkit-details-marker {
+    display: none;
+}
+
+.accordion-icon {
+    font-size: 1.2rem;
+    transition: transform 0.25s ease;
+    display: inline-block;
+}
+
+details[open] .accordion-icon {
+    transform: rotate(180deg);
+}
+
+.accordion-body {
+    margin: 0;
+    padding: 0 0 18px;
+    font-size: 0.9rem;
+    color: #666;
+    line-height: 1.6;
+}
+
+/* ── Social Carousel ───────────────────────────────────────── */
+.social-section {
+    margin: 20px 20px;
+    padding-bottom: 20px;
+}
+
+.social-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 16px;
+}
+
+.social-title {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #2a2320;
+    margin: 0;
+}
+
+.social-link {
+    font-size: 0.75rem;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: #2a2320;
+    border: 1px solid #2a2320;
+    border-radius: 100px;
+    padding: 8px 18px;
+    text-decoration: none;
+    transition: background-color 0.2s, color 0.2s;
+}
+
+.social-link:hover {
+    background-color: #2a2320;
+    color: white;
+}
+
+.social-track {
+    display: flex;
+    overflow: hidden;
+    gap: 12px;
+}
+
+.social-card {
+    flex: 0 0 calc((100% - 36px) / 3.5);
+    aspect-ratio: 1;
+    object-fit: cover;
+    border-radius: 10px;
+}
+
+.social-footer {
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+    margin-top: 16px;
+}
+
+.social-btn {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    border: 1px solid #ccc;
+    background: white;
+    cursor: pointer;
+    font-size: 1rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background-color 0.2s;
+}
+
+.social-btn:hover {
+    background-color: var(--theme-color);
 }
 
 /* ── Product Badge ─────────────────────────────────────────── */

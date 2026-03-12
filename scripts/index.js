@@ -50,4 +50,44 @@ document.addEventListener("DOMContentLoaded", () => {
         track.addEventListener("scroll", updateButtons);
         updateButtons();
     }
+
+    // Social carousel navigation
+    const socialTrack = document.querySelector(".social-track");
+    const socialPrev = document.querySelector(".social-btn--prev");
+    const socialNext = document.querySelector(".social-btn--next");
+
+    if (socialTrack && socialPrev && socialNext) {
+        const getSocialCardWidth = () => {
+            const card = socialTrack.querySelector(".social-card");
+            if (!card) return 0;
+            const gap = parseInt(getComputedStyle(socialTrack).gap) || 12;
+            return card.offsetWidth + gap;
+        };
+
+        socialPrev.addEventListener("click", () => {
+            socialTrack.scrollTo({
+                left: Math.max(socialTrack.scrollLeft - getSocialCardWidth(), 0),
+                behavior: "smooth"
+            });
+        });
+
+        socialNext.addEventListener("click", () => {
+            socialTrack.scrollTo({
+                left: Math.min(socialTrack.scrollLeft + getSocialCardWidth(), socialTrack.scrollWidth - socialTrack.clientWidth),
+                behavior: "smooth"
+            });
+        });
+
+        const updateSocialButtons = () => {
+            const atStart = Math.round(socialTrack.scrollLeft) <= 0;
+            socialPrev.style.opacity = atStart ? "0.3" : "1";
+            socialPrev.style.pointerEvents = atStart ? "none" : "auto";
+            const atEnd = Math.round(socialTrack.scrollLeft + socialTrack.clientWidth) >= socialTrack.scrollWidth;
+            socialNext.style.opacity = atEnd ? "0.3" : "1";
+            socialNext.style.pointerEvents = atEnd ? "none" : "auto";
+        };
+
+        socialTrack.addEventListener("scroll", updateSocialButtons);
+        updateSocialButtons();
+    }
 });

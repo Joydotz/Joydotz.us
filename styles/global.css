@@ -156,6 +156,7 @@ a {
     display: flex;
     flex-direction: column;
     flex-grow: 1;
+    box-shadow: 0 6px 16px rgba(0,0,0,0.12);
 }
 
 .product-card h3 {
