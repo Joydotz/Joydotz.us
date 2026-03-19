@@ -1,62 +1,3 @@
-<footer class="site-footer">
-    <div class="footer-inner">
-
-        <div class="footer-brand">
-            <p class="footer-tagline">Crafted with care.<br>Designed for you.</p>
-            <div class="footer-newsletter">
-                <input class="footer-email" type="email" placeholder="Your email address" />
-                <button class="footer-subscribe">Subscribe</button>
-            </div>
-            <p class="footer-consent">By signing up, you agree to our Privacy Policy.</p>
-        </div>
-
-        <div class="footer-nav">
-            <div class="footer-col">
-                <h4 class="footer-col-title">Shop</h4>
-                <ul>
-                    <li><a href="#">All Products</a></li>
-                    <li><a href="#">New Arrivals</a></li>
-                    <li><a href="#">Best Sellers</a></li>
-                    <li><a href="#">Bundles</a></li>
-                </ul>
-            </div>
-            <div class="footer-col">
-                <h4 class="footer-col-title">Learn</h4>
-                <ul>
-                    <li><a href="#">Our Story</a></li>
-                    <li><a href="#">Ingredients</a></li>
-                    <li><a href="#">Blog</a></li>
-                    <li><a href="#">Press</a></li>
-                </ul>
-            </div>
-            <div class="footer-col">
-                <h4 class="footer-col-title">Support</h4>
-                <ul>
-                    <li><a href="#">FAQ</a></li>
-                    <li><a href="#">Contact Us</a></li>
-                    <li><a href="#">Shipping & Returns</a></li>
-                    <li><a href="#">Privacy Policy</a></li>
-                </ul>
-            </div>
-        </div>
-
-    </div>
-
-    <div class="footer-bottom">
-        <span class="footer-copy">&copy; 2026 Joydotz. All rights reserved.</span>
-        <div class="footer-socials">
-            <a href="#" aria-label="Instagram">&#xe800;</a>
-            <a href="#" aria-label="TikTok">&#xe801;</a>
-            <a href="#" aria-label="YouTube">&#xe802;</a>
-        </div>
-        <div class="footer-legal">
-            <a href="#">Terms</a>
-            <a href="#">Privacy</a>
-        </div>
-    </div>
-</footer>
-
-<style>
 .site-footer {
     background-color: #2a2320;
     color: #c9b8b0;
@@ -215,4 +156,3 @@
 .footer-legal a:hover {
     color: #f5ece8;
 }
-</style>
