@@ -90,4 +90,29 @@ document.addEventListener("DOMContentLoaded", () => {
         socialTrack.addEventListener("scroll", updateSocialButtons);
         updateSocialButtons();
     }
+
+    // Add to cart functionality
+    const addToCartButtons = document.querySelectorAll(".btn-add-to-cart");
+
+    addToCartButtons.forEach(button => {
+        button.addEventListener("click", (event) => {
+            const card = event.target.closest(".product-card");
+            const productId = card.dataset.productId;
+            if (productId) {
+                addToCart(productId);
+                // Optional: give user feedback
+                button.textContent = "Added!";
+                setTimeout(() => {
+                    button.textContent = "Add to Cart";
+                }, 1000);
+            }
+        });
+    });
+
+    function addToCart(productId) {
+        // Get cart from localStorage or initialize an empty object
+        let cart = JSON.parse(localStorage.getItem("shoppingCart")) || {};
+        cart[productId] = (cart[productId] || 0) + 1;
+        localStorage.setItem("shoppingCart", JSON.stringify(cart));
+    }
 });

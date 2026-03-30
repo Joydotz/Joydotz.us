@@ -1,0 +1,6 @@
+{
+  "p001": { "id": "p001", "name": "Product Title 1", "price": 19.99, "image": "images/testimage1.png" },
+  "p002": { "id": "p002", "name": "Product Title 2", "price": 29.99, "image": "images/testimage2.png" },
+  "p003": { "id": "p003", "name": "Product Title 3", "price": 39.99, "image": "images/testimage3.png" },
+  "p004": { "id": "p004", "name": "Product Title 4", "price": 49.99, "image": "images/testimage4.png" }
+}
