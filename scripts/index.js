@@ -115,4 +115,26 @@ document.addEventListener("DOMContentLoaded", () => {
         cart[productId] = (cart[productId] || 0) + 1;
         localStorage.setItem("shoppingCart", JSON.stringify(cart));
     }
+
+    // FAQ Accordion close animation
+    const faqCards = document.querySelectorAll('.faq-card');
+    faqCards.forEach(card => {
+        const summary = card.querySelector('.faq-card-header');
+        if (summary) {
+            summary.addEventListener('click', (e) => {
+                if (card.classList.contains('closing')) {
+                    e.preventDefault();
+                    return;
+                }
+                if (card.hasAttribute('open')) {
+                    e.preventDefault();
+                    card.classList.add('closing');
+                    setTimeout(() => {
+                        card.removeAttribute('open');
+                        card.classList.remove('closing');
+                    }, 400); // Matches the animation duration in CSS
+                }
+            });
+        }
+    });
 });

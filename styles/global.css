@@ -1,3 +1,5 @@
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&display=swap');
+
 :root {
     --theme-color: #eabeb0;
     --text-color: #333;
@@ -6,13 +8,14 @@
 
 body {
     margin: 0;
-    font-family: Arial, sans-serif;
+    font-family: 'Montserrat', sans-serif;
     color: var(--text-color);
+    background-color: #FFEDE7;
 }
 
 /* Header Layout */
 .site-header {
-    background-color: var(--theme-color);
+    background-color: #F5F0EE;
     height: var(--header-height);
     padding: 0 20px;
     display: grid;
@@ -58,7 +61,7 @@ a {
 .side-menu {
     position: fixed;
     top: 0;
-    right: -300px; /* Hidden by default */
+    right: -100%; /* Hidden by default */
     width: 250px;
     height: 100%;
     background-color: white;
@@ -373,4 +376,59 @@ a {
 
 .footer-legal a:hover {
     color: #f5ece8;
+}
+
+/* ── Mobile Responsive Mode ───────────────────────────────── */
+@media (max-width: 768px) {
+    :root {
+        --header-height: 70px;
+    }
+
+    .site-header {
+        padding: 0 15px;
+    }
+
+    .header-center {
+        font-size: 1rem;
+    }
+
+    .header-right {
+        gap: 10px;
+    }
+
+    .side-menu {
+        width: 80%;
+        max-width: 300px;
+    }
+
+    .site-footer {
+        padding: 40px 25px 0;
+    }
+
+    .footer-inner {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 40px;
+        padding-bottom: 40px;
+    }
+
+    .footer-brand {
+        flex: 1 1 auto;
+        width: 100%;
+    }
+
+    .footer-newsletter {
+        max-width: 100%;
+    }
+
+    .footer-nav {
+        flex-direction: column;
+        gap: 30px;
+        width: 100%;
+    }
+
+    .footer-bottom {
+        flex-direction: column;
+        gap: 20px;
+    }
 }

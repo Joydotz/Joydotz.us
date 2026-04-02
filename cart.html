@@ -19,15 +19,34 @@
 
     <main class="cart-container">
         <h1>Your Cart</h1>
-        <div id="cart-items-container">
-            <!-- Cart items will be dynamically inserted here -->
-        </div>
-        <div class="cart-summary">
-            <div class="total-price">
-                <span>Total:</span>
-                <span id="cart-total">$0.00</span>
+        <div id="cart-item-count" class="cart-header-count">0 items in your curated ritual</div>
+        
+        <div class="cart-content">
+            <div id="cart-items-container">
+                <!-- Cart items will be dynamically inserted here -->
             </div>
-            <button class="checkout-btn">Proceed to Checkout</button>
+            
+            <div class="cart-summary">
+                <h2 class="summary-title">Summary</h2>
+                <div class="summary-row">
+                    <span>Subtotal</span>
+                    <span id="cart-subtotal">$0.00</span>
+                </div>
+                <div class="summary-row">
+                    <span>Shipping</span>
+                    <span id="cart-shipping">$0.00</span>
+                </div>
+                <div class="summary-row">
+                    <span>Tax</span>
+                    <span id="cart-tax">$0.00</span>
+                </div>
+                <div class="summary-divider"></div>
+                <div class="summary-total">
+                    <span>Total</span>
+                    <span id="cart-total">$0.00</span>
+                </div>
+                <button class="checkout-btn">Proceed to Checkout</button>
+            </div>
         </div>
     </main>
 

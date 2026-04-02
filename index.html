@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -9,6 +10,7 @@
     <script defer src="scripts/global.js"></script>
     <script defer src="scripts/index.js"></script>
 </head>
+
 <body>
 
     <!-- Header will be loaded here -->
@@ -26,71 +28,176 @@
     </section>
 
     <section class="carousel-section">
+        <h2 class="mobile-carousel-title">All Products</h2>
         <div class="carousel-wrapper">
             <button class="carousel-btn carousel-btn--prev" aria-label="Previous">&#8592;</button>
 
             <div class="product-grid">
                 <!-- Product Card 1 -->
                 <div class="product-card" data-product-id="p001">
-                    <div class="product-image-wrapper">
-                        <img src="images/testimage1.png" alt="Product 1">
-                        <img src="images/card-cover1.jpg" alt="Product 1 Cover" class="card-cover">
+                    <div class="product-media">
+                        <div class="product-image-wrapper">
+                            <img src="images/testimage1.png" alt="Product 1">
+                            <img src="images/card-cover1.jpg" alt="Product 1 Cover" class="card-cover">
+                        </div>
+                        <div class="product-thumbnails">
+                            <img src="images/testimage1.png" alt="Product 1 Thumbnail">
+                            <img src="images/testimage1.png" alt="Product 1 Thumbnail">
+                        </div>
                     </div>
                     <div class="product-info">
-                        <div class="card-footer">
-                            <h3>Product Title 1</h3>
-                            <span class="price">$19.99</span>
+                        <h3>Product Title 1</h3>
+                        <h4 class="product-subtitle">Second Title</h4>
+                        <p>This is a description of the product.</p>
+                        <span class="price">$19.99</span>
+                        <div class="product-descriptions">
+                            <div class="desc-item">
+                                <span class="icon">🌸</span>
+                                <h4>Flower Title</h4>
+                                <p>Lorem ipsum dolor sit amet.</p>
+                            </div>
+                            <div class="desc-item">
+                                <span class="icon">✏️</span>
+                                <h4>Pen Title</h4>
+                                <p>Lorem ipsum dolor sit amet.</p>
+                            </div>
                         </div>
-                        <p>This is a description of the product highlighting its key features.</p>
                         <button class="btn-add-to-cart">Add to Cart</button>
+                        <div class="product-rating-label">Cute enough to wear - 4.9/5 skin Joy</div>
+                        <div class="surprise-desc">
+                            <span class="icon">🎁</span>
+                            <div class="surprise-content">
+                                <h4>The hidden Surprise</h4>
+                                <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Mauris tempus, tellus eget
+                                    condimentum rhoncus, sem quam semper libero, sit amet.</p>
+                            </div>
+                        </div>
                     </div>
                 </div>
 
                 <!-- Product Card 2 -->
                 <div class="product-card" data-product-id="p002">
-                    <div class="product-image-wrapper">
-                        <img src="images/testimage2.png" alt="Product 2">
-                        <img src="images/card-cover2.jpg" alt="Product 2 Cover" class="card-cover">
+                    <div class="product-media">
+                        <div class="product-image-wrapper">
+                            <img src="images/testimage2.png" alt="Product 2">
+                            <img src="images/card-cover2.jpg" alt="Product 2 Cover" class="card-cover">
+                        </div>
+                        <div class="product-thumbnails">
+                            <img src="images/testimage2.png" alt="Product 2 Thumbnail">
+                            <img src="images/testimage2.png" alt="Product 2 Thumbnail">
+                        </div>
                     </div>
                     <div class="product-info">
-                        <div class="card-footer">
-                            <h3>Product Title 2</h3>
-                            <span class="price">$29.99</span>
+                        <h3>Product Title 2</h3>
+                        <h4 class="product-subtitle">Second Title</h4>
+                        <p>This is a description of the product.</p>
+                        <span class="price">$29.99</span>
+                        <div class="product-descriptions">
+                            <div class="desc-item">
+                                <span class="icon">🌸</span>
+                                <h4>Flower Title</h4>
+                                <p>Lorem ipsum dolor sit amet.</p>
+                            </div>
+                            <div class="desc-item">
+                                <span class="icon">✏️</span>
+                                <h4>Pen Title</h4>
+                                <p>Lorem ipsum dolor sit amet.</p>
+                            </div>
                         </div>
-                        <p>This is a description of the product highlighting its key features.</p>
                         <button class="btn-add-to-cart">Add to Cart</button>
+                        <div class="product-rating-label">Cute enough to wear - 4.9/5 skin Joy</div>
+                        <div class="surprise-desc">
+                            <span class="icon">🎁</span>
+                            <div class="surprise-content">
+                                <h4>The hidden Surprise</h4>
+                                <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Mauris tempus, tellus eget
+                                    condimentum rhoncus, sem quam semper libero, sit amet.</p>
+                            </div>
+                        </div>
                     </div>
                 </div>
 
                 <!-- Product Card 3 -->
                 <div class="product-card" data-product-id="p003">
-                    <div class="product-image-wrapper">
-                        <img src="images/testimage3.png" alt="Product 3">
-                        <img src="images/card-cover3.jpg" alt="Product 3 Cover" class="card-cover">
+                    <div class="product-media">
+                        <div class="product-image-wrapper">
+                            <img src="images/testimage3.png" alt="Product 3">
+                            <img src="images/card-cover3.jpg" alt="Product 3 Cover" class="card-cover">
+                        </div>
+                        <div class="product-thumbnails">
+                            <img src="images/testimage3.png" alt="Product 3 Thumbnail">
+                            <img src="images/testimage3.png" alt="Product 3 Thumbnail">
+                        </div>
                     </div>
                     <div class="product-info">
-                        <div class="card-footer">
-                            <h3>Product Title 3</h3>
-                            <span class="price">$39.99</span>
+                        <h3>Product Title 3</h3>
+                        <h4 class="product-subtitle">Second Title</h4>
+                        <p>This is a description of the product.</p>
+                        <span class="price">$39.99</span>
+                        <div class="product-descriptions">
+                            <div class="desc-item">
+                                <span class="icon">🌸</span>
+                                <h4>Flower Title</h4>
+                                <p>Lorem ipsum dolor sit amet.</p>
+                            </div>
+                            <div class="desc-item">
+                                <span class="icon">✏️</span>
+                                <h4>Pen Title</h4>
+                                <p>Lorem ipsum dolor sit amet.</p>
+                            </div>
                         </div>
-                        <p>This is a description of the product highlighting its key features.</p>
                         <button class="btn-add-to-cart">Add to Cart</button>
+                        <div class="product-rating-label">Cute enough to wear - 4.9/5 skin Joy</div>
+                        <div class="surprise-desc">
+                            <span class="icon">🎁</span>
+                            <div class="surprise-content">
+                                <h4>The hidden Surprise</h4>
+                                <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Mauris tempus, tellus eget
+                                    condimentum rhoncus, sem quam semper libero, sit amet.</p>
+                            </div>
+                        </div>
                     </div>
                 </div>
 
                 <!-- Product Card 4 -->
                 <div class="product-card" data-product-id="p004">
-                    <div class="product-image-wrapper">
-                        <img src="images/testimage4.png" alt="Product 4">
-                        <img src="images/card-cover4.jpg" alt="Product 4 Cover" class="card-cover">
+                    <div class="product-media">
+                        <div class="product-image-wrapper">
+                            <img src="images/testimage4.png" alt="Product 4">
+                            <img src="images/card-cover4.jpg" alt="Product 4 Cover" class="card-cover">
+                        </div>
+                        <div class="product-thumbnails">
+                            <img src="images/testimage4.png" alt="Product 4 Thumbnail">
+                            <img src="images/testimage4.png" alt="Product 4 Thumbnail">
+                        </div>
                     </div>
                     <div class="product-info">
-                        <div class="card-footer">
-                            <h3>Product Title 4</h3>
-                            <span class="price">$49.99</span>
+                        <h3>Product Title 4</h3>
+                        <h4 class="product-subtitle">Second Title</h4>
+                        <p>This is a description of the product.</p>
+                        <span class="price">$49.99</span>
+                        <div class="product-descriptions">
+                            <div class="desc-item">
+                                <span class="icon">🌸</span>
+                                <h4>Flower Title</h4>
+                                <p>Lorem ipsum dolor sit amet.</p>
+                            </div>
+                            <div class="desc-item">
+                                <span class="icon">✏️</span>
+                                <h4>Pen Title</h4>
+                                <p>Lorem ipsum dolor sit amet.</p>
+                            </div>
                         </div>
-                        <p>This is a description of the product highlighting its key features.</p>
                         <button class="btn-add-to-cart">Add to Cart</button>
+                        <div class="product-rating-label">Cute enough to wear - 4.9/5 skin Joy</div>
+                        <div class="surprise-desc">
+                            <span class="icon">🎁</span>
+                            <div class="surprise-content">
+                                <h4>The hidden Surprise</h4>
+                                <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Mauris tempus, tellus eget
+                                    condimentum rhoncus, sem quam semper libero, sit amet.</p>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -99,12 +206,87 @@
         </div>
     </section>
 
-    <!-- Hero Section -->
-    <section class="hero-section" style="background-image: url('images/hero2.jpg'); justify-content: center;">
-        <div class="hero-content">
-            Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
+    <!-- Gentle Healing Section -->
+    <section class="gentle-healing-section">
+        <div class="healing-text-col">
+            <h2 class="healing-main-title">Designed for gentle healing</h2>
+            
+            <div class="healing-item">
+                <div class="healing-subtitle-wrapper">
+                    <span class="healing-number">1</span>
+                    <h3 class="healing-subtitle">Nourishing Formula</h3>
+                </div>
+                <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.</p>
+            </div>
+            
+            <div class="healing-item">
+                <div class="healing-subtitle-wrapper">
+                    <span class="healing-number">2</span>
+                    <h3 class="healing-subtitle">Skin Protection</h3>
+                </div>
+                <p>Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.</p>
+            </div>
+            
+            <div class="healing-item">
+                <div class="healing-subtitle-wrapper">
+                    <span class="healing-number">3</span>
+                    <h3 class="healing-subtitle">All-day Hydration</h3>
+                </div>
+                <p>Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur excepteur sint.</p>
+            </div>
+        </div>
+        
+        <div class="healing-img-col">
+            <div class="healing-image-container">
+                <div class="healing-image-wrapper">
+                    <img src="images/card-cover1.jpg" alt="Gentle Healing">
+                </div>
+                <div class="healing-image-overlay">
+                    <h4>The Perfect Balance</h4>
+                    <p>Experience soothing care designed specifically for sensitive skin.</p>
+                </div>
+            </div>
         </div>
     </section>
+
+    <!-- FAQ Section -->
+    <section class="faq-section">
+        <div class="faq-header">
+            <h2 class="faq-title">Curiosities</h2>
+            <p class="faq-subtitle">Everything you need to know about your new ritual</p>
+        </div>
+        
+        <div class="faq-container">
+            <details class="faq-card">
+                <summary class="faq-card-header">
+                    What makes this ritual different?
+                    <span class="faq-icon">&#8964;</span>
+                </summary>
+                <div class="faq-card-body">
+                    <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.</p>
+                </div>
+            </details>
+            <details class="faq-card">
+                <summary class="faq-card-header">
+                    How often should I use the products?
+                    <span class="faq-icon">&#8964;</span>
+                </summary>
+                <div class="faq-card-body">
+                    <p>Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.</p>
+                </div>
+            </details>
+            <details class="faq-card">
+                <summary class="faq-card-header">
+                    Are the ingredients safe for sensitive skin?
+                    <span class="faq-icon">&#8964;</span>
+                </summary>
+                <div class="faq-card-body">
+                    <p>Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur.</p>
+                </div>
+            </details>
+        </div>
+    </section>
+    
 
     <!-- Split: Image + Accordion -->
     <section class="split-section">
@@ -114,23 +296,28 @@
         <div class="split-content">
             <details class="accordion-item">
                 <summary class="accordion-header">What is Joydotz?<span class="accordion-icon">&#8964;</span></summary>
-                <p class="accordion-body">Joydotz is a modern beauty brand crafting everyday essentials that bring joy to your routine.</p>
+                <p class="accordion-body">Joydotz is a modern beauty brand crafting everyday essentials that bring joy
+                    to your routine.</p>
             </details>
             <details class="accordion-item">
                 <summary class="accordion-header">Who is it for?<span class="accordion-icon">&#8964;</span></summary>
-                <p class="accordion-body">Our products are designed for everyone — whether you're a skincare newcomer or a seasoned beauty lover.</p>
+                <p class="accordion-body">Our products are designed for everyone — whether you're a skincare newcomer or
+                    a seasoned beauty lover.</p>
             </details>
             <details class="accordion-item">
                 <summary class="accordion-header">Where can I buy?<span class="accordion-icon">&#8964;</span></summary>
-                <p class="accordion-body">Shop directly from our website or find us at select retail partners across the country.</p>
+                <p class="accordion-body">Shop directly from our website or find us at select retail partners across the
+                    country.</p>
             </details>
             <details class="accordion-item">
                 <summary class="accordion-header">How do I use it?<span class="accordion-icon">&#8964;</span></summary>
-                <p class="accordion-body">Each product comes with simple usage instructions. Apply daily for best results.</p>
+                <p class="accordion-body">Each product comes with simple usage instructions. Apply daily for best
+                    results.</p>
             </details>
             <details class="accordion-item">
                 <summary class="accordion-header">Why Joydotz?<span class="accordion-icon">&#8964;</span></summary>
-                <p class="accordion-body">We believe great skin shouldn't be complicated. Clean ingredients, honest pricing, real results.</p>
+                <p class="accordion-body">We believe great skin shouldn't be complicated. Clean ingredients, honest
+                    pricing, real results.</p>
             </details>
         </div>
     </section>
@@ -157,4 +344,5 @@
     <div id="footer-placeholder"></div>
 
 </body>
+
 </html>

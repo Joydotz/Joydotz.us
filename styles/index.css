@@ -1,9 +1,10 @@
 .hero-section {
+    display: none; /* Hidden by default, can be enabled for specific pages */
     background-image: url('../images/hero1.jpg'); /* default fallback */
     background-size: cover;
     background-position: center;
     height: 500px;
-    display: flex;
+    /*display: flex;*/
     align-items: center; /* Vertically center the content */
     justify-content: flex-start; /* Align content to the left */
     position: relative;
@@ -53,8 +54,13 @@
 }
 
 /* ── Carousel ──────────────────────────────────────────────── */
+.mobile-carousel-title {
+    display: none;
+}
+
 .carousel-section {
-    padding: 0 0 20px;
+    
+    padding: 60px 0 20px;
     margin: 0 20px;
 }
 
@@ -98,13 +104,199 @@
 .product-grid {
     display: flex;
     overflow: hidden;
-    gap: 20px;
+    gap: 0; /* No gap between slides */
     padding: 10px 0 15px;
 }
 
 .product-card {
-    flex: 0 0 calc((100% - 40px) / 3 - 2px);
+    /* Each card is a full slide */
+    flex: 0 0 100%;
     min-width: 0;
+
+    /* New Card Layout: side-by-side */
+    flex-direction: row;
+    align-items: flex-start;
+    gap: 40px;
+    padding: 0 40px;
+    height: 1080px; /* Increased height to prevent rotated thumbnails from clipping */
+    box-sizing: border-box;
+
+    /* Overriding global.css styles */
+    border: none;
+    box-shadow: none;
+    background: transparent;
+    border-radius: 0;
+    transition: none;
+}
+
+.product-card:hover {
+    transform: none;
+}
+
+.product-card .product-media {
+    flex: 1.5; /* Increased from 1 to make the media section wider than the info section */
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.product-card .product-image-wrapper {
+    flex: 1;
+    border-radius: 30px;
+}
+
+.product-card .product-image-wrapper img {
+    height: 100%; /* Override global.css height */
+}
+
+.product-thumbnails {
+    display: flex;
+    gap: 60px;
+    height: 450px; /* Increased height to fully contain the rotated and translated images */
+    justify-content: center;
+    align-items: center;
+}
+
+.product-thumbnails img {
+    width: 350px; /* Keep width as 300px */
+    height: 350px; /* Keep height as 300px */
+    object-fit: contain;
+    background: radial-gradient(circle, #ffffff, var(--theme-color));
+    border-radius: 12px;
+    padding: 10px;
+    box-sizing: border-box;
+    transition: transform 0.3s ease;
+}
+
+.product-thumbnails img:first-child {
+    transform: translateY(-5px) rotate(-10deg);
+    margin-top: -20px; /* Pulls the first thumbnail up to create a more dynamic layout */
+}
+
+.product-thumbnails img:last-child {
+    transform: translateY(5px) rotate(10deg);
+    margin-top: 20px; /* Pulls the second thumbnail down to create a more dynamic layout */
+}
+
+.product-card .product-info {
+    flex: 1;
+    box-shadow: none;
+    background: transparent;
+    padding: 20px;
+    gap: 20px; /* Space between h3, p, footer */
+}
+
+.product-subtitle {
+    color: #633E30;
+    font-size: 4rem;
+    font-weight: 600;
+    margin: -30px 0 10px 0; /* Pulls subtitle closer to the main title */
+}
+
+.product-info .price {
+    font-size: 2.2rem;
+    font-weight: bold;
+    color: #2a2320;
+}
+
+.product-info h3{
+    font-size: 4rem;
+    margin-bottom: 0;
+}
+
+/* This rule was making the subtitle too large. It has been removed. */
+/* Specific h4 styles are handled by .desc-item h4, .surprise-content h4, and .product-subtitle */
+
+.product-info p{
+    font-size: 1.5rem;
+    line-height: 40px;
+    font-weight: 500;
+    margin-top: -30px; /* Pulls description closer to the title */
+}
+
+.product-descriptions {
+    display: flex;
+    gap: 20px;
+    width: 100%;
+}
+
+.desc-item {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    background-color: #f5f5f5;
+    border-radius: 12px;
+    padding: 16px;
+}
+
+.desc-item .icon {
+    font-size: 1.5rem;
+    margin-bottom: 8px;
+    color: #D9A694;
+}
+
+.desc-item h4 {
+    margin: 0 0 8px 0;
+    font-size: 1rem;
+    color: #2a2320;
+}
+
+.product-card .product-info .desc-item p {
+    margin: 0;
+    font-size: 0.85rem;
+    flex-grow: 0; /* Prevents global.css 'flex-grow: 1' from distorting the new small descriptions */
+}
+
+.product-card .btn-add-to-cart {
+    margin-top: 20px;
+    align-self: center;
+    background-color: #633E30;
+    border-color: #D9A694;
+    color: white;
+    padding: 24px 0;
+    width: 100%;
+    white-space: nowrap;
+    border-radius: 30px;
+    font-size: 1.5rem;
+}
+
+.product-rating-label {
+    font-size: 0.8rem;
+    color: #555;
+    margin-top: 20px;
+    align-self: flex-start;
+}
+
+.surprise-desc {
+    display: flex;
+    gap: 15px;
+    align-items: flex-start;
+    margin-top: 20px;
+    border: 5px dotted #FFD9DC;
+    background-color: #FFECED;
+    padding: 16px;
+    border-radius: 40px;
+}
+
+.surprise-desc .icon {
+    font-size: 1.5rem;
+    background-color: #FFD9DC;
+    color: white;
+    padding: 12px;
+    border-radius: 50%;
+}
+
+.surprise-content h4 {
+    margin: 0 0 8px 0;
+    font-size: 1rem;
+    color: #2a2320;
+}
+
+.surprise-content p {
+    margin: 0;
+    font-size: 0.85rem;
+    color: #666;
 }
 
 /* ── Product Image ─────────────────────────────────────────── */
@@ -130,14 +322,264 @@
     transition: opacity 0.4s ease;
 }
 
-.product-card:hover .card-cover {
+/* Scale up the first product's image if the file has extra transparent whitespace */
+.product-card:first-child .product-image-wrapper img:not(.card-cover) {
+    transform: scale(1.15); /* Adjust this value if it needs to be larger/smaller */
+}
+
+.product-image-wrapper:hover .card-cover {
     opacity: 1;
+}
+
+/* ── Gentle Healing Section ────────────────────────────────── */
+.gentle-healing-section {
+    display: flex;
+    gap: 80px;
+    padding-left: 180px; /* Increased overall section padding for a more relaxed feel */
+    padding-right: 0; /* Removed right padding to bring image very close to the border */
+    padding-top: 50px;
+    padding-bottom: 50px;
+    
+    align-items: center;
+    margin: 40px 20px;
+    box-sizing: border-box;
+    background-color: #F5F0EE;
+    border-radius: 30px;
+}
+
+.healing-text-col {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 30px;
+}
+
+.healing-main-title {
+    font-size: 3rem;
+    color: #2a2320;
+    margin: 0 0 10px 0;
+}
+
+.healing-item {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.healing-subtitle-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.healing-number {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    background-color: #D9A694;
+    color: white;
+    font-weight: bold;
+    border-radius: 50%;
+    font-size: 1.2rem;
+}
+
+.healing-subtitle {
+    font-size: 1.5rem;
+    color: #2a2320;
+    margin: 0;
+}
+
+.healing-item p {
+    margin: 0;
+    color: #666;
+    font-size: 1.1rem;
+    line-height: 1.6;
+    padding-left: 55px; /* Indents the text to match the subtitle starting position */
+}
+
+.healing-img-col {
+    flex: 1;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 40px; /* Provides safe space so the rotated image isn't clipped */
+}
+
+.healing-image-container {
+    position: relative;
+    width: 100%;
+    max-width: 750px; /* Increased width to make the image bigger */
+    height: 550px; /* Increased height proportionally */
+}
+
+.healing-image-wrapper {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    border-radius: 30px;
+    overflow: hidden;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+    transform: rotate(4deg);
+}
+
+.healing-image-wrapper img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.healing-image-overlay {
+    position: absolute;
+    bottom: 30px; /* Moved slightly further from the bottom edge */
+    left: 30px; /* Moved slightly further from the left edge */
+    background-color: rgba(255, 255, 255, 0.95);
+    padding: 32px; /* Increased padding so text doesn't press against the borders */
+    border-radius: 15px;
+    max-width: 290px; /* Increased width to accommodate the extra padding gracefully */
+    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+    z-index: 2; /* Ensures straight text floats above the rotated image */
+}
+
+.healing-image-overlay h4 {
+    margin: 0 0 10px 0;
+    color: #2a2320;
+    font-size: 1.2rem;
+}
+
+.healing-image-overlay p {
+    margin: 0;
+    color: #666;
+    font-size: 0.95rem;
+    line-height: 1.4;
+}
+
+/* ── FAQ Section ───────────────────────────────────────────── */
+.faq-section {
+    padding: 60px 40px;
+    margin: 40px 20px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.faq-header {
+    text-align: center;
+    margin-bottom: 50px;
+}
+
+.faq-title {
+    font-size: 3.5rem;
+    color: #2a2320;
+    margin: 0 0 15px 0;
+}
+
+.faq-subtitle {
+    font-size: 1.2rem;
+    color: #666;
+    margin: 0;
+}
+
+.faq-container {
+    width: 100%;
+    max-width: 850px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.faq-card {
+    background-color: #ffffff;
+    border-radius: 20px;
+    overflow: hidden;
+}
+
+.faq-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 24px 32px;
+    font-size: 1.2rem;
+    font-weight: 600;
+    color: #2a2320;
+    cursor: pointer;
+    list-style: none; /* Hide default browser arrow */
+}
+
+/* Hide default browser arrow for webkit browsers */
+.faq-card-header::-webkit-details-marker {
+    display: none;
+}
+
+.faq-icon {
+    font-size: 1.8rem;
+    transition: transform 0.3s ease;
+    color: #D9A694;
+}
+
+details[open].faq-card .faq-icon {
+    transform: rotate(180deg);
+}
+
+details[open].closing.faq-card .faq-icon {
+    transform: rotate(0deg);
+}
+
+.faq-card-body {
+    padding: 0 32px 28px 32px;
+    color: #666;
+    font-size: 1.05rem;
+    line-height: 1.6;
+}
+
+.faq-card-body p {
+    margin: 0;
+}
+
+details[open].faq-card .faq-card-body {
+    animation: faqSlideDown 0.4s ease-out forwards;
+    overflow: hidden;
+}
+
+details[open].closing.faq-card .faq-card-body {
+    animation: faqSlideUp 0.4s ease-out forwards;
+}
+
+@keyframes faqSlideDown {
+    0% {
+        opacity: 0;
+        max-height: 0;
+        padding-bottom: 0;
+    }
+    100% {
+        opacity: 1;
+        max-height: 300px; /* A safe maximum height for the content to expand into */
+        padding-bottom: 28px;
+    }
+}
+
+@keyframes faqSlideUp {
+    0% {
+        opacity: 1;
+        max-height: 300px;
+        padding-bottom: 28px;
+    }
+    100% {
+        opacity: 0;
+        max-height: 0;
+        padding-bottom: 0;
+    }
 }
 
 /* ── Product Badge ─────────────────────────────────────────── */
 /* ── Split: Image + Accordion ─────────────────────────────── */
 .split-section {
-    display: flex;
+    display: none; /* Hidden by default, can be enabled for specific pages */
+    /*display: flex;*/
     margin: 20px;
     border-radius: 16px;
     background: #f5f3f1;
@@ -214,6 +656,7 @@ details[open] .accordion-icon {
 
 /* ── Social Carousel ───────────────────────────────────────── */
 .social-section {
+    display: none; /* Hidden by default, can be enabled for specific pages */
     margin: 20px 20px;
     padding-bottom: 20px;
 }
@@ -302,4 +745,191 @@ details[open] .accordion-icon {
     text-transform: uppercase;
     padding: 4px 10px;
     border-radius: 100px;
+}
+
+/* ── Mobile Responsive Mode ───────────────────────────────── */
+@media (max-width: 768px) {
+    .hero-section {
+        display: flex;
+        height: 350px;
+        margin: 15px;
+        border-radius: 15px;
+    }
+
+    .hero-content h1 {
+        font-size: 2.2rem;
+        margin-bottom: 15px;
+    }
+
+    /* Carousel & Product Card */
+    .mobile-carousel-title {
+        display: block;
+        font-size: 2.2rem;
+        text-align: center;
+        margin-bottom: 20px;
+        color: #2a2320;
+        margin-top: 0;
+    }
+
+    .carousel-section {
+        padding: 20px 0 10px;
+        margin: 0 10px;
+    }
+
+    .product-grid {
+        gap: 10px;
+        padding: 10px 0;
+    }
+
+    .carousel-btn {
+        top: 30%; /* Align with the top image on mobile */
+        width: 36px;
+        height: 36px;
+    }
+
+    .product-card {
+        flex: 0 0 calc(50% - 5px);
+        flex-direction: column;
+        height: auto;
+        padding: 10px;
+        gap: 10px;
+        background-color: white;
+        border-radius: 30px;
+    }
+
+    .product-card .product-media {
+        width: 100%;
+        gap: 0;
+    }
+
+    .product-card .product-image-wrapper {
+        aspect-ratio: 1;
+        padding: 10px;
+        box-sizing: border-box;
+        border-radius: 60px;
+    }
+
+    .product-card .product-image-wrapper img {
+        border-radius: 30px;
+    }
+
+    .product-thumbnails {
+        display: none;
+    }
+
+    .product-card .product-info {
+        padding: 5px;
+        display: grid;
+        grid-template-columns: 1fr auto;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .product-info h3 {
+        grid-column: 1 / 2;
+        grid-row: 1;
+        font-size: 1.1rem;
+        margin: 0;
+    }
+
+    .product-info p {
+        grid-column: 1 / 3;
+        grid-row: 2;
+        font-size: 0.85rem;
+        line-height: 1.4;
+        margin: 0;
+    }
+
+    .product-info .price {
+        grid-column: 2 / 3;
+        grid-row: 1;
+        font-size: 1.1rem;
+        margin: 0;
+    }
+
+    .product-card .btn-add-to-cart {
+        grid-column: 1 / 3;
+        grid-row: 3;
+        font-size: 1rem;
+        padding: 12px 0;
+        margin-top: 5px;
+        background-color: #FFD9DC;
+        color: #996D5D;
+        border: none;
+    }
+
+    .product-subtitle,
+    .product-descriptions,
+    .product-rating-label,
+    .surprise-desc {
+        display: none !important;
+    }
+
+    /* Gentle Healing Section */
+    .gentle-healing-section {
+        flex-direction: column;
+        padding: 40px 20px;
+        gap: 40px;
+        margin: 20px 10px;
+    }
+
+    .healing-main-title {
+        font-size: 2.2rem;
+    }
+
+    .healing-item p {
+        padding-left: 0; /* Remove indent on small screens */
+    }
+
+    .healing-img-col {
+        padding: 10px;
+        width: 100%;
+        box-sizing: border-box;
+    }
+
+    .healing-image-container {
+        height: 350px;
+    }
+
+    .healing-image-wrapper {
+        transform: none; /* Remove rotation to fit screen */
+    }
+
+    .healing-image-overlay {
+        bottom: 15px;
+        left: 15px;
+        padding: 20px;
+        max-width: 85%;
+        box-sizing: border-box;
+    }
+
+    /* FAQ Section */
+    .faq-section {
+        padding: 40px 15px;
+        margin: 20px 10px;
+    }
+
+    .faq-title {
+        font-size: 2.2rem;
+    }
+
+    .faq-card-header {
+        padding: 16px 20px;
+        font-size: 1.1rem;
+    }
+
+    .faq-card-body {
+        padding: 0 20px 20px 20px;
+    }
+
+    /* Split Section */
+    .split-section {
+        flex-direction: column;
+        height: auto;
+        margin: 10px;
+    }
+
+    .split-content {
+        padding: 20px;
+    }
 }
