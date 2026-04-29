@@ -1,0 +1,112 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ─── Base ─────────────────────────────────────────────────────────────── */
+@layer base {
+  *, *::before, *::after { box-sizing: border-box; }
+
+  html { scroll-behavior: smooth; -webkit-font-smoothing: antialiased; }
+
+  :root {
+    --color-primary: #D4A090;
+  }
+
+  /*
+   * The body IS the brand color — Pantone 7520 C (#D4A090) is the canvas.
+   * All content surfaces (white/cream panels) float on top of it.
+   * The grain texture gives the paper/material quality to the canvas.
+   */
+  body {
+    background-color: #edd6c0;
+    background-repeat: repeat;
+    @apply text-joy-text font-body;
+  }
+}
+
+/* ─── Components ────────────────────────────────────────────────────────── */
+@layer components {
+
+  /* Surface panel — white/cream sheet floating on the canvas */
+  .surface {
+    background-color: #FAF4F0;
+    border-radius: 2rem;
+    box-shadow: 0 2px 20px rgba(90, 40, 20, 0.12);
+  }
+
+  .surface-alt {
+    background-color: #F5EDE8;
+    border-radius: 2rem;
+    box-shadow: 0 2px 20px rgba(90, 40, 20, 0.12);
+  }
+
+  /* Primary button — dark pill, high contrast on canvas */
+  .btn-primary {
+    @apply inline-flex items-center justify-center gap-2
+           bg-joy-text text-joy-surface
+           font-body font-medium text-sm
+           px-6 py-3 rounded-full
+           transition-all duration-200
+           hover:-translate-y-0.5 hover:shadow-float
+           active:translate-y-0;
+  }
+
+  /* Ghost button — works on canvas */
+  .btn-ghost {
+    @apply inline-flex items-center justify-center gap-2
+           border border-joy-text/30 text-joy-text
+           font-body font-medium text-sm
+           px-6 py-3 rounded-full
+           transition-all duration-200
+           hover:-translate-y-0.5 hover:border-joy-text/60
+           active:translate-y-0;
+  }
+
+  /* White button — works on canvas or deep sections */
+  .btn-surface {
+    @apply inline-flex items-center justify-center gap-2
+           bg-joy-surface text-joy-text
+           font-body font-medium text-sm
+           px-6 py-3 rounded-full
+           transition-all duration-200
+           hover:-translate-y-0.5 hover:shadow-float
+           active:translate-y-0;
+  }
+
+  /* Message card — lighter than canvas, feels tactile */
+  .message-card {
+    @apply rounded-3xl p-8;
+    background-color: #E2B8A8;
+    background-repeat: repeat;
+  }
+
+  /* Section wrapper */
+  .section     { @apply max-w-6xl mx-auto px-6 py-24; }
+  .section-sm  { @apply max-w-6xl mx-auto px-6 py-16; }
+  .section-pad { @apply px-6 py-20; }
+
+  /* Typography */
+  .headline-xl  { @apply font-display text-5xl md:text-7xl leading-[1.1] tracking-tight text-joy-text; }
+  .headline-lg  { @apply font-display text-4xl md:text-5xl leading-[1.15] tracking-tight text-joy-text; }
+  .headline-md  { @apply font-display text-3xl md:text-4xl leading-[1.2] text-joy-text; }
+  .headline-sm  { @apply font-display text-2xl leading-snug text-joy-text; }
+
+  .body-lg  { @apply font-body text-base md:text-lg leading-relaxed text-joy-text/75; }
+  .body-sm  { @apply font-body text-sm leading-relaxed text-joy-text/60; }
+  .label    { @apply font-body text-xs font-medium tracking-widest uppercase text-joy-text/50; }
+
+  /* Divider */
+  .divider { @apply border-t border-joy-text/10; }
+}
+
+/* ─── Utilities ─────────────────────────────────────────────────────────── */
+@layer utilities {
+  .text-balance { text-wrap: balance; }
+
+  /* Shimmer for Cloud SKU */
+  .shimmer-bg {
+    background: linear-gradient(105deg, #B8CDEA 0%, #D6E8FF 25%, #EEF4FF 50%, #C8DAFF 75%, #B8CDEA 100%);
+    background-size: 200% auto;
+    animation: shimmer 4s linear infinite;
+  }
+}
