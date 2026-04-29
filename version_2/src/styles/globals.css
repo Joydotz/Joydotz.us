@@ -1,0 +1,97 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html {
+    font-family: 'DM Sans', sans-serif;
+    -webkit-font-smoothing: antialiased;
+    scroll-behavior: smooth;
+  }
+
+  body {
+    background-color: #FDF6F2;
+    color: #1a1a1a;
+    overflow-x: hidden;
+  }
+}
+
+@layer utilities {
+  /* Paper grain texture overlay */
+  .grain {
+    position: relative;
+  }
+  .grain::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='300' height='300' filter='url(%23n)' opacity='1'/%3E%3C/svg%3E");
+    opacity: 0.022;
+    pointer-events: none;
+    z-index: 1;
+  }
+
+  /* Cloud holographic shimmer */
+  .shimmer-cloud {
+    background: linear-gradient(
+      135deg,
+      #c8d8f0 0%,
+      #b8c4e8 15%,
+      #ccc0e8 30%,
+      #a8d4e8 45%,
+      #c0ccf0 60%,
+      #d0b8e0 75%,
+      #b8d4ec 90%,
+      #c8d8f0 100%
+    );
+    background-size: 400% 400%;
+    animation: shimmer 5s ease-in-out infinite;
+  }
+
+  /* Butterfly pearl sheen */
+  .shimmer-butterfly {
+    background: linear-gradient(
+      135deg,
+      #ede9e4 0%,
+      #ddd8d0 25%,
+      #e8e4de 50%,
+      #d4d0c8 75%,
+      #ede9e4 100%
+    );
+    background-size: 300% 300%;
+    animation: shimmer 6s ease-in-out infinite;
+  }
+
+  /* Flower soft gradient */
+  .shimmer-flower {
+    background: linear-gradient(
+      135deg,
+      #f8d4d0 0%,
+      #f0c0bc 30%,
+      #f8d0cc 60%,
+      #eab8b4 80%,
+      #f8d4d0 100%
+    );
+    background-size: 300% 300%;
+    animation: shimmer 6s ease-in-out infinite;
+  }
+
+  /* Image placeholder block */
+  .img-placeholder {
+    background: rgba(234, 190, 176, 0.15);
+    border: 1.5px dashed rgba(234, 190, 176, 0.5);
+    border-radius: 1.25rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #a89390;
+    font-size: 0.75rem;
+    letter-spacing: 0.08em;
+    font-family: 'DM Sans', sans-serif;
+  }
+}
+
+/* Marquee pause on hover */
+.marquee-track:hover {
+  animation-play-state: paused;
+}
