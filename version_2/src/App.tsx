@@ -1,23 +1,25 @@
 import Nav from './components/Nav'
+import BottomNav from './components/BottomNav'
 import Hero from './components/sections/Hero'
-import BrandMessage from './components/sections/BrandMessage'
 import Collection from './components/sections/Collection'
-import Ritual from './components/sections/Ritual'
-import MessageCards from './components/sections/MessageCards'
+import BentoGrid from './components/sections/BentoGrid'
+import ProductHighlight from './components/sections/ProductHighlight'
+import Newsletter from './components/sections/Newsletter'
 import Footer from './components/sections/Footer'
 
 export default function App() {
   return (
-    <div className="font-body">
+    <div className="bg-background text-on-background selection:bg-primary-container selection:text-on-primary-container bg-grain min-h-screen">
       <Nav />
-      <main>
+      <main className="pt-24">
         <Hero />
-        <BrandMessage />
         <Collection />
-        <Ritual />
-        <MessageCards />
+        <BentoGrid />
+        <ProductHighlight />
+        <Newsletter />
       </main>
       <Footer />
+      <BottomNav />
     </div>
   )
 }

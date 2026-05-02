@@ -1,142 +1,79 @@
-import FadeIn from '../ui/FadeIn'
-
-/* SVG patch shapes — floating in the background */
-function CloudPatch({ className }: { className?: string }) {
-  return (
-    <svg viewBox="0 0 80 60" className={className} fill="none">
-      <path
-        d="M20 40 Q10 40 10 30 Q10 20 20 20 Q22 12 30 12 Q38 8 44 16 Q50 10 58 14 Q68 16 68 26 Q72 26 72 34 Q72 42 62 42 Z"
-        fill="url(#cloud-grad)"
-        opacity="0.7"
-      />
-      <defs>
-        <linearGradient id="cloud-grad" x1="0" y1="0" x2="1" y2="1">
-          <stop offset="0%" stopColor="#c8d8f0" />
-          <stop offset="50%" stopColor="#ccc0e8" />
-          <stop offset="100%" stopColor="#a8d4e8" />
-        </linearGradient>
-      </defs>
-    </svg>
-  )
-}
-
-function FlowerPatch({ className }: { className?: string }) {
-  return (
-    <svg viewBox="0 0 60 60" className={className} fill="none">
-      <path
-        d="M30 10 Q36 10 36 16 Q42 10 46 16 Q52 20 46 26 Q52 30 46 34 Q42 40 36 34 Q36 40 30 40 Q24 40 24 34 Q18 40 14 34 Q8 30 14 26 Q8 20 14 16 Q18 10 24 16 Q24 10 30 10 Z"
-        fill="#f5c4c0"
-        opacity="0.75"
-      />
-    </svg>
-  )
-}
-
-function ButterflyPatch({ className }: { className?: string }) {
-  return (
-    <svg viewBox="0 0 70 50" className={className} fill="none">
-      <path
-        d="M35 25 Q28 10 18 10 Q8 10 8 20 Q8 30 18 30 Q25 30 30 25 Q28 22 35 25 Z"
-        fill="#e0dbd4"
-        opacity="0.8"
-      />
-      <path
-        d="M35 25 Q42 10 52 10 Q62 10 62 20 Q62 30 52 30 Q45 30 40 25 Q42 22 35 25 Z"
-        fill="#ede9e4"
-        opacity="0.8"
-      />
-      <path
-        d="M35 25 Q30 30 22 36 Q14 40 14 34 Q14 28 22 28 Q28 28 35 25 Z"
-        fill="#d8d4ce"
-        opacity="0.7"
-      />
-      <path
-        d="M35 25 Q40 30 48 36 Q56 40 56 34 Q56 28 48 28 Q42 28 35 25 Z"
-        fill="#ddd8d2"
-        opacity="0.7"
-      />
-    </svg>
-  )
-}
+const HERO_IMG = 'https://lh3.googleusercontent.com/aida-public/AB6AXuCMqnlA1yJBjcR8XqBNKREOON-7KjQhrwpSRp4oXpmtHbui30b1cPrUQ8-nGooxW9z7Zsy4gTUgI6WUxjmGFRMhslmlGUafysvh_zqDjl76SYV-RjaJy_VLFCgFqBpKqkCu6v7UCI_5YDdga444nd_96zmhqbNCyZebKIU5SeNPbU2cOx6NuZJ64V_o_aun4IU3K_mxDYQRJOK_YjvM5YED-NErwZBZXyVMnxIA430J9_KMgTSIOdVVmnYC35bwtzqaQj-NY5P2p3E'
+const CLOUD_IMG = 'https://lh3.googleusercontent.com/aida-public/AB6AXuB8xZHWL_rcw7lgxpuTaolnZjGxZ9depQBoPnezOn591Enc7h3e90ujvvi_nmYyZmhd6iRcXrBr0phTc6UiB9vss1Ts8TOhY9apcVuY9JRAz8Mdhc1kOdOjpKKbMEn4dWKqHCnYLQ91FenYuy1trZ8bJJJp1gU5NEYPR5rS1A9lUh_hQ78VgoniFEuxawK5JkDkRgwisaYhq1cK2Id8XYGyQg0Qe-rKLrNoaOD0tdHobg9iN_kNU5Zg7PoIFSDlzW9k5OLNw-DissQ'
+const BUTTERFLY_IMG = 'https://lh3.googleusercontent.com/aida-public/AB6AXuDMIJmpo15V6oP8s92l67Gsh900WsZXwvVnMAlqSmKdatf1g0vLxuPphwrD55wUm-OuamVblpbXSsR2hmZrY0s3Z59DbwFdDXTKUuf97gf6pYqx3l3S1oKPA0m5ynUKmnPqt-h9gCGbh9IJY2Yu1MksW_092k-lEh9HxsG4VuQYr5pwZwuXOjWYkMi2P_1wvtNQhsSfweSXD3e6ziQUThCu91lA9KsqchSH2rXXkaARxIPpXbNN-Bjaxtu0Z4SrK8qAnipWyy5XIIE'
 
 export default function Hero() {
   return (
-    <section className="relative min-h-screen flex flex-col items-center justify-center overflow-hidden grain bg-brand-cream px-6">
-      {/* Floating patch shapes — background layer */}
-      <div className="absolute inset-0 pointer-events-none select-none overflow-hidden">
-        <CloudPatch className="absolute w-28 md:w-40 top-[18%] left-[8%] animate-float opacity-60" />
-        <FlowerPatch className="absolute w-20 md:w-28 top-[15%] right-[12%] animate-float-delayed opacity-55" />
-        <ButterflyPatch className="absolute w-28 md:w-36 bottom-[22%] left-[14%] animate-float-slow opacity-50" />
-        <CloudPatch className="absolute w-16 md:w-24 bottom-[28%] right-[10%] animate-float opacity-40" />
-        <FlowerPatch className="absolute w-14 top-[55%] left-[4%] animate-float-slow opacity-35" />
-        <ButterflyPatch className="absolute w-20 top-[60%] right-[5%] animate-float-delayed opacity-40" />
-      </div>
+    <section className="relative min-h-[921px] flex items-center overflow-hidden px-8">
+      {/* Decorative blobs */}
+      <div className="absolute top-20 right-[10%] w-64 h-64 bg-primary-container/20 rounded-full blur-[80px] -z-10" />
+      <div className="absolute bottom-10 left-[5%] w-96 h-96 bg-secondary-container/20 rounded-full blur-[100px] -z-10" />
 
-      {/* Content */}
-      <div className="relative z-10 text-center max-w-2xl mx-auto flex flex-col items-center gap-6">
-        {/* Eyebrow */}
-        <FadeIn delay={0}>
-          <p className="font-body text-xs tracking-[0.25em] uppercase text-brand-muted2 font-medium">
-            hydrocolloid spot patches
-          </p>
-        </FadeIn>
-
-        {/* Brand name */}
-        <FadeIn delay={80}>
-          <h1 className="font-display font-extrabold italic text-[clamp(3.5rem,12vw,7rem)] leading-none tracking-tight text-brand-dark">
-            joydotz
-          </h1>
-        </FadeIn>
-
-        {/* Tagline */}
-        <FadeIn delay={200}>
-          <p className="font-body text-[clamp(1.1rem,3vw,1.5rem)] text-brand-dark font-light leading-snug max-w-md">
-            some days your skin just decides.
-            <br />
-            <span className="font-medium">there's still joy in you.</span>
-          </p>
-        </FadeIn>
-
-        {/* CTA */}
-        <FadeIn delay={340}>
-          <div className="flex flex-col sm:flex-row gap-3 mt-2">
-            <a
-              href="#shop"
-              className="font-body font-medium bg-brand-dark text-brand-cream px-8 py-3.5 rounded-full text-sm hover:bg-brand-muted transition-colors duration-200 hover:scale-[1.02] active:scale-[0.98] transform"
-            >
-              shop the collection
-            </a>
-            <a
-              href="#about"
-              className="font-body font-medium bg-brand-blush/60 text-brand-dark px-8 py-3.5 rounded-full text-sm hover:bg-brand-blush transition-colors duration-200 hover:scale-[1.02] active:scale-[0.98] transform"
-            >
-              our story
-            </a>
+      <div className="max-w-7xl mx-auto w-full grid md:grid-cols-2 gap-16 items-center">
+        {/* Left column */}
+        <div className="space-y-8 z-10">
+          <div className="inline-flex items-center gap-2 px-4 py-2 bg-surface-container-low rounded-full">
+            <span className="w-2 h-2 bg-primary rounded-full animate-pulse" />
+            <span className="text-xs font-bold uppercase tracking-widest text-on-surface-variant font-label">
+              A New Phase of Care
+            </span>
           </div>
-        </FadeIn>
 
-        {/* Sub-note */}
-        <FadeIn delay={460}>
-          <p className="font-body text-xs text-brand-muted2 mt-1">
-            cute enough to wear · comforting to use · a little collectible
+          <h1 className="text-6xl md:text-8xl font-black text-on-surface leading-[0.9] tracking-tighter font-headline">
+            The skin has{' '}
+            <span className="text-primary italic">phases</span>, but joy remains.
+          </h1>
+
+          <p className="text-xl text-on-surface-variant max-w-lg leading-relaxed font-body">
+            Curating comfort for your daily ritual. Discover collectible skincare that
+            treats your skin with the gentleness of a soft cloud.
           </p>
-        </FadeIn>
-      </div>
 
-      {/* Scroll indicator */}
-      <div className="absolute bottom-10 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2 opacity-40">
-        <span className="font-body text-xs tracking-widest uppercase text-brand-muted">scroll</span>
-        <div className="w-px h-10 bg-brand-muted/40 relative overflow-hidden">
-          <div className="absolute top-0 w-full h-full bg-brand-muted animate-[scrollDown_1.8s_ease-in-out_infinite]" />
+          <div className="flex flex-wrap gap-4">
+            <button className="px-10 py-5 bg-primary text-on-primary rounded-full font-bold text-lg shadow-[0_20px_40px_rgba(126,85,70,0.15)] hover:scale-105 hover:shadow-[0_25px_50px_rgba(126,85,70,0.25)] transition-all active:scale-95 border border-primary-fixed-dim/20">
+              Shop the Collection
+            </button>
+            <button className="px-10 py-5 bg-surface-container-lowest text-on-surface rounded-full font-bold text-lg hover:bg-surface-container transition-all active:scale-95">
+              Our Story
+            </button>
+          </div>
+        </div>
+
+        {/* Right column — images */}
+        <div className="relative flex justify-center items-center h-[600px]">
+          <div className="relative w-full h-full rounded-xl overflow-hidden shadow-2xl rotate-2 hover:rotate-0 transition-transform duration-700">
+            <img
+              className="w-full h-full object-cover"
+              alt="Dreamy artistic close-up of soft pink and peach skincare textures"
+              src={HERO_IMG}
+            />
+          </div>
+
+          {/* Cloud sticker */}
+          <div className="absolute -top-10 -left-10 w-40 h-40 bg-surface-container-lowest p-4 rounded-xl shadow-xl -rotate-12 hover:scale-110 transition-transform">
+            <img
+              className="w-full h-full object-cover rounded-lg"
+              alt="A small white cloud-shaped ceramic container on soft silk"
+              src={CLOUD_IMG}
+            />
+            <div className="absolute -bottom-2 -right-2 bg-primary text-on-primary text-[10px] font-bold px-2 py-1 rounded-full uppercase tracking-tighter">
+              Cloud SKU
+            </div>
+          </div>
+
+          {/* Butterfly sticker */}
+          <div className="absolute -bottom-12 right-0 w-48 h-48 bg-surface-container-lowest p-4 rounded-xl shadow-xl rotate-6 hover:scale-110 transition-transform">
+            <img
+              className="w-full h-full object-cover rounded-lg"
+              alt="Macro photography of a delicate butterfly resting on a soft pastel petal"
+              src={BUTTERFLY_IMG}
+            />
+            <div className="absolute -top-2 -left-2 bg-secondary text-on-secondary text-[10px] font-bold px-2 py-1 rounded-full uppercase tracking-tighter">
+              Butterfly Phase
+            </div>
+          </div>
         </div>
       </div>
-
-      <style>{`
-        @keyframes scrollDown {
-          0% { transform: translateY(-100%); }
-          100% { transform: translateY(200%); }
-        }
-      `}</style>
     </section>
   )
 }
