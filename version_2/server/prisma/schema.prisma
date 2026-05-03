@@ -11,3 +11,12 @@ generator client {
 datasource db {
   provider = "postgresql"
 }
+
+model EmailSubscriber {
+  id        String   @id @default(uuid())
+  email     String   @unique
+  source    String   @default("newsletter")
+  createdAt DateTime @default(now())
+
+  @@index([createdAt])
+}

@@ -4,8 +4,14 @@ import cors from '@fastify/cors'
 import rateLimit from '@fastify/rate-limit'
 import { errorHandler } from './middleware/errorHandler'
 import { productRoutes } from './routes/products'
+import { emailRoutes } from './routes/emails'
 
-export function buildApp(opts: { logger?: boolean } = {}) {
+interface AppOptions {
+  logger?: boolean
+  skipRateLimit?: boolean
+}
+
+export function buildApp(opts: AppOptions = {}) {
   const app = Fastify({
     logger: opts.logger ?? true,
     bodyLimit: 10 * 1024, // 10 KB hard limit
@@ -21,16 +27,19 @@ export function buildApp(opts: { logger?: boolean } = {}) {
     credentials: false,
   })
 
-  app.register(rateLimit, {
-    global: true,
-    max: 100,
-    timeWindow: '1 minute',
-  })
+  if (!opts.skipRateLimit) {
+    app.register(rateLimit, {
+      global: true,
+      max: 100,
+      timeWindow: '1 minute',
+    })
+  }
 
   app.setErrorHandler(errorHandler)
 
   app.get('/health', async () => ({ status: 'ok' }))
   app.register(productRoutes)
+  app.register(emailRoutes, { skipRateLimit: opts.skipRateLimit ?? false })
 
   return app
 }
