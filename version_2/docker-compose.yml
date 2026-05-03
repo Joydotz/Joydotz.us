@@ -1,0 +1,17 @@
+services:
+  db:
+    image: postgres:16
+    container_name: joydotz-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: joydotz
+      POSTGRES_PASSWORD: joydotz
+      POSTGRES_DB: joydotz
+    ports:
+      - "5433:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./docker/init.sql:/docker-entrypoint-initdb.d/init.sql
+
+volumes:
+  postgres_data:
