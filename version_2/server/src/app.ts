@@ -3,6 +3,7 @@ import helmet from '@fastify/helmet'
 import cors from '@fastify/cors'
 import rateLimit from '@fastify/rate-limit'
 import { errorHandler } from './middleware/errorHandler'
+import { productRoutes } from './routes/products'
 
 export function buildApp(opts: { logger?: boolean } = {}) {
   const app = Fastify({
@@ -29,6 +30,7 @@ export function buildApp(opts: { logger?: boolean } = {}) {
   app.setErrorHandler(errorHandler)
 
   app.get('/health', async () => ({ status: 'ok' }))
+  app.register(productRoutes)
 
   return app
 }
