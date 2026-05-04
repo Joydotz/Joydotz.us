@@ -19,9 +19,9 @@ afterAll(async () => {
 })
 
 describe('Rate limiting', () => {
-  describe('POST /api/emails — 3 requests per hour per IP', () => {
-    it('allows the first 3 requests', async () => {
-      for (let i = 0; i < 3; i++) {
+  describe('POST /api/emails — 10 requests per hour per IP', () => {
+    it('allows the first 10 requests', async () => {
+      for (let i = 0; i < 10; i++) {
         const res = await app.inject({
           method: 'POST',
           url: '/api/emails',

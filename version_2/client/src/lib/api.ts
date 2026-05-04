@@ -1,3 +1,5 @@
+// ── Types ─────────────────────────────────────────────────────────────────────
+
 export interface Product {
   id: string
   name: string
@@ -7,21 +9,129 @@ export interface Product {
   imageUrl: string
 }
 
-export async function fetchProducts(): Promise<Product[]> {
-  const res = await fetch('/api/products')
-  if (!res.ok) throw new Error('Failed to fetch products')
-  const data = await res.json()
-  return data.products as Product[]
+export interface User {
+  id: string
+  email: string
+  newsletterOptIn: boolean
+  createdAt: string
 }
 
+export interface Address {
+  id: string
+  line1: string
+  line2?: string
+  city: string
+  state: string
+  postal_code: string
+  country: string
+  isDefault: boolean
+}
+
+export type AddressInput = Omit<Address, 'id' | 'isDefault'>
+
+// ── Helpers ───────────────────────────────────────────────────────────────────
+
+async function request<T>(url: string, options?: RequestInit): Promise<T> {
+  const res = await fetch(url, {
+    ...options,
+    credentials: 'include', // always send cookies
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+  })
+  const data = await res.json().catch(() => ({}))
+  if (!res.ok) throw Object.assign(new Error(data.error ?? 'Request failed'), { status: res.status })
+  return data as T
+}
+
+// ── Products ──────────────────────────────────────────────────────────────────
+
+export async function fetchProducts(): Promise<Product[]> {
+  const data = await request<{ products: Product[] }>('/api/products')
+  return data.products
+}
+
+// ── Email subscription ────────────────────────────────────────────────────────
+
 export async function subscribeEmail(email: string): Promise<void> {
-  const res = await fetch('/api/emails', {
+  await request('/api/emails', {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ email, source: 'newsletter' }),
   })
-  if (!res.ok) {
-    const data = await res.json().catch(() => ({}))
-    throw new Error(data.error ?? 'Subscription failed')
+}
+
+// ── Auth ──────────────────────────────────────────────────────────────────────
+
+export async function signup(
+  email: string,
+  password: string,
+  newsletterOptIn: boolean,
+): Promise<User> {
+  const data = await request<{ user: User }>('/api/auth/signup', {
+    method: 'POST',
+    body: JSON.stringify({ email, password, newsletterOptIn }),
+  })
+  return data.user
+}
+
+export async function login(email: string, password: string): Promise<User> {
+  const data = await request<{ user: User }>('/api/auth/login', {
+    method: 'POST',
+    body: JSON.stringify({ email, password }),
+  })
+  return data.user
+}
+
+export async function logout(): Promise<void> {
+  await request('/api/auth/logout', { method: 'POST' })
+}
+
+export async function getMe(): Promise<User | null> {
+  try {
+    const data = await request<{ user: User }>('/api/auth/me')
+    return data.user
+  } catch {
+    return null
   }
+}
+
+// ── Account ───────────────────────────────────────────────────────────────────
+
+export async function updateNewsletter(newsletterOptIn: boolean): Promise<void> {
+  await request('/api/account', {
+    method: 'PATCH',
+    body: JSON.stringify({ newsletterOptIn }),
+  })
+}
+
+export async function fetchAddresses(): Promise<Address[]> {
+  const data = await request<{ addresses: Address[] }>('/api/account/addresses')
+  return data.addresses
+}
+
+export async function createAddress(input: AddressInput): Promise<Address> {
+  const data = await request<{ address: Address }>('/api/account/addresses', {
+    method: 'POST',
+    body: JSON.stringify(input),
+  })
+  return data.address
+}
+
+export async function updateAddress(id: string, input: Partial<AddressInput>): Promise<Address> {
+  const data = await request<{ address: Address }>(`/api/account/addresses/${id}`, {
+    method: 'PATCH',
+    body: JSON.stringify(input),
+  })
+  return data.address
+}
+
+export async function deleteAddress(id: string): Promise<void> {
+  await request(`/api/account/addresses/${id}`, { method: 'DELETE' })
+}
+
+export async function setDefaultAddress(id: string): Promise<void> {
+  await request(`/api/account/addresses/${id}/default`, { method: 'PATCH' })
+}
+
+export async function fetchOrders(): Promise<unknown[]> {
+  const data = await request<{ orders: unknown[] }>('/api/account/orders')
+  return data.orders
 }

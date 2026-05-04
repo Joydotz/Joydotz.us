@@ -1,4 +1,5 @@
 import { Link, useLocation } from 'react-router-dom'
+import { useAuth } from '../context/AuthContext'
 
 const navLinks = [
   { label: 'Home', to: '/' },
@@ -10,6 +11,7 @@ const navLinks = [
 
 export default function Nav() {
   const { pathname } = useLocation()
+  const { user } = useAuth()
 
   const isActive = (to: string) =>
     to === '/' ? pathname === '/' : pathname.startsWith(to)
@@ -44,9 +46,15 @@ export default function Nav() {
           <button className="hover:opacity-100 hover:scale-105 transition-all active:scale-95 duration-200">
             <span className="material-symbols-outlined">shopping_bag</span>
           </button>
-          <button className="hover:opacity-100 hover:scale-105 transition-all active:scale-95 duration-200">
+          <Link
+            to={user ? '/account' : '/login'}
+            className="relative hover:opacity-100 hover:scale-105 transition-all active:scale-95 duration-200"
+          >
             <span className="material-symbols-outlined">account_circle</span>
-          </button>
+            {user && (
+              <span className="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 bg-primary rounded-full border-2 border-background" />
+            )}
+          </Link>
         </div>
       </div>
     </header>

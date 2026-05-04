@@ -20,7 +20,7 @@ export async function emailRoutes(
     {
       config: opts.skipRateLimit
         ? {}
-        : { rateLimit: { max: 3, timeWindow: '1 hour' } },
+        : { rateLimit: { max: 10, timeWindow: '1 hour' } },
     },
     async (request, reply) => {
       const result = bodySchema.safeParse(request.body)

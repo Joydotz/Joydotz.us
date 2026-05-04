@@ -20,3 +20,31 @@ model EmailSubscriber {
 
   @@index([createdAt])
 }
+
+model User {
+  id              String    @id @default(uuid())
+  email           String    @unique
+  passwordHash    String
+  newsletterOptIn Boolean   @default(false)
+  createdAt       DateTime  @default(now())
+
+  addresses Address[]
+
+  @@index([email])
+}
+
+model Address {
+  id          String   @id @default(uuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  line1       String
+  line2       String?
+  city        String
+  state       String
+  postal_code String
+  country     String   @default("US")
+  isDefault   Boolean  @default(false)
+  createdAt   DateTime @default(now())
+
+  @@index([userId])
+}
