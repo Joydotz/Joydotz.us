@@ -1,26 +1,42 @@
-const navLinks = ['Home', 'Shop', 'About', 'Messages', 'FAQ']
+import { Link, useLocation } from 'react-router-dom'
+
+const navLinks = [
+  { label: 'Home', to: '/' },
+  { label: 'Shop', to: '/shop' },
+  { label: 'About', to: '/about' },
+  { label: 'Messages', to: '/messages' },
+  { label: 'FAQ', to: '/faq' },
+]
 
 export default function Nav() {
+  const { pathname } = useLocation()
+
+  const isActive = (to: string) =>
+    to === '/' ? pathname === '/' : pathname.startsWith(to)
+
   return (
     <header className="fixed top-0 w-full z-50 bg-[#fdf8f6]/80 dark:bg-[#343230]/80 backdrop-blur-xl shadow-[0_32px_64px_rgba(52,50,48,0.06)]">
       <div className="flex justify-between items-center w-full px-6 py-4 max-w-7xl mx-auto">
-        <div className="text-2xl font-black text-[#D9A694] tracking-tighter font-['Plus_Jakarta_Sans']">
+        <Link
+          to="/"
+          className="text-2xl font-black text-[#D9A694] tracking-tighter font-['Plus_Jakarta_Sans']"
+        >
           Joydotz
-        </div>
+        </Link>
 
         <nav className="hidden md:flex gap-8 items-center font-['Plus_Jakarta_Sans'] font-bold tracking-tight">
-          {navLinks.map((link, i) => (
-            <a
-              key={link}
-              href="#"
+          {navLinks.map(({ label, to }) => (
+            <Link
+              key={label}
+              to={to}
               className={
-                i === 0
+                isActive(to)
                   ? 'text-[#D9A694] border-b-2 border-[#D9A694] pb-1 hover:opacity-100 hover:scale-105 transition-all'
                   : 'text-[#343230] dark:text-[#fdf8f6] opacity-70 hover:opacity-100 hover:scale-105 transition-all'
               }
             >
-              {link}
-            </a>
+              {label}
+            </Link>
           ))}
         </nav>
 

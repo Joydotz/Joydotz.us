@@ -1,25 +1,19 @@
-import Nav from './components/Nav'
-import BottomNav from './components/BottomNav'
-import Hero from './components/sections/Hero'
-import Collection from './components/sections/Collection'
-import BentoGrid from './components/sections/BentoGrid'
-import ProductHighlight from './components/sections/ProductHighlight'
-import Newsletter from './components/sections/Newsletter'
-import Footer from './components/sections/Footer'
+import { BrowserRouter, Routes, Route } from 'react-router-dom'
+import Layout from './components/Layout'
+import Home from './pages/Home'
 
 export default function App() {
   return (
-    <div className="bg-background text-on-background selection:bg-primary-container selection:text-on-primary-container bg-grain min-h-screen">
-      <Nav />
-      <main className="pt-24">
-        <Hero />
-        <Collection />
-        <BentoGrid />
-        <ProductHighlight />
-        <Newsletter />
-      </main>
-      <Footer />
-      <BottomNav />
-    </div>
+    <BrowserRouter>
+      <Routes>
+        <Route element={<Layout />}>
+          <Route index element={<Home />} />
+          <Route path="/shop" element={<div className="px-8 py-24">Shop — coming soon</div>} />
+          <Route path="/about" element={<div className="px-8 py-24">About — coming soon</div>} />
+          <Route path="/messages" element={<div className="px-8 py-24">Messages — coming soon</div>} />
+          <Route path="/faq" element={<div className="px-8 py-24">FAQ — coming soon</div>} />
+        </Route>
+      </Routes>
+    </BrowserRouter>
   )
 }

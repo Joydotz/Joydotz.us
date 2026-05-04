@@ -1,3 +1,5 @@
+import { Link } from 'react-router-dom'
+
 const HERO_IMG = 'https://lh3.googleusercontent.com/aida-public/AB6AXuCMqnlA1yJBjcR8XqBNKREOON-7KjQhrwpSRp4oXpmtHbui30b1cPrUQ8-nGooxW9z7Zsy4gTUgI6WUxjmGFRMhslmlGUafysvh_zqDjl76SYV-RjaJy_VLFCgFqBpKqkCu6v7UCI_5YDdga444nd_96zmhqbNCyZebKIU5SeNPbU2cOx6NuZJ64V_o_aun4IU3K_mxDYQRJOK_YjvM5YED-NErwZBZXyVMnxIA430J9_KMgTSIOdVVmnYC35bwtzqaQj-NY5P2p3E'
 const CLOUD_IMG = 'https://lh3.googleusercontent.com/aida-public/AB6AXuB8xZHWL_rcw7lgxpuTaolnZjGxZ9depQBoPnezOn591Enc7h3e90ujvvi_nmYyZmhd6iRcXrBr0phTc6UiB9vss1Ts8TOhY9apcVuY9JRAz8Mdhc1kOdOjpKKbMEn4dWKqHCnYLQ91FenYuy1trZ8bJJJp1gU5NEYPR5rS1A9lUh_hQ78VgoniFEuxawK5JkDkRgwisaYhq1cK2Id8XYGyQg0Qe-rKLrNoaOD0tdHobg9iN_kNU5Zg7PoIFSDlzW9k5OLNw-DissQ'
 const BUTTERFLY_IMG = 'https://lh3.googleusercontent.com/aida-public/AB6AXuDMIJmpo15V6oP8s92l67Gsh900WsZXwvVnMAlqSmKdatf1g0vLxuPphwrD55wUm-OuamVblpbXSsR2hmZrY0s3Z59DbwFdDXTKUuf97gf6pYqx3l3S1oKPA0m5ynUKmnPqt-h9gCGbh9IJY2Yu1MksW_092k-lEh9HxsG4VuQYr5pwZwuXOjWYkMi2P_1wvtNQhsSfweSXD3e6ziQUThCu91lA9KsqchSH2rXXkaARxIPpXbNN-Bjaxtu0Z4SrK8qAnipWyy5XIIE'
@@ -30,12 +32,18 @@ export default function Hero() {
           </p>
 
           <div className="flex flex-wrap gap-4">
-            <button className="px-10 py-5 bg-primary text-on-primary rounded-full font-bold text-lg shadow-[0_20px_40px_rgba(126,85,70,0.15)] hover:scale-105 hover:shadow-[0_25px_50px_rgba(126,85,70,0.25)] transition-all active:scale-95 border border-primary-fixed-dim/20">
+            <Link
+              to="/shop"
+              className="px-10 py-5 bg-primary text-on-primary rounded-full font-bold text-lg shadow-[0_20px_40px_rgba(126,85,70,0.15)] hover:scale-105 hover:shadow-[0_25px_50px_rgba(126,85,70,0.25)] transition-all active:scale-95 border border-primary-fixed-dim/20"
+            >
               Shop the Collection
-            </button>
-            <button className="px-10 py-5 bg-surface-container-lowest text-on-surface rounded-full font-bold text-lg hover:bg-surface-container transition-all active:scale-95">
+            </Link>
+            <Link
+              to="/about"
+              className="px-10 py-5 bg-surface-container-lowest text-on-surface rounded-full font-bold text-lg hover:bg-surface-container transition-all active:scale-95"
+            >
               Our Story
-            </button>
+            </Link>
           </div>
         </div>
 
