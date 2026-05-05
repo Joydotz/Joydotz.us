@@ -10,7 +10,7 @@ let app: FastifyInstance
 
 beforeAll(async () => {
   // Rate limiting ON — this is what tests the defense
-  app = buildApp({ logger: false, skipRateLimit: false })
+  app = buildApp({ logger: false, skipRateLimit: false, skipCsrf: true })
   await app.ready()
 })
 

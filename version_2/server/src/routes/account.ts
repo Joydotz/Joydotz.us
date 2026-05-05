@@ -23,9 +23,16 @@ const addressSchema = z.object({
   country: z.string().trim().length(2).regex(/^[A-Za-z]{2}$/, 'Country must be a 2-letter code').default('US'),
 })
 
-export async function accountRoutes(app: FastifyInstance) {
-  // All account routes require authentication
+interface AccountRouteOptions {
+  skipCsrf?: boolean
+}
+
+export async function accountRoutes(app: FastifyInstance, opts: AccountRouteOptions = {}) {
+  // All account routes require authentication and CSRF verification
   app.addHook('preHandler', authenticate)
+  if (!opts.skipCsrf) {
+    app.addHook('preHandler', app.csrfProtection as any) // type mismatch between @fastify/csrf-protection v6 and Fastify v4 hook overloads
+  }
 
   // ── POST /api/account/news — toggle newsletter opt-in ──────────────────────
 

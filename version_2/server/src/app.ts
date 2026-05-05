@@ -4,6 +4,7 @@ import cors from '@fastify/cors'
 import rateLimit from '@fastify/rate-limit'
 import cookie from '@fastify/cookie'
 import jwt from '@fastify/jwt'
+import csrf from '@fastify/csrf-protection'
 import { errorHandler } from './middleware/errorHandler.js'
 import { productRoutes } from './routes/products.js'
 import { emailRoutes } from './routes/emails.js'
@@ -13,6 +14,7 @@ import { accountRoutes } from './routes/account.js'
 interface AppOptions {
   logger?: boolean
   skipRateLimit?: boolean
+  skipCsrf?: boolean
 }
 
 export function buildApp(opts: AppOptions = {}) {
@@ -27,7 +29,7 @@ export function buildApp(opts: AppOptions = {}) {
   app.register(cors, {
     origin: process.env.FRONTEND_ORIGIN ?? false,
     methods: ['GET', 'POST', 'PATCH', 'DELETE'],
-    allowedHeaders: ['Content-Type'],
+    allowedHeaders: ['Content-Type', 'x-csrf-token'],
     credentials: true, // required for cookies
   })
 
@@ -38,6 +40,16 @@ export function buildApp(opts: AppOptions = {}) {
     cookie: {
       cookieName: 'token',
       signed: false,
+    },
+  })
+
+  app.register(csrf, {
+    sessionPlugin: '@fastify/cookie',
+    cookieOpts: {
+      httpOnly: true,
+      sameSite: 'strict',
+      secure: process.env.NODE_ENV === 'production',
+      path: '/',
     },
   })
 
@@ -52,10 +64,17 @@ export function buildApp(opts: AppOptions = {}) {
   app.setErrorHandler(errorHandler)
 
   app.get('/health', async () => ({ status: 'ok' }))
+
+  // ── GET /api/csrf-token — fetch a CSRF token on app load ──────────────────
+  app.get('/api/csrf-token', async (_request, reply) => {
+    const token = await reply.generateCsrf()
+    return { token }
+  })
+
   app.register(productRoutes)
-  app.register(emailRoutes, { skipRateLimit: opts.skipRateLimit ?? false })
-  app.register(authRoutes)
-  app.register(accountRoutes)
+  app.register(emailRoutes, { skipRateLimit: opts.skipRateLimit ?? false, skipCsrf: opts.skipCsrf ?? false })
+  app.register(authRoutes, { skipCsrf: opts.skipCsrf ?? false })
+  app.register(accountRoutes, { skipCsrf: opts.skipCsrf ?? false })
 
   return app
 }

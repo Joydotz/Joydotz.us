@@ -1,4 +1,4 @@
-import { FastifyInstance } from 'fastify'
+import { FastifyInstance, FastifyReply } from 'fastify'
 import { z } from 'zod'
 import { signupUser, loginUser, getUserById } from '../services/authService.js'
 import { authenticate } from '../middleware/authenticate.js'
@@ -18,7 +18,7 @@ const loginSchema = z.object({
 
 const COOKIE_NAME = 'token'
 
-function setCookie(reply: ReturnType<FastifyInstance['route']>, token: string) {
+function setCookie(reply: FastifyReply, token: string) {
   // Session cookie: no maxAge = expires when browser closes
   reply.setCookie(COOKIE_NAME, token, {
     httpOnly: true,
@@ -28,7 +28,15 @@ function setCookie(reply: ReturnType<FastifyInstance['route']>, token: string) {
   })
 }
 
-export async function authRoutes(app: FastifyInstance) {
+interface AuthRouteOptions {
+  skipCsrf?: boolean
+}
+
+export async function authRoutes(app: FastifyInstance, opts: AuthRouteOptions = {}) {
+  if (!opts.skipCsrf) {
+    app.addHook('preHandler', app.csrfProtection as any) // type mismatch between @fastify/csrf-protection v6 and Fastify v4 hook overloads
+  }
+
   app.post('/api/auth/signup', {
     config: { rateLimit: { max: 10, timeWindow: '1 hour' } },
   }, async (request, reply) => {

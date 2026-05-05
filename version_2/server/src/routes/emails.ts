@@ -10,12 +10,17 @@ const bodySchema = z.object({
 
 interface EmailRouteOptions {
   skipRateLimit?: boolean
+  skipCsrf?: boolean
 }
 
 export async function emailRoutes(
   app: FastifyInstance,
   opts: EmailRouteOptions,
 ) {
+  if (!opts.skipCsrf) {
+    app.addHook('preHandler', app.csrfProtection as any) // type mismatch between @fastify/csrf-protection v6 and Fastify v4 hook overloads
+  }
+
   app.post(
     '/api/emails',
     {

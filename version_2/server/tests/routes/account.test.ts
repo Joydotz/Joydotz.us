@@ -92,7 +92,7 @@ let app: FastifyInstance
 let sessionCookie: string
 
 beforeAll(async () => {
-  app = buildApp({ logger: false, skipRateLimit: true })
+  app = buildApp({ logger: false, skipRateLimit: true, skipCsrf: true })
   await app.ready()
 
   // Obtain a real JWT cookie once — reused for all authenticated tests

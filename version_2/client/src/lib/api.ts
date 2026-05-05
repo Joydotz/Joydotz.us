@@ -31,12 +31,30 @@ export type AddressInput = Omit<Address, 'id' | 'isDefault'>
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
+let csrfToken: string | null = null
+
+async function getCsrfToken(): Promise<string> {
+  if (csrfToken) return csrfToken
+  const data = await request<{ token: string }>('/api/csrf-token')
+  csrfToken = data.token
+  return csrfToken
+}
+
+const STATE_CHANGING_METHODS = new Set(['POST', 'DELETE', 'PATCH', 'PUT'])
+
 async function request<T>(url: string, options?: RequestInit): Promise<T> {
+  const method = (options?.method ?? 'GET').toUpperCase()
+  const needsCsrf = STATE_CHANGING_METHODS.has(method)
+
+  // Fetch CSRF token lazily — skip for the token endpoint itself to avoid infinite recursion
+  const token = needsCsrf && url !== '/api/csrf-token' ? await getCsrfToken() : null
+
   const res = await fetch(url, {
     ...options,
     credentials: 'include', // always send cookies
     headers: {
       ...(options?.body !== undefined ? { 'Content-Type': 'application/json' } : {}),
+      ...(token ? { 'x-csrf-token': token } : {}),
       ...options?.headers,
     },
   })

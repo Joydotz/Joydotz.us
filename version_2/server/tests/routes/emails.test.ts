@@ -14,7 +14,7 @@ const mockSaveEmail = vi.mocked(saveEmail)
 let app: FastifyInstance
 
 beforeAll(async () => {
-  app = buildApp({ logger: false, skipRateLimit: true })
+  app = buildApp({ logger: false, skipRateLimit: true, skipCsrf: true })
   await app.ready()
 })
 

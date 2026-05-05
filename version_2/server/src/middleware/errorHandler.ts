@@ -16,6 +16,11 @@ export function errorHandler(
     return
   }
 
+  if (error.statusCode === 403) {
+    reply.status(403).send({ error: 'Forbidden' })
+    return
+  }
+
   if (error.statusCode === 429) {
     reply.status(429).send({ error: 'Too many requests' })
     return
