@@ -71,7 +71,7 @@ async function getSessionCookie(): Promise<string> {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// POST /api/auth/signup
+// POST /api/auth/signup — register a new user account
 // ─────────────────────────────────────────────────────────────────────────────
 
 describe('POST /api/auth/signup', () => {
@@ -240,10 +240,105 @@ describe('POST /api/auth/signup', () => {
       expect(res.statusCode).toBe(500)
     })
   })
+
+  describe('malformed / malicious payloads', () => {
+    it('returns 400 when email contains a null byte', async () => {
+      const res = await app.inject({
+        method: 'POST',
+        url: '/api/auth/signup',
+        payload: { email: 'test\x00@example.com', password: 'password123' },
+      })
+      expect(res.statusCode).toBe(400)
+    })
+
+    it('returns 400 when email contains a CRLF sequence', async () => {
+      const res = await app.inject({
+        method: 'POST',
+        url: '/api/auth/signup',
+        payload: { email: 'test\r\n@example.com', password: 'password123' },
+      })
+      expect(res.statusCode).toBe(400)
+    })
+
+    it('returns 400 when password contains a null byte', async () => {
+      const res = await app.inject({
+        method: 'POST',
+        url: '/api/auth/signup',
+        payload: { email: 'test@example.com', password: 'password\x00123' },
+      })
+      expect(res.statusCode).toBe(400)
+    })
+
+    it('returns 400 when password contains a CRLF sequence', async () => {
+      const res = await app.inject({
+        method: 'POST',
+        url: '/api/auth/signup',
+        payload: { email: 'test@example.com', password: 'password\r\n123' },
+      })
+      expect(res.statusCode).toBe(400)
+    })
+
+    it('returns 400 when email is not a string', async () => {
+      const res = await app.inject({
+        method: 'POST',
+        url: '/api/auth/signup',
+        payload: { email: 12345, password: 'password123' },
+      })
+      expect(res.statusCode).toBe(400)
+    })
+
+    it('returns 400 when password is not a string', async () => {
+      const res = await app.inject({
+        method: 'POST',
+        url: '/api/auth/signup',
+        payload: { email: 'test@example.com', password: ['p', 'a', 's', 's'] },
+      })
+      expect(res.statusCode).toBe(400)
+    })
+
+    it('returns 400 when newsletterOptIn is a string instead of boolean', async () => {
+      const res = await app.inject({
+        method: 'POST',
+        url: '/api/auth/signup',
+        payload: { email: 'test@example.com', password: 'password123', newsletterOptIn: 'true' },
+      })
+      expect(res.statusCode).toBe(400)
+    })
+
+    it('returns 400 when newsletterOptIn is a number instead of boolean', async () => {
+      const res = await app.inject({
+        method: 'POST',
+        url: '/api/auth/signup',
+        payload: { email: 'test@example.com', password: 'password123', newsletterOptIn: 1 },
+      })
+      expect(res.statusCode).toBe(400)
+    })
+
+    it('strips unknown fields and still creates the account', async () => {
+      // Attacker injects a role or admin flag — Zod strips it before it reaches the service
+      mockSignup.mockResolvedValueOnce(MOCK_USER)
+
+      const res = await app.inject({
+        method: 'POST',
+        url: '/api/auth/signup',
+        payload: { email: 'test@example.com', password: 'password123', role: 'admin', isAdmin: true },
+      })
+
+      expect(res.statusCode).toBe(201)
+      expect(mockSignup).toHaveBeenCalledWith(
+        'test@example.com',
+        'password123',
+        expect.any(Boolean),
+      )
+      // Service must not receive the injected fields
+      const [, , thirdArg, ...rest] = mockSignup.mock.calls[0]
+      expect(rest).toHaveLength(0)
+    })
+  })
 })
 
 // ─────────────────────────────────────────────────────────────────────────────
-// POST /api/auth/login
+// POST /api/auth/login — authenticate and receive a session cookie
 // ─────────────────────────────────────────────────────────────────────────────
 
 describe('POST /api/auth/login', () => {
@@ -381,10 +476,89 @@ describe('POST /api/auth/login', () => {
       expect(res.statusCode).toBe(500)
     })
   })
+
+  describe('malformed / malicious payloads', () => {
+    it('returns 400 when email contains a null byte', async () => {
+      const res = await app.inject({
+        method: 'POST',
+        url: '/api/auth/login',
+        payload: { email: 'test\x00@example.com', password: 'password123' },
+      })
+      expect(res.statusCode).toBe(400)
+    })
+
+    it('returns 400 when email contains a CRLF sequence', async () => {
+      const res = await app.inject({
+        method: 'POST',
+        url: '/api/auth/login',
+        payload: { email: 'test\r\n@example.com', password: 'password123' },
+      })
+      expect(res.statusCode).toBe(400)
+    })
+
+    it('returns 400 when password contains a null byte', async () => {
+      const res = await app.inject({
+        method: 'POST',
+        url: '/api/auth/login',
+        payload: { email: 'test@example.com', password: 'password\x00123' },
+      })
+      expect(res.statusCode).toBe(400)
+    })
+
+    it('returns 400 when password contains a CRLF sequence', async () => {
+      const res = await app.inject({
+        method: 'POST',
+        url: '/api/auth/login',
+        payload: { email: 'test@example.com', password: 'password\r\n123' },
+      })
+      expect(res.statusCode).toBe(400)
+    })
+
+    it('returns 400 when password exceeds 1000 characters (DoS guard)', async () => {
+      // No max on login password currently — a huge bcrypt payload would block the event loop
+      const res = await app.inject({
+        method: 'POST',
+        url: '/api/auth/login',
+        payload: { email: 'test@example.com', password: 'a'.repeat(1001) },
+      })
+      expect(res.statusCode).toBe(400)
+    })
+
+    it('returns 400 when email is not a string', async () => {
+      const res = await app.inject({
+        method: 'POST',
+        url: '/api/auth/login',
+        payload: { email: 99999, password: 'password123' },
+      })
+      expect(res.statusCode).toBe(400)
+    })
+
+    it('returns 400 when password is not a string', async () => {
+      const res = await app.inject({
+        method: 'POST',
+        url: '/api/auth/login',
+        payload: { email: 'test@example.com', password: { value: 'password123' } },
+      })
+      expect(res.statusCode).toBe(400)
+    })
+
+    it('strips unknown fields and still attempts login', async () => {
+      mockLogin.mockResolvedValueOnce(MOCK_USER)
+
+      const res = await app.inject({
+        method: 'POST',
+        url: '/api/auth/login',
+        payload: { email: 'test@example.com', password: 'password123', role: 'admin' },
+      })
+
+      expect(res.statusCode).toBe(200)
+      expect(mockLogin).toHaveBeenCalledWith('test@example.com', 'password123')
+    })
+  })
 })
 
 // ─────────────────────────────────────────────────────────────────────────────
-// POST /api/auth/logout
+// POST /api/auth/logout — clear the session cookie
 // ─────────────────────────────────────────────────────────────────────────────
 
 describe('POST /api/auth/logout', () => {
@@ -412,7 +586,7 @@ describe('POST /api/auth/logout', () => {
 })
 
 // ─────────────────────────────────────────────────────────────────────────────
-// GET /api/auth/me
+// GET /api/auth/me — return the currently authenticated user
 // ─────────────────────────────────────────────────────────────────────────────
 
 describe('GET /api/auth/me', () => {
@@ -495,7 +669,7 @@ describe('GET /api/auth/me', () => {
 })
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Rate limiting — separate app instance with rate limiting ON
+// Rate limiting on auth routes — POST /api/auth/login blocks after 10 failed attempts
 // ─────────────────────────────────────────────────────────────────────────────
 
 describe('Rate limiting on auth routes', () => {

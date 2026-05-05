@@ -35,7 +35,10 @@ async function request<T>(url: string, options?: RequestInit): Promise<T> {
   const res = await fetch(url, {
     ...options,
     credentials: 'include', // always send cookies
-    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    headers: {
+      ...(options?.body !== undefined ? { 'Content-Type': 'application/json' } : {}),
+      ...options?.headers,
+    },
   })
   const data = await res.json().catch(() => ({}))
   if (!res.ok) throw Object.assign(new Error(data.error ?? 'Request failed'), { status: res.status })
@@ -96,8 +99,8 @@ export async function getMe(): Promise<User | null> {
 // ── Account ───────────────────────────────────────────────────────────────────
 
 export async function updateNewsletter(newsletterOptIn: boolean): Promise<void> {
-  await request('/api/account', {
-    method: 'PATCH',
+  await request('/api/account/news', {
+    method: 'POST',
     body: JSON.stringify({ newsletterOptIn }),
   })
 }
@@ -117,7 +120,7 @@ export async function createAddress(input: AddressInput): Promise<Address> {
 
 export async function updateAddress(id: string, input: Partial<AddressInput>): Promise<Address> {
   const data = await request<{ address: Address }>(`/api/account/addresses/${id}`, {
-    method: 'PATCH',
+    method: 'POST',
     body: JSON.stringify(input),
   })
   return data.address
@@ -128,7 +131,7 @@ export async function deleteAddress(id: string): Promise<void> {
 }
 
 export async function setDefaultAddress(id: string): Promise<void> {
-  await request(`/api/account/addresses/${id}/default`, { method: 'PATCH' })
+  await request(`/api/account/addresses/${id}/default`, { method: 'POST' })
 }
 
 export async function fetchOrders(): Promise<unknown[]> {

@@ -142,6 +142,7 @@ export default function Account() {
   const [orders, setOrders] = useState<unknown[]>([])
   const [showAddForm, setShowAddForm] = useState(false)
   const [editingId, setEditingId] = useState<string | null>(null)
+  const [deletingId, setDeletingId] = useState<string | null>(null)
   const [newsletterOptIn, setNewsletterOptIn] = useState(user?.newsletterOptIn ?? false)
   const [newsletterSaving, setNewsletterSaving] = useState(false)
 
@@ -185,8 +186,15 @@ export default function Account() {
   }
 
   async function handleDeleteAddress(id: string) {
-    await deleteAddress(id)
-    setAddresses((prev) => prev.filter((a) => a.id !== id))
+    setDeletingId(id)
+    try {
+      await deleteAddress(id)
+      setAddresses((prev) => prev.filter((a) => a.id !== id))
+    } catch {
+      // silent — button re-enables, user can retry
+    } finally {
+      setDeletingId(null)
+    }
   }
 
   async function handleSetDefault(id: string) {
@@ -269,7 +277,7 @@ export default function Account() {
             <div className="space-y-4">
               {addresses.map((addr) =>
                 editingId === addr.id ? (
-                  <div key={addr.id} className="border border-outline-variant/20 rounded-xl p-4">
+                  <div key={addr.id} className="border border-outline-variant/50 rounded-xl p-4">
                     <AddressForm
                       initial={addr}
                       onSave={(input) => handleUpdateAddress(addr.id, input)}
@@ -279,7 +287,7 @@ export default function Account() {
                 ) : (
                   <div
                     key={addr.id}
-                    className="border border-outline-variant/20 rounded-xl p-4 space-y-2"
+                    className="border border-outline-variant/50 rounded-xl p-4 space-y-2"
                   >
                     <div className="flex items-start justify-between gap-2">
                       <div className="text-sm font-body text-on-surface leading-relaxed">
@@ -298,22 +306,23 @@ export default function Account() {
                       {!addr.isDefault && (
                         <button
                           onClick={() => handleSetDefault(addr.id)}
-                          className="text-xs font-bold text-on-surface-variant hover:text-primary transition-colors"
+                          className="text-xs font-bold px-3 py-1 rounded-full bg-primary-container text-on-primary-container hover:opacity-80 transition-all"
                         >
                           set default
                         </button>
                       )}
                       <button
                         onClick={() => setEditingId(addr.id)}
-                        className="text-xs font-bold text-on-surface-variant hover:text-primary transition-colors"
+                        className="text-xs font-bold px-3 py-1 rounded-full bg-primary-container text-on-primary-container hover:opacity-80 transition-all"
                       >
                         edit
                       </button>
                       <button
                         onClick={() => handleDeleteAddress(addr.id)}
-                        className="text-xs font-bold text-on-surface-variant hover:text-error transition-colors"
+                        disabled={deletingId === addr.id}
+                        className="text-xs font-bold px-3 py-1 rounded-full bg-primary-container text-on-primary-container hover:opacity-80 transition-all disabled:opacity-40"
                       >
-                        delete
+                        {deletingId === addr.id ? 'deleting…' : 'delete'}
                       </button>
                     </div>
                   </div>
@@ -325,7 +334,7 @@ export default function Account() {
               )}
 
               {showAddForm && (
-                <div className="border border-outline-variant/20 rounded-xl p-4">
+                <div className="border border-outline-variant/50 rounded-xl p-4">
                   <AddressForm
                     onSave={handleCreateAddress}
                     onCancel={() => setShowAddForm(false)}
@@ -351,7 +360,7 @@ export default function Account() {
                     disabled={newsletterSaving}
                     className="sr-only peer"
                   />
-                  <div className="w-10 h-6 bg-surface-container rounded-full peer-checked:bg-primary transition-colors peer-disabled:opacity-50" />
+                  <div className="w-10 h-6 bg-outline-variant/50 rounded-full peer-checked:bg-primary transition-colors peer-disabled:opacity-50" />
                   <div className="absolute top-1 left-1 w-4 h-4 bg-white rounded-full shadow transition-transform peer-checked:translate-x-4" />
                 </div>
               </label>

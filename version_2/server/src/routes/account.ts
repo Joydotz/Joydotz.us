@@ -10,23 +10,26 @@ import {
   setDefaultAddress,
   getOrders,
 } from '../services/accountService.js'
+import { safeAddr } from '../lib/validation.js'
 
 const addressSchema = z.object({
-  line1: z.string().min(1).max(255),
-  line2: z.string().max(255).optional(),
-  city: z.string().min(1).max(100),
-  state: z.string().min(1).max(100),
-  postal_code: z.string().min(1).max(20),
-  country: z.string().length(2).default('US'),
+  line1: safeAddr(z.string().trim().min(1).max(255)),
+  line2: safeAddr(z.string().trim().max(255)).optional(),
+  city: safeAddr(z.string().trim().min(1).max(100)),
+  state: safeAddr(z.string().trim().min(1).max(100)),
+  // alphanumeric, spaces, and hyphens only — covers US ZIP, UK, CA, AU formats
+  postal_code: z.string().trim().min(1).max(20).regex(/^[A-Za-z0-9 \-]+$/, 'Invalid postal code'),
+  // exactly 2 alpha characters — ISO 3166-1 alpha-2
+  country: z.string().trim().length(2).regex(/^[A-Za-z]{2}$/, 'Country must be a 2-letter code').default('US'),
 })
 
 export async function accountRoutes(app: FastifyInstance) {
   // All account routes require authentication
   app.addHook('preHandler', authenticate)
 
-  // ── Newsletter ──────────────────────────────────────────────────────────────
+  // ── POST /api/account/news — toggle newsletter opt-in ──────────────────────
 
-  app.patch('/api/account', async (request, reply) => {
+  app.post('/api/account/news', async (request, reply) => {
     const { sub } = request.user as { sub: string }
 
     const result = z.object({ newsletterOptIn: z.boolean() }).safeParse(request.body)
@@ -38,13 +41,15 @@ export async function accountRoutes(app: FastifyInstance) {
     return reply.send({ success: true })
   })
 
-  // ── Addresses ───────────────────────────────────────────────────────────────
+  // ── GET /api/account/addresses — list all addresses for the logged-in user ──
 
   app.get('/api/account/addresses', async (request, reply) => {
     const { sub } = request.user as { sub: string }
     const addresses = await getAddresses(sub)
     return reply.send({ addresses })
   })
+
+  // ── POST /api/account/addresses — create a new address ─────────────────────
 
   app.post('/api/account/addresses', async (request, reply) => {
     const { sub } = request.user as { sub: string }
@@ -58,7 +63,9 @@ export async function accountRoutes(app: FastifyInstance) {
     return reply.status(201).send({ address })
   })
 
-  app.patch('/api/account/addresses/:id', async (request, reply) => {
+  // ── POST /api/account/addresses/:id — update fields on an existing address ──
+
+  app.post('/api/account/addresses/:id', async (request, reply) => {
     const { sub } = request.user as { sub: string }
     const { id } = request.params as { id: string }
 
@@ -76,6 +83,8 @@ export async function accountRoutes(app: FastifyInstance) {
     }
   })
 
+  // ── DELETE /api/account/addresses/:id — remove an address ──────────────────
+
   app.delete('/api/account/addresses/:id', async (request, reply) => {
     const { sub } = request.user as { sub: string }
     const { id } = request.params as { id: string }
@@ -89,7 +98,9 @@ export async function accountRoutes(app: FastifyInstance) {
     }
   })
 
-  app.patch('/api/account/addresses/:id/default', async (request, reply) => {
+  // ── POST /api/account/addresses/:id/default — set an address as default ────
+
+  app.post('/api/account/addresses/:id/default', async (request, reply) => {
     const { sub } = request.user as { sub: string }
     const { id } = request.params as { id: string }
 
@@ -102,7 +113,7 @@ export async function accountRoutes(app: FastifyInstance) {
     }
   })
 
-  // ── Orders ──────────────────────────────────────────────────────────────────
+  // ── GET /api/account/orders — list past orders for the logged-in user ───────
 
   app.get('/api/account/orders', async (request, reply) => {
     const { sub } = request.user as { sub: string }

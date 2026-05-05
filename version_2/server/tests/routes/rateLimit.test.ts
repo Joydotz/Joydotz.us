@@ -18,6 +18,10 @@ afterAll(async () => {
   await app.close()
 })
 
+// ─────────────────────────────────────────────────────────────────────────────
+// Rate limiting — per-route and global request caps enforced by @fastify/rate-limit
+// ─────────────────────────────────────────────────────────────────────────────
+
 describe('Rate limiting', () => {
   describe('POST /api/emails — 10 requests per hour per IP', () => {
     it('allows the first 10 requests', async () => {

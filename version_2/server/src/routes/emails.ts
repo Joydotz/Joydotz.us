@@ -1,9 +1,10 @@
 import { FastifyInstance } from 'fastify'
 import { z } from 'zod'
 import { saveEmail } from '../services/emailService'
+import { safe } from '../lib/validation.js'
 
 const bodySchema = z.object({
-  email: z.string().email().max(255),
+  email: safe(z.string().email().max(255)),
   source: z.enum(['newsletter', 'checkout']).default('newsletter'),
 })
 

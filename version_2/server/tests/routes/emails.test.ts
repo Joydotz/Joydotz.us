@@ -27,12 +27,17 @@ beforeEach(() => {
   mockSaveEmail.mockResolvedValue({ created: true })
 })
 
+// ─────────────────────────────────────────────────────────────────────────────
+// POST /api/emails — subscribe an email address to the newsletter
+// ─────────────────────────────────────────────────────────────────────────────
+
 describe('POST /api/emails', () => {
   it('returns 200 for a valid email', async () => {
+    // Frontend always sends source: 'newsletter' via subscribeEmail()
     const res = await app.inject({
       method: 'POST',
       url: '/api/emails',
-      payload: { email: 'hello@example.com' },
+      payload: { email: 'hello@example.com', source: 'newsletter' },
     })
 
     expect(res.statusCode).toBe(200)
@@ -50,6 +55,8 @@ describe('POST /api/emails', () => {
   })
 
   it('defaults source to newsletter when not provided', async () => {
+    // Tests the schema default — source is always sent by the frontend but the
+    // default ensures other callers (e.g. checkout) don't break without it
     await app.inject({
       method: 'POST',
       url: '/api/emails',
@@ -122,5 +129,54 @@ describe('POST /api/emails', () => {
     })
 
     expect(res.statusCode).toBe(500)
+  })
+
+  describe('malformed / malicious payloads', () => {
+    it('returns 400 when email contains a null byte', async () => {
+      const res = await app.inject({
+        method: 'POST',
+        url: '/api/emails',
+        payload: { email: 'hello\x00@example.com' },
+      })
+      expect(res.statusCode).toBe(400)
+    })
+
+    it('returns 400 when email contains a CRLF sequence', async () => {
+      const res = await app.inject({
+        method: 'POST',
+        url: '/api/emails',
+        payload: { email: 'hello\r\n@example.com' },
+      })
+      expect(res.statusCode).toBe(400)
+    })
+
+    it('returns 400 when email is not a string', async () => {
+      const res = await app.inject({
+        method: 'POST',
+        url: '/api/emails',
+        payload: { email: 12345 },
+      })
+      expect(res.statusCode).toBe(400)
+    })
+
+    it('returns 400 when source is not a string', async () => {
+      const res = await app.inject({
+        method: 'POST',
+        url: '/api/emails',
+        payload: { email: 'hello@example.com', source: 42 },
+      })
+      expect(res.statusCode).toBe(400)
+    })
+
+    it('strips unknown fields and still saves the email', async () => {
+      const res = await app.inject({
+        method: 'POST',
+        url: '/api/emails',
+        payload: { email: 'hello@example.com', source: 'newsletter', injected: '<script>alert(1)</script>' },
+      })
+
+      expect(res.statusCode).toBe(200)
+      expect(mockSaveEmail).toHaveBeenCalledWith('hello@example.com', 'newsletter')
+    })
   })
 })

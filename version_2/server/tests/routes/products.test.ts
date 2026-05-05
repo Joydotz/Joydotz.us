@@ -14,6 +14,10 @@ afterAll(async () => {
   await app.close()
 })
 
+// ─────────────────────────────────────────────────────────────────────────────
+// GET /api/products — return all available product SKUs
+// ─────────────────────────────────────────────────────────────────────────────
+
 describe('GET /api/products', () => {
   it('returns 200', async () => {
     const res = await app.inject({ method: 'GET', url: '/api/products' })

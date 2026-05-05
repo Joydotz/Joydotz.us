@@ -75,8 +75,11 @@ const MOCK_ADDRESS = {
   createdAt: new Date('2026-01-01'),
 }
 
+// Mirrors EMPTY_ADDRESS in client/src/pages/Account.tsx exactly —
+// the frontend always serialises line2 as '' even when left blank.
 const VALID_ADDRESS_PAYLOAD = {
   line1: '123 Joy Street',
+  line2: '',
   city: 'Los Angeles',
   state: 'CA',
   postal_code: '90001',
@@ -112,17 +115,17 @@ beforeEach(() => {
 })
 
 // ─────────────────────────────────────────────────────────────────────────────
-// PATCH /api/account — newsletter opt-in toggle
+// POST /api/account/news — newsletter opt-in toggle
 // ─────────────────────────────────────────────────────────────────────────────
 
-describe('PATCH /api/account', () => {
+describe('POST /api/account/news', () => {
   describe('authenticated', () => {
     it('returns 200 when opting in to the newsletter', async () => {
       mockSetNewsletter.mockResolvedValueOnce(undefined)
 
       const res = await app.inject({
-        method: 'PATCH',
-        url: '/api/account',
+        method: 'POST',
+        url: '/api/account/news',
         headers: { cookie: sessionCookie },
         payload: { newsletterOptIn: true },
       })
@@ -135,8 +138,8 @@ describe('PATCH /api/account', () => {
       mockSetNewsletter.mockResolvedValueOnce(undefined)
 
       await app.inject({
-        method: 'PATCH',
-        url: '/api/account',
+        method: 'POST',
+        url: '/api/account/news',
         headers: { cookie: sessionCookie },
         payload: { newsletterOptIn: true },
       })
@@ -148,8 +151,8 @@ describe('PATCH /api/account', () => {
       mockSetNewsletter.mockResolvedValueOnce(undefined)
 
       const res = await app.inject({
-        method: 'PATCH',
-        url: '/api/account',
+        method: 'POST',
+        url: '/api/account/news',
         headers: { cookie: sessionCookie },
         payload: { newsletterOptIn: false },
       })
@@ -159,8 +162,8 @@ describe('PATCH /api/account', () => {
 
     it('returns 400 when newsletterOptIn is not a boolean', async () => {
       const res = await app.inject({
-        method: 'PATCH',
-        url: '/api/account',
+        method: 'POST',
+        url: '/api/account/news',
         headers: { cookie: sessionCookie },
         payload: { newsletterOptIn: 'yes' },
       })
@@ -170,8 +173,8 @@ describe('PATCH /api/account', () => {
 
     it('returns 400 when the body is empty', async () => {
       const res = await app.inject({
-        method: 'PATCH',
-        url: '/api/account',
+        method: 'POST',
+        url: '/api/account/news',
         headers: { cookie: sessionCookie },
         payload: {},
       })
@@ -183,8 +186,8 @@ describe('PATCH /api/account', () => {
       mockSetNewsletter.mockRejectedValueOnce(new Error('DB is down'))
 
       const res = await app.inject({
-        method: 'PATCH',
-        url: '/api/account',
+        method: 'POST',
+        url: '/api/account/news',
         headers: { cookie: sessionCookie },
         payload: { newsletterOptIn: true },
       })
@@ -196,8 +199,8 @@ describe('PATCH /api/account', () => {
   describe('unauthenticated', () => {
     it('returns 401 with no cookie', async () => {
       const res = await app.inject({
-        method: 'PATCH',
-        url: '/api/account',
+        method: 'POST',
+        url: '/api/account/news',
         payload: { newsletterOptIn: true },
       })
       expect(res.statusCode).toBe(401)
@@ -206,7 +209,7 @@ describe('PATCH /api/account', () => {
 })
 
 // ─────────────────────────────────────────────────────────────────────────────
-// GET /api/account/addresses
+// GET /api/account/addresses — list all addresses for the logged-in user
 // ─────────────────────────────────────────────────────────────────────────────
 
 describe('GET /api/account/addresses', () => {
@@ -272,7 +275,7 @@ describe('GET /api/account/addresses', () => {
 })
 
 // ─────────────────────────────────────────────────────────────────────────────
-// POST /api/account/addresses
+// POST /api/account/addresses — create a new address
 // ─────────────────────────────────────────────────────────────────────────────
 
 describe('POST /api/account/addresses', () => {
@@ -319,6 +322,7 @@ describe('POST /api/account/addresses', () => {
 
       expect(res.statusCode).toBe(201)
     })
+
 
     it('returns 400 when line1 is missing', async () => {
       const { line1: _removed, ...without } = VALID_ADDRESS_PAYLOAD
@@ -371,6 +375,139 @@ describe('POST /api/account/addresses', () => {
     })
   })
 
+  describe('malformed / malicious payloads', () => {
+    it('returns 400 when line1 is whitespace only', async () => {
+      const res = await app.inject({
+        method: 'POST',
+        url: '/api/account/addresses',
+        headers: { cookie: sessionCookie },
+        payload: { ...VALID_ADDRESS_PAYLOAD, line1: '   ' },
+      })
+      expect(res.statusCode).toBe(400)
+    })
+
+    it('returns 400 when line1 exceeds 255 characters', async () => {
+      const res = await app.inject({
+        method: 'POST',
+        url: '/api/account/addresses',
+        headers: { cookie: sessionCookie },
+        payload: { ...VALID_ADDRESS_PAYLOAD, line1: 'A'.repeat(256) },
+      })
+      expect(res.statusCode).toBe(400)
+    })
+
+    it('returns 400 when line2 exceeds 255 characters', async () => {
+      const res = await app.inject({
+        method: 'POST',
+        url: '/api/account/addresses',
+        headers: { cookie: sessionCookie },
+        payload: { ...VALID_ADDRESS_PAYLOAD, line2: 'B'.repeat(256) },
+      })
+      expect(res.statusCode).toBe(400)
+    })
+
+    it('returns 400 when city is whitespace only', async () => {
+      const res = await app.inject({
+        method: 'POST',
+        url: '/api/account/addresses',
+        headers: { cookie: sessionCookie },
+        payload: { ...VALID_ADDRESS_PAYLOAD, city: '   ' },
+      })
+      expect(res.statusCode).toBe(400)
+    })
+
+    it('returns 400 when postal_code contains special characters', async () => {
+      const res = await app.inject({
+        method: 'POST',
+        url: '/api/account/addresses',
+        headers: { cookie: sessionCookie },
+        payload: { ...VALID_ADDRESS_PAYLOAD, postal_code: '<script>alert(1)</script>' },
+      })
+      expect(res.statusCode).toBe(400)
+    })
+
+
+    it('returns 400 when country code contains digits', async () => {
+      const res = await app.inject({
+        method: 'POST',
+        url: '/api/account/addresses',
+        headers: { cookie: sessionCookie },
+        payload: { ...VALID_ADDRESS_PAYLOAD, country: '12' },
+      })
+      expect(res.statusCode).toBe(400)
+    })
+
+    it('returns 400 when line1 contains a null byte', async () => {
+      const res = await app.inject({
+        method: 'POST',
+        url: '/api/account/addresses',
+        headers: { cookie: sessionCookie },
+        payload: { ...VALID_ADDRESS_PAYLOAD, line1: '123 Main\x00St' },
+      })
+      expect(res.statusCode).toBe(400)
+    })
+
+    it('returns 400 when line1 contains a CRLF sequence', async () => {
+      const res = await app.inject({
+        method: 'POST',
+        url: '/api/account/addresses',
+        headers: { cookie: sessionCookie },
+        payload: { ...VALID_ADDRESS_PAYLOAD, line1: '123 Main\r\nSt' },
+      })
+      expect(res.statusCode).toBe(400)
+    })
+
+    it('returns 400 when line1 contains HTML tags', async () => {
+      const res = await app.inject({
+        method: 'POST',
+        url: '/api/account/addresses',
+        headers: { cookie: sessionCookie },
+        payload: { ...VALID_ADDRESS_PAYLOAD, line1: '<script>alert(1)</script>' },
+      })
+      expect(res.statusCode).toBe(400)
+    })
+
+    it('returns 400 when line1 contains object injection characters', async () => {
+      const res = await app.inject({
+        method: 'POST',
+        url: '/api/account/addresses',
+        headers: { cookie: sessionCookie },
+        payload: { ...VALID_ADDRESS_PAYLOAD, line1: '{"$gt":""}' },
+      })
+      expect(res.statusCode).toBe(400)
+    })
+
+    it('returns 400 when line1 is not a string', async () => {
+      const res = await app.inject({
+        method: 'POST',
+        url: '/api/account/addresses',
+        headers: { cookie: sessionCookie },
+        payload: { ...VALID_ADDRESS_PAYLOAD, line1: 12345 },
+      })
+      expect(res.statusCode).toBe(400)
+    })
+
+    it('strips unknown fields and still creates the address', async () => {
+      // Attacker attempts to inject a userId override — Zod strips unknown fields,
+      // so the address is created under the authenticated user's ID, not the injected one.
+      mockCreateAddress.mockResolvedValueOnce(MOCK_ADDRESS)
+
+      const res = await app.inject({
+        method: 'POST',
+        url: '/api/account/addresses',
+        headers: { cookie: sessionCookie },
+        payload: { ...VALID_ADDRESS_PAYLOAD, userId: 'attacker-id', isDefault: true },
+      })
+
+      expect(res.statusCode).toBe(201)
+      // Service must be called with the real authenticated userId, not the injected one
+      expect(mockCreateAddress).toHaveBeenCalledWith(
+        MOCK_USER.id,
+        expect.not.objectContaining({ userId: 'attacker-id' }),
+      )
+    })
+  })
+
   describe('unauthenticated', () => {
     it('returns 401 with no cookie', async () => {
       const res = await app.inject({
@@ -384,19 +521,20 @@ describe('POST /api/account/addresses', () => {
 })
 
 // ─────────────────────────────────────────────────────────────────────────────
-// PATCH /api/account/addresses/:id
+// POST /api/account/addresses/:id — update fields on an existing address
 // ─────────────────────────────────────────────────────────────────────────────
 
-describe('PATCH /api/account/addresses/:id', () => {
+describe('POST /api/account/addresses/:id', () => {
   describe('authenticated', () => {
     it('returns 200 and the updated address', async () => {
+      // Frontend sends the full form state, not a partial patch
       mockUpdateAddress.mockResolvedValueOnce({ ...MOCK_ADDRESS, city: 'San Francisco' })
 
       const res = await app.inject({
-        method: 'PATCH',
+        method: 'POST',
         url: `/api/account/addresses/${MOCK_ADDRESS.id}`,
         headers: { cookie: sessionCookie },
-        payload: { city: 'San Francisco' },
+        payload: { ...VALID_ADDRESS_PAYLOAD, city: 'San Francisco' },
       })
 
       expect(res.statusCode).toBe(200)
@@ -407,10 +545,10 @@ describe('PATCH /api/account/addresses/:id', () => {
       mockUpdateAddress.mockResolvedValueOnce(MOCK_ADDRESS)
 
       await app.inject({
-        method: 'PATCH',
+        method: 'POST',
         url: `/api/account/addresses/${MOCK_ADDRESS.id}`,
         headers: { cookie: sessionCookie },
-        payload: { city: 'San Francisco' },
+        payload: { ...VALID_ADDRESS_PAYLOAD, city: 'San Francisco' },
       })
 
       expect(mockUpdateAddress).toHaveBeenCalledWith(
@@ -426,10 +564,10 @@ describe('PATCH /api/account/addresses/:id', () => {
       )
 
       const res = await app.inject({
-        method: 'PATCH',
+        method: 'POST',
         url: '/api/account/addresses/other-users-address-id',
         headers: { cookie: sessionCookie },
-        payload: { city: 'San Francisco' },
+        payload: { ...VALID_ADDRESS_PAYLOAD, city: 'San Francisco' },
       })
 
       expect(res.statusCode).toBe(404)
@@ -437,20 +575,121 @@ describe('PATCH /api/account/addresses/:id', () => {
 
     it('returns 400 for an invalid country code', async () => {
       const res = await app.inject({
-        method: 'PATCH',
+        method: 'POST',
         url: `/api/account/addresses/${MOCK_ADDRESS.id}`,
         headers: { cookie: sessionCookie },
-        payload: { country: 'INVALID' },
+        payload: { ...VALID_ADDRESS_PAYLOAD, country: 'INVALID' },
       })
 
       expect(res.statusCode).toBe(400)
     })
   })
 
+  describe('malformed / malicious payloads', () => {
+    it('returns 400 when updating city to whitespace only', async () => {
+      const res = await app.inject({
+        method: 'POST',
+        url: `/api/account/addresses/${MOCK_ADDRESS.id}`,
+        headers: { cookie: sessionCookie },
+        payload: { city: '   ' },
+      })
+      expect(res.statusCode).toBe(400)
+    })
+
+    it('returns 400 when postal_code contains special characters', async () => {
+      const res = await app.inject({
+        method: 'POST',
+        url: `/api/account/addresses/${MOCK_ADDRESS.id}`,
+        headers: { cookie: sessionCookie },
+        payload: { postal_code: '!!!<bad>' },
+      })
+      expect(res.statusCode).toBe(400)
+    })
+
+
+    it('returns 400 when country code contains digits', async () => {
+      const res = await app.inject({
+        method: 'POST',
+        url: `/api/account/addresses/${MOCK_ADDRESS.id}`,
+        headers: { cookie: sessionCookie },
+        payload: { country: '42' },
+      })
+      expect(res.statusCode).toBe(400)
+    })
+
+    it('returns 400 when city contains a null byte', async () => {
+      const res = await app.inject({
+        method: 'POST',
+        url: `/api/account/addresses/${MOCK_ADDRESS.id}`,
+        headers: { cookie: sessionCookie },
+        payload: { city: 'Los\x00Angeles' },
+      })
+      expect(res.statusCode).toBe(400)
+    })
+
+    it('returns 400 when city contains a CRLF sequence', async () => {
+      const res = await app.inject({
+        method: 'POST',
+        url: `/api/account/addresses/${MOCK_ADDRESS.id}`,
+        headers: { cookie: sessionCookie },
+        payload: { city: 'Los\r\nAngeles' },
+      })
+      expect(res.statusCode).toBe(400)
+    })
+
+    it('returns 400 when city contains HTML tags', async () => {
+      const res = await app.inject({
+        method: 'POST',
+        url: `/api/account/addresses/${MOCK_ADDRESS.id}`,
+        headers: { cookie: sessionCookie },
+        payload: { city: '<img src=x onerror=alert(1)>' },
+      })
+      expect(res.statusCode).toBe(400)
+    })
+
+    it('returns 400 when city contains object injection characters', async () => {
+      const res = await app.inject({
+        method: 'POST',
+        url: `/api/account/addresses/${MOCK_ADDRESS.id}`,
+        headers: { cookie: sessionCookie },
+        payload: { city: '{"$gt":""}' },
+      })
+      expect(res.statusCode).toBe(400)
+    })
+
+    it('returns 400 when city is not a string', async () => {
+      const res = await app.inject({
+        method: 'POST',
+        url: `/api/account/addresses/${MOCK_ADDRESS.id}`,
+        headers: { cookie: sessionCookie },
+        payload: { city: ['Los', 'Angeles'] },
+      })
+      expect(res.statusCode).toBe(400)
+    })
+
+    it('strips unknown fields and still updates the address', async () => {
+      mockUpdateAddress.mockResolvedValueOnce(MOCK_ADDRESS)
+
+      const res = await app.inject({
+        method: 'POST',
+        url: `/api/account/addresses/${MOCK_ADDRESS.id}`,
+        headers: { cookie: sessionCookie },
+        payload: { city: 'San Francisco', userId: 'attacker-id' },
+      })
+
+      expect(res.statusCode).toBe(200)
+      expect(mockUpdateAddress).toHaveBeenCalledWith(
+        MOCK_USER.id,
+        MOCK_ADDRESS.id,
+        expect.not.objectContaining({ userId: 'attacker-id' }),
+      )
+    })
+  })
+
   describe('unauthenticated', () => {
     it('returns 401 with no cookie', async () => {
       const res = await app.inject({
-        method: 'PATCH',
+        method: 'POST',
         url: `/api/account/addresses/${MOCK_ADDRESS.id}`,
         payload: { city: 'San Francisco' },
       })
@@ -460,7 +699,7 @@ describe('PATCH /api/account/addresses/:id', () => {
 })
 
 // ─────────────────────────────────────────────────────────────────────────────
-// DELETE /api/account/addresses/:id
+// DELETE /api/account/addresses/:id — remove an address
 // ─────────────────────────────────────────────────────────────────────────────
 
 describe('DELETE /api/account/addresses/:id', () => {
@@ -529,16 +768,16 @@ describe('DELETE /api/account/addresses/:id', () => {
 })
 
 // ─────────────────────────────────────────────────────────────────────────────
-// PATCH /api/account/addresses/:id/default
+// POST /api/account/addresses/:id/default — set an address as default
 // ─────────────────────────────────────────────────────────────────────────────
 
-describe('PATCH /api/account/addresses/:id/default', () => {
+describe('POST /api/account/addresses/:id/default', () => {
   describe('authenticated', () => {
     it('returns 200 on success', async () => {
       mockSetDefault.mockResolvedValueOnce(undefined)
 
       const res = await app.inject({
-        method: 'PATCH',
+        method: 'POST',
         url: `/api/account/addresses/${MOCK_ADDRESS.id}/default`,
         headers: { cookie: sessionCookie },
       })
@@ -551,7 +790,7 @@ describe('PATCH /api/account/addresses/:id/default', () => {
       mockSetDefault.mockResolvedValueOnce(undefined)
 
       await app.inject({
-        method: 'PATCH',
+        method: 'POST',
         url: `/api/account/addresses/${MOCK_ADDRESS.id}/default`,
         headers: { cookie: sessionCookie },
       })
@@ -565,7 +804,7 @@ describe('PATCH /api/account/addresses/:id/default', () => {
       )
 
       const res = await app.inject({
-        method: 'PATCH',
+        method: 'POST',
         url: '/api/account/addresses/other-users-address-id/default',
         headers: { cookie: sessionCookie },
       })
@@ -577,7 +816,7 @@ describe('PATCH /api/account/addresses/:id/default', () => {
   describe('unauthenticated', () => {
     it('returns 401 with no cookie', async () => {
       const res = await app.inject({
-        method: 'PATCH',
+        method: 'POST',
         url: `/api/account/addresses/${MOCK_ADDRESS.id}/default`,
       })
       expect(res.statusCode).toBe(401)
@@ -586,7 +825,7 @@ describe('PATCH /api/account/addresses/:id/default', () => {
 })
 
 // ─────────────────────────────────────────────────────────────────────────────
-// GET /api/account/orders
+// GET /api/account/orders — list past orders for the logged-in user
 // ─────────────────────────────────────────────────────────────────────────────
 
 describe('GET /api/account/orders', () => {

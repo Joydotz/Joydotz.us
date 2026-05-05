@@ -52,6 +52,9 @@ export async function signupUser(
       update: {},
       create: { email: normalizedEmail, source: 'signup' },
     })
+  } else {
+    // User explicitly opted out at signup — remove any prior newsletter subscription
+    await prisma.emailSubscriber.deleteMany({ where: { email: normalizedEmail } })
   }
 
   return toPublicUser(user)

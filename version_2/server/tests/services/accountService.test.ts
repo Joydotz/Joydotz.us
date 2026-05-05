@@ -129,7 +129,7 @@ beforeEach(() => {
 })
 
 // ─────────────────────────────────────────────────────────────────────────────
-// setNewsletterOptIn
+// setNewsletterOptIn — sync User.newsletterOptIn and EmailSubscriber table
 // ─────────────────────────────────────────────────────────────────────────────
 
 describe('setNewsletterOptIn', () => {
@@ -217,7 +217,7 @@ describe('setNewsletterOptIn', () => {
 })
 
 // ─────────────────────────────────────────────────────────────────────────────
-// getAddresses
+// getAddresses — list all addresses for a user, default address first
 // ─────────────────────────────────────────────────────────────────────────────
 
 describe('getAddresses', () => {
@@ -257,7 +257,7 @@ describe('getAddresses', () => {
 })
 
 // ─────────────────────────────────────────────────────────────────────────────
-// createAddress
+// createAddress — insert a new address, auto-set default if first
 // ─────────────────────────────────────────────────────────────────────────────
 
 describe('createAddress', () => {
@@ -304,7 +304,7 @@ describe('createAddress', () => {
 })
 
 // ─────────────────────────────────────────────────────────────────────────────
-// updateAddress
+// updateAddress — edit address fields, verify ownership first
 // ─────────────────────────────────────────────────────────────────────────────
 
 describe('updateAddress', () => {
@@ -348,7 +348,7 @@ describe('updateAddress', () => {
 })
 
 // ─────────────────────────────────────────────────────────────────────────────
-// deleteAddress
+// deleteAddress — remove an address, promote next to default if needed
 // ─────────────────────────────────────────────────────────────────────────────
 
 describe('deleteAddress', () => {
@@ -431,7 +431,7 @@ describe('deleteAddress', () => {
 })
 
 // ─────────────────────────────────────────────────────────────────────────────
-// setDefaultAddress
+// setDefaultAddress — unset all, then set chosen address as default
 // ─────────────────────────────────────────────────────────────────────────────
 
 describe('setDefaultAddress', () => {
@@ -486,7 +486,7 @@ describe('setDefaultAddress', () => {
 })
 
 // ─────────────────────────────────────────────────────────────────────────────
-// getOrders
+// getOrders — placeholder returning empty array until Stripe is implemented
 // ─────────────────────────────────────────────────────────────────────────────
 
 describe('getOrders', () => {

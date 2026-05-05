@@ -2,16 +2,18 @@ import { FastifyInstance } from 'fastify'
 import { z } from 'zod'
 import { signupUser, loginUser, getUserById } from '../services/authService.js'
 import { authenticate } from '../middleware/authenticate.js'
+import { safe } from '../lib/validation.js'
 
 const signupSchema = z.object({
-  email: z.string().email().max(255),
-  password: z.string().min(8).max(72),
+  email: safe(z.string().email().max(255)),
+  password: safe(z.string().min(8).max(72)),
   newsletterOptIn: z.boolean().default(false),
 })
 
 const loginSchema = z.object({
-  email: z.string().email().max(255),
-  password: z.string().min(1),
+  email: safe(z.string().email().max(255)),
+  // max(72) matches bcrypt's input limit and guards against DoS via huge payloads
+  password: safe(z.string().min(1).max(72)),
 })
 
 const COOKIE_NAME = 'token'

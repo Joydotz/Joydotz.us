@@ -21,6 +21,7 @@ vi.mock('../../src/db/client', () => ({
     },
     emailSubscriber: {
       upsert: vi.fn(),
+      deleteMany: vi.fn(),
     },
   },
 }))
@@ -41,6 +42,7 @@ import { signupUser, loginUser, getUserById } from '../../src/services/authServi
 const mockFindUnique = vi.mocked(prisma.user.findUnique)
 const mockCreate = vi.mocked(prisma.user.create)
 const mockUpsert = vi.mocked(prisma.emailSubscriber.upsert)
+const mockDeleteMany = vi.mocked(prisma.emailSubscriber.deleteMany)
 const mockHash = vi.mocked(bcrypt.hash)
 const mockCompare = vi.mocked(bcrypt.compare)
 
@@ -72,7 +74,7 @@ beforeEach(() => {
 })
 
 // ─────────────────────────────────────────────────────────────────────────────
-// signupUser
+// signupUser — hash password, create user, strip passwordHash from return value
 // ─────────────────────────────────────────────────────────────────────────────
 
 describe('signupUser', () => {
@@ -152,14 +154,28 @@ describe('signupUser', () => {
       )
     })
 
-    it('does not create an EmailSubscriber when newsletterOptIn is false', async () => {
+    it('does not upsert an EmailSubscriber when newsletterOptIn is false', async () => {
       mockFindUnique.mockResolvedValueOnce(null)
       mockHash.mockResolvedValueOnce(DB_USER.passwordHash as never)
       mockCreate.mockResolvedValueOnce(DB_USER as never)
+      mockDeleteMany.mockResolvedValueOnce({ count: 0 } as never)
 
       await signupUser('test@example.com', 'password123', false)
 
       expect(mockUpsert).not.toHaveBeenCalled()
+    })
+
+    it('deletes any prior EmailSubscriber when newsletterOptIn is false', async () => {
+      // Scenario: user previously subscribed via the landing page, then signs up
+      // with the checkbox unchecked — their prior subscription must be removed.
+      mockFindUnique.mockResolvedValueOnce(null)
+      mockHash.mockResolvedValueOnce(DB_USER.passwordHash as never)
+      mockCreate.mockResolvedValueOnce(DB_USER as never)
+      mockDeleteMany.mockResolvedValueOnce({ count: 1 } as never)
+
+      await signupUser('test@example.com', 'password123', false)
+
+      expect(mockDeleteMany).toHaveBeenCalledWith({ where: { email: 'test@example.com' } })
     })
   })
 
@@ -197,7 +213,7 @@ describe('signupUser', () => {
 })
 
 // ─────────────────────────────────────────────────────────────────────────────
-// loginUser
+// loginUser — verify credentials, return public user or throw INVALID_CREDENTIALS
 // ─────────────────────────────────────────────────────────────────────────────
 
 describe('loginUser', () => {
@@ -292,7 +308,7 @@ describe('loginUser', () => {
 })
 
 // ─────────────────────────────────────────────────────────────────────────────
-// getUserById
+// getUserById — fetch a user by id, strip passwordHash from return value
 // ─────────────────────────────────────────────────────────────────────────────
 
 describe('getUserById', () => {

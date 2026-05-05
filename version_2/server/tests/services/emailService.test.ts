@@ -19,6 +19,10 @@ beforeEach(() => {
   vi.clearAllMocks()
 })
 
+// ─────────────────────────────────────────────────────────────────────────────
+// saveEmail — normalise email, insert subscriber row, return created flag
+// ─────────────────────────────────────────────────────────────────────────────
+
 describe('saveEmail', () => {
   it('creates a new subscriber and returns created: true', async () => {
     mockCreate.mockResolvedValueOnce({
