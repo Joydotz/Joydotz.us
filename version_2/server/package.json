@@ -11,7 +11,8 @@
     "test:coverage": "vitest run --coverage",
     "db:generate": "prisma generate",
     "db:migrate:dev": "prisma migrate dev",
-    "db:migrate:deploy": "prisma migrate deploy"
+    "db:migrate:deploy": "prisma migrate deploy",
+    "db:migrate:test": "USE_TEST_DB=1 prisma migrate deploy"
   },
   "dependencies": {
     "@fastify/cookie": "^9.4.0",
@@ -25,6 +26,7 @@
     "bcrypt": "^6.0.0",
     "dotenv": "^17.4.2",
     "fastify": "^4.28.1",
+    "kafkajs": "^2.2.4",
     "pg": "^8.20.0",
     "stripe": "^16.2.0",
     "zod": "^3.23.8"

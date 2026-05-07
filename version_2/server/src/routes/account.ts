@@ -8,8 +8,8 @@ import {
   updateAddress,
   deleteAddress,
   setDefaultAddress,
-  getOrders,
 } from '../services/accountService.js'
+import { getOrdersByUser, getOrderById } from '../services/orderService.js'
 import { safeAddr } from '../lib/validation.js'
 
 const addressSchema = z.object({
@@ -120,11 +120,21 @@ export async function accountRoutes(app: FastifyInstance, opts: AccountRouteOpti
     }
   })
 
-  // ── GET /api/account/orders — list past orders for the logged-in user ───────
+  // ── GET /api/account/orders — list all orders for the logged-in user ─────────
 
   app.get('/api/account/orders', async (request, reply) => {
     const { sub } = request.user as { sub: string }
-    const orders = await getOrders(sub)
+    const orders = await getOrdersByUser(sub)
     return reply.send({ orders })
+  })
+
+  // ── GET /api/account/orders/:id — get a single order by ID ───────────────────
+
+  app.get('/api/account/orders/:id', async (request, reply) => {
+    const { sub } = request.user as { sub: string }
+    const { id } = request.params as { id: string }
+    const order = await getOrderById(id, sub)
+    if (!order) return reply.status(404).send({ error: 'Order not found' })
+    return reply.send({ order })
   })
 }

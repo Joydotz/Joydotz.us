@@ -40,7 +40,6 @@ import {
   updateAddress,
   deleteAddress,
   setDefaultAddress,
-  getOrders,
 } from '../../src/services/accountService'
 
 const mockUserUpdate = vi.mocked(prisma.user.update)
@@ -485,13 +484,3 @@ describe('setDefaultAddress', () => {
   })
 })
 
-// ─────────────────────────────────────────────────────────────────────────────
-// getOrders — placeholder returning empty array until Stripe is implemented
-// ─────────────────────────────────────────────────────────────────────────────
-
-describe('getOrders', () => {
-  it('returns an empty array (placeholder until Stripe is implemented)', async () => {
-    const result = await getOrders(USER_ID)
-    expect(result).toEqual([])
-  })
-})

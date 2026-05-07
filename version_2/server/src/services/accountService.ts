@@ -100,9 +100,3 @@ export async function setDefaultAddress(userId: string, addressId: string) {
   await prisma.address.update({ where: { id: addressId }, data: { isDefault: true } })
 }
 
-// ── Orders ────────────────────────────────────────────────────────────────────
-
-export async function getOrders(_userId: string) {
-  // Placeholder — will be populated when Stripe is implemented
-  return []
-}

@@ -10,11 +10,15 @@ import { productRoutes } from './routes/products.js'
 import { emailRoutes } from './routes/emails.js'
 import { authRoutes } from './routes/auth.js'
 import { accountRoutes } from './routes/account.js'
+import { checkoutRoutes } from './routes/checkout.js'
+import { EventBus } from './events/EventBus.js'
+import { MockEventBus } from './events/MockEventBus.js'
 
 interface AppOptions {
   logger?: boolean
   skipRateLimit?: boolean
   skipCsrf?: boolean
+  eventBus?: EventBus
 }
 
 export function buildApp(opts: AppOptions = {}) {
@@ -71,10 +75,13 @@ export function buildApp(opts: AppOptions = {}) {
     return { token }
   })
 
+  const eventBus = opts.eventBus ?? new MockEventBus()
+
   app.register(productRoutes)
   app.register(emailRoutes, { skipRateLimit: opts.skipRateLimit ?? false, skipCsrf: opts.skipCsrf ?? false })
   app.register(authRoutes, { skipCsrf: opts.skipCsrf ?? false })
   app.register(accountRoutes, { skipCsrf: opts.skipCsrf ?? false })
+  app.register(checkoutRoutes, { skipCsrf: opts.skipCsrf ?? false, eventBus })
 
   return app
 }

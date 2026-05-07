@@ -30,7 +30,16 @@ vi.mock('../../src/services/accountService', () => ({
   updateAddress: vi.fn(),
   deleteAddress: vi.fn(),
   setDefaultAddress: vi.fn(),
-  getOrders: vi.fn(),
+}))
+
+vi.mock('../../src/services/orderService', () => ({
+  getOrdersByUser: vi.fn(),
+  getOrderById: vi.fn(),
+  createOrder: vi.fn(),
+  getOrderByStripeSessionId: vi.fn(),
+  updateOrderStatus: vi.fn(),
+  shipOrder: vi.fn(),
+  markDelivered: vi.fn(),
 }))
 
 import { loginUser } from '../../src/services/authService'
@@ -41,8 +50,8 @@ import {
   updateAddress,
   deleteAddress,
   setDefaultAddress,
-  getOrders,
 } from '../../src/services/accountService'
+import { getOrdersByUser } from '../../src/services/orderService'
 
 const mockLogin = vi.mocked(loginUser)
 const mockSetNewsletter = vi.mocked(setNewsletterOptIn)
@@ -51,7 +60,7 @@ const mockCreateAddress = vi.mocked(createAddress)
 const mockUpdateAddress = vi.mocked(updateAddress)
 const mockDeleteAddress = vi.mocked(deleteAddress)
 const mockSetDefault = vi.mocked(setDefaultAddress)
-const mockGetOrders = vi.mocked(getOrders)
+const mockGetOrders = vi.mocked(getOrdersByUser)
 
 // ── Fixtures ──────────────────────────────────────────────────────────────────
 

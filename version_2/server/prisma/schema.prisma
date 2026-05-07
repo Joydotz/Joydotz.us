@@ -29,6 +29,7 @@ model User {
   createdAt       DateTime  @default(now())
 
   addresses Address[]
+  orders    Order[]
 
   @@index([email])
 }
@@ -46,5 +47,51 @@ model Address {
   isDefault   Boolean  @default(false)
   createdAt   DateTime @default(now())
 
+  orders Order[]
+
   @@index([userId])
 }
+
+enum OrderStatus {
+  PENDING    // payment initiated
+  PAID       // payment confirmed — awaiting shipment
+  SHIPPED    // handed to carrier
+  DELIVERED  // confirmed delivered
+  FAILED     // payment failed
+  CANCELLED  // cancelled before shipment
+  REFUNDED   // refunded after payment
+}
+
+model Order {
+  id              String      @id @default(uuid())
+  userId          String
+  user            User        @relation(fields: [userId], references: [id])
+  addressId       String
+  address         Address     @relation(fields: [addressId], references: [id], onDelete: Restrict)
+  status          OrderStatus @default(PENDING)
+  stripeSessionId String      @unique
+  total           Int         // cents
+  createdAt       DateTime    @default(now())
+
+  trackingNumber String?
+  shippedAt      DateTime?
+  deliveredAt    DateTime?
+
+  items OrderItem[]
+
+  @@index([userId])
+}
+
+model OrderItem {
+  id              String  @id @default(uuid())
+  orderId         String
+  order           Order   @relation(fields: [orderId], references: [id])
+  productId       String  // matches id in products.ts
+  name            String  // snapshot at purchase time
+  priceAtPurchase Int     // cents — snapshot at purchase time
+  quantity        Int
+  imageUrl        String?
+
+  @@index([orderId])
+}
+
