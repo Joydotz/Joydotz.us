@@ -26,6 +26,7 @@ import { describe, it, expect, vi, beforeAll, afterAll, beforeEach } from 'vites
 import { FastifyInstance } from 'fastify'
 import { buildApp } from '../../src/app'
 import { MockEventBus } from '../../src/events/MockEventBus'
+import { PRODUCTS } from '../../src/data/products'
 
 // ── Mocks ─────────────────────────────────────────────────────────────────────
 
@@ -47,10 +48,13 @@ vi.mock('../../src/services/accountService', () => ({
 
 vi.mock('../../src/services/orderService', () => ({
   createOrder: vi.fn(),
+  getRecentPendingOrdersByUser: vi.fn(),
   getOrdersByUser: vi.fn(),
   getOrderById: vi.fn(),
+  getOrderByIdForWebhook: vi.fn(),
   getOrderByStripeSessionId: vi.fn(),
   updateOrderStatus: vi.fn(),
+  updateOrderStripeSessionId: vi.fn(),
   shipOrder: vi.fn(),
   markDelivered: vi.fn(),
 }))
@@ -62,13 +66,15 @@ vi.mock('../../src/services/stripeService', () => ({
 
 import { loginUser } from '../../src/services/authService'
 import { getAddresses } from '../../src/services/accountService'
-import { createOrder } from '../../src/services/orderService'
+import { createOrder, getRecentPendingOrdersByUser, updateOrderStripeSessionId } from '../../src/services/orderService'
 import { createCheckoutSession } from '../../src/services/stripeService'
 
 const mockLogin = vi.mocked(loginUser)
 const mockGetAddresses = vi.mocked(getAddresses)
 const mockCreateOrder = vi.mocked(createOrder)
+const mockGetRecentPendingOrdersByUser = vi.mocked(getRecentPendingOrdersByUser)
 const mockCreateCheckoutSession = vi.mocked(createCheckoutSession)
+const mockUpdateOrderStripeSessionId = vi.mocked(updateOrderStripeSessionId)
 
 // ── Fixtures ──────────────────────────────────────────────────────────────────
 
@@ -146,6 +152,7 @@ afterAll(async () => {
 
 beforeEach(() => {
   vi.clearAllMocks()
+  mockGetRecentPendingOrdersByUser.mockResolvedValue([])
   eventBus.clear()
 })
 
@@ -388,6 +395,7 @@ describe('happy path', () => {
     expect(res.statusCode).toBe(200)
     expect(res.json().url).toBe('https://checkout.stripe.com/c/pay/cs_test_abc123')
     expect(res.json().orderId).toBe('order-001')
+    expect(mockUpdateOrderStripeSessionId).toHaveBeenCalledWith('order-001', 'cs_test_abc123')
   })
 
   it('creates a PENDING order before creating the Stripe session', async () => {
@@ -447,9 +455,79 @@ describe('happy path', () => {
     })
 
     const stripeCall = mockCreateCheckoutSession.mock.calls[0][0]
+    const butterflyPriceId = PRODUCTS.find((p) => p.id === 'softwing-butterfly')!.stripePriceId
     expect(stripeCall.lineItems).toEqual([
-      { stripePriceId: 'price_placeholder_butterfly', quantity: 1 },
+      { stripePriceId: butterflyPriceId, quantity: 1 },
     ])
+  })
+})
+
+describe('duplicate checkout guard', () => {
+  it('reuses an equivalent pending order instead of creating a new one', async () => {
+    const existingPendingOrder = {
+      ...MOCK_ORDER,
+      id: 'order-existing-001',
+      addressId: MOCK_ADDRESS.id,
+      status: 'PENDING',
+      total: 2200,
+      items: [{ productId: 'softwing-butterfly', quantity: 1 }],
+    }
+
+    mockGetAddresses.mockResolvedValueOnce([MOCK_ADDRESS] as any)
+    mockGetRecentPendingOrdersByUser.mockResolvedValueOnce([existingPendingOrder] as any)
+    mockCreateCheckoutSession.mockResolvedValueOnce({
+      sessionId: 'cs_test_reused_123',
+      url: 'https://checkout.stripe.com/c/pay/cs_test_reused_123',
+    })
+
+    const res = await app.inject({
+      method: 'POST',
+      url: '/api/checkout/create-session',
+      headers: { cookie: sessionCookie },
+      payload: VALID_PAYLOAD,
+    })
+
+    expect(res.statusCode).toBe(200)
+    expect(mockCreateOrder).not.toHaveBeenCalled()
+    expect(mockCreateCheckoutSession).toHaveBeenCalledWith(
+      expect.objectContaining({
+        metadata: expect.objectContaining({ orderId: 'order-existing-001' }),
+      }),
+    )
+    expect(res.json().orderId).toBe('order-existing-001')
+  })
+
+  it('creates a new order when cart differs from existing pending order', async () => {
+    const existingPendingOrder = {
+      ...MOCK_ORDER,
+      id: 'order-existing-002',
+      addressId: MOCK_ADDRESS.id,
+      status: 'PENDING',
+      total: 2200,
+      items: [{ productId: 'softwing-butterfly', quantity: 1 }],
+    }
+
+    mockGetAddresses.mockResolvedValueOnce([MOCK_ADDRESS] as any)
+    mockGetRecentPendingOrdersByUser.mockResolvedValueOnce([existingPendingOrder] as any)
+    mockCreateOrder.mockResolvedValueOnce(MOCK_ORDER as any)
+    mockCreateCheckoutSession.mockResolvedValueOnce({
+      sessionId: 'cs_test_new_123',
+      url: 'https://checkout.stripe.com/c/pay/cs_test_new_123',
+    })
+
+    const res = await app.inject({
+      method: 'POST',
+      url: '/api/checkout/create-session',
+      headers: { cookie: sessionCookie },
+      payload: {
+        addressId: MOCK_ADDRESS.id,
+        items: [{ productId: 'softwing-butterfly', quantity: 2 }],
+      },
+    })
+
+    expect(res.statusCode).toBe(200)
+    expect(mockCreateOrder).toHaveBeenCalledTimes(1)
+    expect(res.json().orderId).toBe('order-001')
   })
 })
 
@@ -475,5 +553,6 @@ describe('Stripe errors', () => {
     })
 
     expect(res.statusCode).toBe(500)
+    expect(mockUpdateOrderStripeSessionId).not.toHaveBeenCalled()
   })
 })

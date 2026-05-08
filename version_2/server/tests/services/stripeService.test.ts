@@ -8,8 +8,9 @@
  * Covered:
  *   createCheckoutSession — happy path returns sessionId and url; passes
  *                           correct mode, line items, urls, and metadata to
- *                           Stripe; throws on API errors; throws when Stripe
- *                           returns a null url; handles empty line items
+ *                           Stripe; uses idempotency keyed by orderId; throws
+ *                           on API errors; throws when Stripe returns a null
+ *                           url; handles empty line items
  *
  *   constructWebhookEvent — happy path returns parsed Stripe event; throws
  *                           on invalid signature; throws on tampered payload;
@@ -119,6 +120,7 @@ describe('createCheckoutSession', () => {
 
     expect(mockSessionCreate).toHaveBeenCalledWith(
       expect.objectContaining({ mode: 'payment' }),
+      expect.any(Object),
     )
   })
 
@@ -134,6 +136,7 @@ describe('createCheckoutSession', () => {
           { price: 'price_placeholder_cloud', quantity: 2 },
         ],
       }),
+      expect.any(Object),
     )
   })
 
@@ -147,6 +150,7 @@ describe('createCheckoutSession', () => {
         success_url: VALID_INPUT.successUrl,
         cancel_url: VALID_INPUT.cancelUrl,
       }),
+      expect.any(Object),
     )
   })
 
@@ -161,6 +165,36 @@ describe('createCheckoutSession', () => {
           orderId: '550e8400-e29b-41d4-a716-446655440001',
           userId: '550e8400-e29b-41d4-a716-446655440002',
         },
+      }),
+      expect.any(Object),
+    )
+  })
+
+  it('uses a Stripe idempotency key derived from orderId by default', async () => {
+    mockSessionCreate.mockResolvedValue(STRIPE_SESSION)
+
+    await createCheckoutSession(VALID_INPUT)
+
+    expect(mockSessionCreate).toHaveBeenCalledWith(
+      expect.any(Object),
+      expect.objectContaining({
+        idempotencyKey: 'checkout_session_550e8400-e29b-41d4-a716-446655440001',
+      }),
+    )
+  })
+
+  it('uses an explicit idempotency key override when provided', async () => {
+    mockSessionCreate.mockResolvedValue(STRIPE_SESSION)
+
+    await createCheckoutSession({
+      ...VALID_INPUT,
+      idempotencyKey: 'custom-idempotency-key',
+    })
+
+    expect(mockSessionCreate).toHaveBeenCalledWith(
+      expect.any(Object),
+      expect.objectContaining({
+        idempotencyKey: 'custom-idempotency-key',
       }),
     )
   })

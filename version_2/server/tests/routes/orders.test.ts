@@ -40,10 +40,13 @@ vi.mock('../../src/services/accountService', () => ({
 
 vi.mock('../../src/services/orderService', () => ({
   createOrder: vi.fn(),
+  getRecentPendingOrdersByUser: vi.fn(),
   getOrdersByUser: vi.fn(),
   getOrderById: vi.fn(),
+  getOrderByIdForWebhook: vi.fn(),
   getOrderByStripeSessionId: vi.fn(),
   updateOrderStatus: vi.fn(),
+  updateOrderStripeSessionId: vi.fn(),
   shipOrder: vi.fn(),
   markDelivered: vi.fn(),
 }))

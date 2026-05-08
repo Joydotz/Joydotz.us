@@ -13,8 +13,14 @@
  *                          returns empty array when the user has no orders
  *   getOrderById         — scopes lookup to the requesting user so one user
  *                          cannot read another user's order; returns null on miss
+ *   getOrderByIdForWebhook — unscoped lookup by order ID for trusted Stripe
+ *                          webhook events; includes user email for event payloads
  *   getOrderByStripeSessionId — looks up an order by Stripe session ID for use
  *                          in the webhook handler; returns null on miss
+ *   getRecentPendingOrdersByUser — returns newest pending checkout attempts so
+ *                          create-session can reuse equivalent in-flight intents
+ *   updateOrderStripeSessionId — replaces placeholder session id with real `cs_...`
+ *                          after Checkout Session creation succeeds
  *   updateOrderStatus    — transitions an order to PAID, SHIPPED, DELIVERED,
  *                          CANCELLED, or REFUNDED
  *   shipOrder            — sets SHIPPED status, trackingNumber, and shippedAt
@@ -55,7 +61,10 @@ import {
   createOrder,
   getOrdersByUser,
   getOrderById,
+  getOrderByIdForWebhook,
   getOrderByStripeSessionId,
+  getRecentPendingOrdersByUser,
+  updateOrderStripeSessionId,
   updateOrderStatus,
   shipOrder,
   markDelivered,
@@ -242,6 +251,29 @@ describe('getOrderById', () => {
   })
 })
 
+describe('getOrderByIdForWebhook', () => {
+  it('returns the order by id without user scope', async () => {
+    mockFindUnique.mockResolvedValue(DB_ORDER as any)
+
+    const result = await getOrderByIdForWebhook(ORDER_ID)
+
+    expect(mockFindUnique).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: { id: ORDER_ID },
+      }),
+    )
+    expect(result?.id).toBe(ORDER_ID)
+  })
+
+  it('returns null when order does not exist', async () => {
+    mockFindUnique.mockResolvedValue(null)
+
+    const result = await getOrderByIdForWebhook('missing-order-id')
+
+    expect(result).toBeNull()
+  })
+})
+
 // ─────────────────────────────────────────────────────────────────────────────
 // getOrderByStripeSessionId
 //
@@ -271,6 +303,56 @@ describe('getOrderByStripeSessionId', () => {
     const result = await getOrderByStripeSessionId('nonexistent')
 
     expect(result).toBeNull()
+  })
+})
+
+describe('getRecentPendingOrdersByUser', () => {
+  it('returns latest pending orders for a user', async () => {
+    mockFindMany.mockResolvedValue([DB_ORDER] as any)
+
+    const result = await getRecentPendingOrdersByUser(USER_ID)
+
+    expect(mockFindMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: { userId: USER_ID, status: 'PENDING' },
+        orderBy: { createdAt: 'desc' },
+        take: 10,
+      }),
+    )
+    expect(result).toHaveLength(1)
+  })
+
+  it('supports a custom take limit', async () => {
+    mockFindMany.mockResolvedValue([] as any)
+
+    await getRecentPendingOrdersByUser(USER_ID, 5)
+
+    expect(mockFindMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        take: 5,
+      }),
+    )
+  })
+})
+
+// ─────────────────────────────────────────────────────────────────────────────
+// updateOrderStripeSessionId
+//
+// After Stripe checkout.sessions.create returns, the order row must store the
+// real session id so webhook lookup by session.id succeeds.
+// ─────────────────────────────────────────────────────────────────────────────
+
+describe('updateOrderStripeSessionId', () => {
+  it('updates stripeSessionId for the order', async () => {
+    mockUpdate.mockResolvedValue({ ...DB_ORDER, stripeSessionId: 'cs_test_new' } as any)
+
+    const result = await updateOrderStripeSessionId(ORDER_ID, 'cs_test_new')
+
+    expect(mockUpdate).toHaveBeenCalledWith({
+      where: { id: ORDER_ID },
+      data: { stripeSessionId: 'cs_test_new' },
+    })
+    expect(result.stripeSessionId).toBe('cs_test_new')
   })
 })
 

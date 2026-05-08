@@ -57,10 +57,26 @@ export async function getOrderById(orderId: string, userId: string) {
   })
 }
 
+export async function getOrderByIdForWebhook(orderId: string) {
+  return prisma.order.findUnique({
+    where: { id: orderId },
+    include: { items: true, address: true, user: { select: { email: true } } },
+  })
+}
+
 export async function getOrderByStripeSessionId(stripeSessionId: string) {
   return prisma.order.findUnique({
     where: { stripeSessionId },
     include: { items: true, address: true, user: { select: { email: true } } },
+  })
+}
+
+export async function getRecentPendingOrdersByUser(userId: string, take = 10) {
+  return prisma.order.findMany({
+    where: { userId, status: 'PENDING' },
+    include: { items: true },
+    orderBy: { createdAt: 'desc' },
+    take,
   })
 }
 
@@ -70,6 +86,14 @@ export async function updateOrderStatus(orderId: string, status: 'PENDING' | 'PA
   return prisma.order.update({
     where: { id: orderId },
     data: { status },
+  })
+}
+
+/** Replace placeholder session id with the real Stripe Checkout Session id (`cs_...`) after sessions.create succeeds. */
+export async function updateOrderStripeSessionId(orderId: string, stripeSessionId: string) {
+  return prisma.order.update({
+    where: { id: orderId },
+    data: { stripeSessionId },
   })
 }
 

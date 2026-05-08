@@ -2,8 +2,14 @@ import { FastifyInstance } from 'fastify'
 import { z } from 'zod'
 import { authenticate } from '../middleware/authenticate.js'
 import { getAddresses } from '../services/accountService.js'
-import { createOrder } from '../services/orderService.js'
-import { getOrderByStripeSessionId, updateOrderStatus } from '../services/orderService.js'
+import {
+  createOrder,
+  getOrderByIdForWebhook,
+  getRecentPendingOrdersByUser,
+  getOrderByStripeSessionId,
+  updateOrderStatus,
+  updateOrderStripeSessionId,
+} from '../services/orderService.js'
 import { createCheckoutSession, constructWebhookEvent } from '../services/stripeService.js'
 import { PRODUCTS } from '../data/products.js'
 import { EventBus } from '../events/EventBus.js'
@@ -14,6 +20,12 @@ interface CheckoutRouteOptions {
 }
 
 export async function checkoutRoutes(app: FastifyInstance, opts: CheckoutRouteOptions) {
+  const buildCartFingerprint = (items: { productId: string; quantity: number }[]) =>
+    [...items]
+      .sort((a, b) => a.productId.localeCompare(b.productId))
+      .map((item) => `${item.productId}:${item.quantity}`)
+      .join('|')
+
   // Override the JSON parser for this entire plugin scope so that the webhook
   // route receives a raw Buffer for signature verification.  The create-session
   // handler manually JSON.parses its buffer below.
@@ -84,26 +96,51 @@ export async function checkoutRoutes(app: FastifyInstance, opts: CheckoutRouteOp
       // 4. Calculate total server-side
       const total = resolvedItems.reduce((sum, i) => sum + i.priceAtPurchase * i.quantity, 0)
 
-      // 5. Create a temporary PENDING order to obtain an orderId for Stripe metadata.
-      //    Use a unique placeholder session ID — it will never be looked up because
-      //    the real stripeSessionId arrives via the webhook after payment completes.
-      const tempSessionId = `pending_${userId}_${Date.now()}`
-      const order = await createOrder({
+      // 5. Reuse an equivalent pending checkout attempt when possible to avoid
+      // accidental duplicate sessions/orders from reload/double-click retries.
+      const requestCartFingerprint = buildCartFingerprint(
+        resolvedItems.map((item) => ({
+          productId: item.productId,
+          quantity: item.quantity,
+        })),
+      )
+      const pendingOrders = await getRecentPendingOrdersByUser(userId)
+      const reusableOrder = pendingOrders.find((pendingOrder) => {
+        if (pendingOrder.addressId !== addressId) return false
+        if (pendingOrder.total !== total) return false
+
+        const pendingFingerprint = buildCartFingerprint(
+          pendingOrder.items.map((item) => ({
+            productId: item.productId,
+            quantity: item.quantity,
+          })),
+        )
+        return pendingFingerprint === requestCartFingerprint
+      })
+
+      // 6. Create a temporary PENDING order only when no equivalent intent exists.
+      //    stripeSessionId starts as a placeholder — replaced with the real `cs_...`
+      //    immediately after Stripe creates the Checkout Session (step 7).
+      const order = reusableOrder ?? await createOrder({
         userId,
         addressId,
-        stripeSessionId: tempSessionId,
+        stripeSessionId: `pending_${userId}_${Date.now()}`,
         total,
         items: resolvedItems,
       })
 
-      // 6. Create Stripe Checkout Session with orderId embedded in metadata
+      // 7. Create Stripe Checkout Session with orderId embedded in metadata.
+      //    stripeService uses an orderId-based idempotency key, so duplicate
+      //    retries of the same order reuse the same Stripe session.
       const origin = process.env.FRONTEND_ORIGIN ?? 'http://localhost:5173'
-      const { url } = await createCheckoutSession({
+      const { url, sessionId } = await createCheckoutSession({
         lineItems: resolvedItems.map((i) => ({ stripePriceId: i.stripePriceId, quantity: i.quantity })),
         successUrl: `${origin}/order-confirmation?session_id={CHECKOUT_SESSION_ID}`,
         cancelUrl: `${origin}/cart`,
         metadata: { orderId: order.id, userId },
       })
+
+      await updateOrderStripeSessionId(order.id, sessionId)
 
       return reply.send({ url, orderId: order.id })
     },
@@ -150,8 +187,9 @@ export async function checkoutRoutes(app: FastifyInstance, opts: CheckoutRouteOp
       const orderId = charge.metadata?.orderId
       if (!orderId) return reply.send({ received: true })
 
-      const order = await getOrderByStripeSessionId(orderId)
+      const order = await getOrderByIdForWebhook(orderId)
       if (!order) return reply.send({ received: true })
+      if (order.status === 'REFUNDED') return reply.send({ received: true })
 
       await updateOrderStatus(order.id, 'REFUNDED')
 

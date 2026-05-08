@@ -39,10 +39,13 @@ vi.mock('../../src/services/stripeService', () => ({
 
 vi.mock('../../src/services/orderService', () => ({
   createOrder: vi.fn(),
+  getRecentPendingOrdersByUser: vi.fn(),
   getOrdersByUser: vi.fn(),
   getOrderById: vi.fn(),
+  getOrderByIdForWebhook: vi.fn(),
   getOrderByStripeSessionId: vi.fn(),
   updateOrderStatus: vi.fn(),
+  updateOrderStripeSessionId: vi.fn(),
   shipOrder: vi.fn(),
   markDelivered: vi.fn(),
 }))
@@ -64,10 +67,11 @@ vi.mock('../../src/services/accountService', () => ({
 }))
 
 import { constructWebhookEvent } from '../../src/services/stripeService'
-import { getOrderByStripeSessionId, updateOrderStatus } from '../../src/services/orderService'
+import { getOrderByIdForWebhook, getOrderByStripeSessionId, updateOrderStatus } from '../../src/services/orderService'
 
 const mockConstructEvent = vi.mocked(constructWebhookEvent)
 const mockGetOrderBySession = vi.mocked(getOrderByStripeSessionId)
+const mockGetOrderByIdForWebhook = vi.mocked(getOrderByIdForWebhook)
 const mockUpdateOrderStatus = vi.mocked(updateOrderStatus)
 
 // ── Fixtures ──────────────────────────────────────────────────────────────────
@@ -278,7 +282,7 @@ describe('charge.refunded', () => {
 
   it('returns 200 and updates order to REFUNDED', async () => {
     mockConstructEvent.mockReturnValue(CHARGE_REFUNDED_EVENT as any)
-    mockGetOrderBySession.mockResolvedValueOnce(MOCK_ORDER_PAID as any)
+    mockGetOrderByIdForWebhook.mockResolvedValueOnce(MOCK_ORDER_PAID as any)
     mockUpdateOrderStatus.mockResolvedValueOnce({ ...MOCK_ORDER_PAID, status: 'REFUNDED' } as any)
 
     const res = await app.inject({
@@ -294,7 +298,7 @@ describe('charge.refunded', () => {
 
   it('publishes ORDER_REFUNDED event to Kafka via EventBus', async () => {
     mockConstructEvent.mockReturnValue(CHARGE_REFUNDED_EVENT as any)
-    mockGetOrderBySession.mockResolvedValueOnce(MOCK_ORDER_PAID as any)
+    mockGetOrderByIdForWebhook.mockResolvedValueOnce(MOCK_ORDER_PAID as any)
     mockUpdateOrderStatus.mockResolvedValueOnce({ ...MOCK_ORDER_PAID, status: 'REFUNDED' } as any)
 
     await app.inject({
@@ -307,6 +311,22 @@ describe('charge.refunded', () => {
     const events = eventBus.eventsOf('ORDER_REFUNDED')
     expect(events).toHaveLength(1)
     expect(events[0].orderId).toBe(ORDER_ID)
+  })
+
+  it('returns 200 immediately when order is already REFUNDED (idempotency)', async () => {
+    mockConstructEvent.mockReturnValue(CHARGE_REFUNDED_EVENT as any)
+    mockGetOrderByIdForWebhook.mockResolvedValueOnce({ ...MOCK_ORDER_PAID, status: 'REFUNDED' } as any)
+
+    const res = await app.inject({
+      method: 'POST',
+      url: '/api/webhooks/stripe',
+      headers: { 'stripe-signature': VALID_SIGNATURE },
+      payload: REFUND_RAW_BODY,
+    })
+
+    expect(res.statusCode).toBe(200)
+    expect(mockUpdateOrderStatus).not.toHaveBeenCalled()
+    expect(eventBus.eventsOf('ORDER_REFUNDED')).toHaveLength(0)
   })
 })
 

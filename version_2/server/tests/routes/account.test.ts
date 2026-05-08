@@ -33,11 +33,14 @@ vi.mock('../../src/services/accountService', () => ({
 }))
 
 vi.mock('../../src/services/orderService', () => ({
+  getRecentPendingOrdersByUser: vi.fn(),
   getOrdersByUser: vi.fn(),
   getOrderById: vi.fn(),
+  getOrderByIdForWebhook: vi.fn(),
   createOrder: vi.fn(),
   getOrderByStripeSessionId: vi.fn(),
   updateOrderStatus: vi.fn(),
+  updateOrderStripeSessionId: vi.fn(),
   shipOrder: vi.fn(),
   markDelivered: vi.fn(),
 }))
