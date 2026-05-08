@@ -16,6 +16,23 @@ export interface User {
   createdAt: string
 }
 
+export interface OrderItem {
+  id: string
+  productId: string
+  name: string
+  quantity: number
+  priceAtPurchase: number  // in cents
+}
+
+export interface Order {
+  id: string
+  status: 'PENDING' | 'PAID' | 'SHIPPED' | 'DELIVERED' | 'FAILED' | 'CANCELLED' | 'REFUNDED'
+  total: number            // in cents
+  createdAt: string
+  address: Address
+  items: OrderItem[]
+}
+
 export interface Address {
   id: string
   line1: string
@@ -152,7 +169,22 @@ export async function setDefaultAddress(id: string): Promise<void> {
   await request(`/api/account/addresses/${id}/default`, { method: 'POST' })
 }
 
-export async function fetchOrders(): Promise<unknown[]> {
-  const data = await request<{ orders: unknown[] }>('/api/account/orders')
+export async function fetchOrders(): Promise<Order[]> {
+  const data = await request<{ orders: Order[] }>('/api/account/orders')
   return data.orders
+}
+
+export async function fetchOrder(id: string): Promise<Order> {
+  const data = await request<{ order: Order }>(`/api/account/orders/${id}`)
+  return data.order
+}
+
+export async function createCheckoutSession(
+  addressId: string,
+  items: { productId: string; quantity: number }[],
+): Promise<{ url: string; orderId: string }> {
+  return request<{ url: string; orderId: string }>('/api/checkout/create-session', {
+    method: 'POST',
+    body: JSON.stringify({ addressId, items }),
+  })
 }

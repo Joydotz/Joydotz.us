@@ -11,126 +11,9 @@ import {
   fetchOrders,
   type Address,
   type AddressInput,
+  type Order,
 } from '../lib/api'
-
-const EMPTY_ADDRESS: AddressInput = {
-  line1: '',
-  line2: '',
-  city: '',
-  state: '',
-  postal_code: '',
-  country: 'US',
-}
-
-// ── Address form ──────────────────────────────────────────────────────────────
-
-function AddressForm({
-  initial,
-  onSave,
-  onCancel,
-}: {
-  initial?: AddressInput
-  onSave: (input: AddressInput) => Promise<void>
-  onCancel: () => void
-}) {
-  const [form, setForm] = useState<AddressInput>(initial ?? EMPTY_ADDRESS)
-  const [saving, setSaving] = useState(false)
-  const [error, setError] = useState('')
-
-  function set(field: keyof AddressInput, value: string) {
-    setForm((prev) => ({ ...prev, [field]: value }))
-  }
-
-  async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault()
-    setSaving(true)
-    setError('')
-    try {
-      await onSave(form)
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to save address')
-    } finally {
-      setSaving(false)
-    }
-  }
-
-  const inputClass =
-    'w-full bg-surface-container px-4 py-3 rounded-full text-on-surface placeholder:text-on-surface-variant/50 focus:ring-2 focus:ring-primary/20 outline-none transition-all text-sm disabled:opacity-50'
-
-  return (
-    <form onSubmit={handleSubmit} className="space-y-3 pt-2">
-      <input
-        className={inputClass}
-        placeholder="address line 1"
-        value={form.line1}
-        onChange={(e) => set('line1', e.target.value)}
-        required
-        disabled={saving}
-      />
-      <input
-        className={inputClass}
-        placeholder="address line 2 (optional)"
-        value={form.line2 ?? ''}
-        onChange={(e) => set('line2', e.target.value)}
-        disabled={saving}
-      />
-      <div className="grid grid-cols-2 gap-3">
-        <input
-          className={inputClass}
-          placeholder="city"
-          value={form.city}
-          onChange={(e) => set('city', e.target.value)}
-          required
-          disabled={saving}
-        />
-        <input
-          className={inputClass}
-          placeholder="state"
-          value={form.state}
-          onChange={(e) => set('state', e.target.value)}
-          required
-          disabled={saving}
-        />
-      </div>
-      <div className="grid grid-cols-2 gap-3">
-        <input
-          className={inputClass}
-          placeholder="postal code"
-          value={form.postal_code}
-          onChange={(e) => set('postal_code', e.target.value)}
-          required
-          disabled={saving}
-        />
-        <input
-          className={inputClass}
-          placeholder="country (2-letter)"
-          value={form.country}
-          onChange={(e) => set('country', e.target.value.toUpperCase())}
-          maxLength={2}
-          required
-          disabled={saving}
-        />
-      </div>
-      {error && <p className="text-error text-xs font-body">{error}</p>}
-      <div className="flex gap-3 pt-1">
-        <button
-          type="submit"
-          disabled={saving}
-          className="flex-1 py-2.5 bg-primary text-on-primary rounded-full font-bold text-sm hover:scale-[1.02] active:scale-[0.98] transition-all disabled:opacity-50"
-        >
-          {saving ? 'saving…' : 'save address'}
-        </button>
-        <button
-          type="button"
-          onClick={onCancel}
-          className="flex-1 py-2.5 bg-surface-container text-on-surface-variant rounded-full font-bold text-sm hover:bg-surface-container-high transition-all"
-        >
-          cancel
-        </button>
-      </div>
-    </form>
-  )
-}
+import AddressForm from '../components/AddressForm'
 
 // ── Main page ─────────────────────────────────────────────────────────────────
 
@@ -139,7 +22,7 @@ export default function Account() {
   const navigate = useNavigate()
 
   const [addresses, setAddresses] = useState<Address[]>([])
-  const [orders, setOrders] = useState<unknown[]>([])
+  const [orders, setOrders] = useState<Order[]>([])
   const [showAddForm, setShowAddForm] = useState(false)
   const [editingId, setEditingId] = useState<string | null>(null)
   const [deletingId, setDeletingId] = useState<string | null>(null)
@@ -251,7 +134,52 @@ export default function Account() {
             </div>
           ) : (
             <div className="space-y-4">
-              {/* Order items will go here when Stripe is live */}
+              {orders.map((order) => (
+                <div
+                  key={order.id}
+                  className="border border-outline-variant/50 rounded-xl p-5 space-y-3"
+                >
+                  <div className="flex items-start justify-between gap-3">
+                    <div>
+                      <p className="text-xs text-on-surface-variant font-body">
+                        {new Date(order.createdAt).toLocaleDateString('en-US', {
+                          year: 'numeric', month: 'long', day: 'numeric',
+                        })}
+                      </p>
+                      <p className="text-xs font-bold font-body text-on-surface-variant mt-0.5">
+                        #{order.id.slice(0, 8).toUpperCase()}
+                      </p>
+                    </div>
+                    <span className={`text-[10px] font-bold uppercase tracking-widest px-2 py-1 rounded-full shrink-0 ${
+                      order.status === 'PAID' || order.status === 'SHIPPED' || order.status === 'DELIVERED'
+                        ? 'bg-primary/10 text-primary'
+                        : order.status === 'REFUNDED' || order.status === 'CANCELLED' || order.status === 'FAILED'
+                        ? 'bg-error/10 text-error'
+                        : 'bg-surface-container text-on-surface-variant'
+                    }`}>
+                      {order.status.toLowerCase()}
+                    </span>
+                  </div>
+
+                  <div className="space-y-1">
+                    {order.items.map((item) => (
+                      <div key={item.id} className="flex justify-between text-sm font-body">
+                        <span className="text-on-surface-variant">{item.name} × {item.quantity}</span>
+                        <span className="text-on-surface font-bold">
+                          ${((item.priceAtPurchase * item.quantity) / 100).toFixed(2)}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+
+                  <div className="flex justify-between pt-1 border-t border-outline-variant/20">
+                    <span className="text-xs font-bold font-body text-on-surface-variant">total</span>
+                    <span className="text-sm font-black font-headline text-primary">
+                      ${(order.total / 100).toFixed(2)}
+                    </span>
+                  </div>
+                </div>
+              ))}
             </div>
           )}
         </div>

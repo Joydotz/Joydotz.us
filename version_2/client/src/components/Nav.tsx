@@ -1,5 +1,6 @@
 import { Link, useLocation } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
+import { useCart } from '../context/CartContext'
 
 const navLinks = [
   { label: 'Home', to: '/' },
@@ -12,6 +13,7 @@ const navLinks = [
 export default function Nav() {
   const { pathname } = useLocation()
   const { user } = useAuth()
+  const { totalItems } = useCart()
 
   const isActive = (to: string) =>
     to === '/' ? pathname === '/' : pathname.startsWith(to)
@@ -43,9 +45,17 @@ export default function Nav() {
         </nav>
 
         <div className="flex items-center gap-4 text-[#D9A694]">
-          <button className="hover:opacity-100 hover:scale-105 transition-all active:scale-95 duration-200">
+          <Link
+            to="/cart"
+            className="relative hover:opacity-100 hover:scale-105 transition-all active:scale-95 duration-200"
+          >
             <span className="material-symbols-outlined">shopping_bag</span>
-          </button>
+            {totalItems > 0 && (
+              <span className="absolute -top-1 -right-1 min-w-[1.1rem] h-[1.1rem] px-0.5 bg-primary text-on-primary text-[10px] font-bold rounded-full flex items-center justify-center leading-none border-2 border-background">
+                {totalItems > 99 ? '99+' : totalItems}
+              </span>
+            )}
+          </Link>
           <Link
             to={user ? '/account' : '/login'}
             className="relative hover:opacity-100 hover:scale-105 transition-all active:scale-95 duration-200"

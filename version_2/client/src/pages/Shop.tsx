@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { fetchProducts, type Product } from '../lib/api'
+import { useCart } from '../context/CartContext'
 
 const filters = ['All', 'Cloud Phase', 'Butterfly Phase', 'Flower Phase']
 
@@ -8,6 +9,20 @@ export default function Shop() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(false)
   const [activeFilter, setActiveFilter] = useState('All')
+  const [added, setAdded] = useState<string | null>(null)
+  const { addItem } = useCart()
+
+  function handleAddToCart(product: Product) {
+    addItem({
+      productId: product.id,
+      name: product.name,
+      price: product.price,
+      displayPrice: product.displayPrice,
+      imageUrl: product.imageUrl,
+    })
+    setAdded(product.id)
+    setTimeout(() => setAdded(null), 1200)
+  }
 
   useEffect(() => {
     fetchProducts()
@@ -116,8 +131,11 @@ export default function Shop() {
 
                   {/* Divider */}
                   <div className="border-t border-outline-variant/20 pt-4 mt-2 flex gap-3">
-                    <button className="flex-1 py-3 bg-primary text-on-primary rounded-full font-bold text-sm hover:scale-[1.02] active:scale-[0.98] transition-all shadow-[0_8px_20px_rgba(126,85,70,0.15)]">
-                      Add to Bag
+                    <button
+                      onClick={() => handleAddToCart(product)}
+                      className="flex-1 py-3 bg-primary text-on-primary rounded-full font-bold text-sm hover:scale-[1.02] active:scale-[0.98] transition-all shadow-[0_8px_20px_rgba(126,85,70,0.15)]"
+                    >
+                      {added === product.id ? '✓ Added' : 'Add to Bag'}
                     </button>
                     <button className="w-12 h-12 flex items-center justify-center rounded-full bg-surface-container text-on-surface-variant hover:bg-surface-container-high hover:text-primary transition-all">
                       <span className="material-symbols-outlined text-xl">favorite</span>

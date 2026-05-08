@@ -16,6 +16,52 @@ import { PrismaPg } from '@prisma/adapter-pg'
 import { execSync } from 'node:child_process'
 import { Client } from 'pg'
 
+/** host:port/database — same triple means the same physical database. */
+function pgConnectionTarget(urlString: string): string {
+  const u = new URL(urlString.replace(/^postgresql:/i, 'http:'))
+  const port = u.port || '5432'
+  const db = u.pathname.replace(/^\//, '').split('/')[0] ?? ''
+  return `${u.hostname}:${port}/${db}`
+}
+
+/**
+ * cleanDb() issues bare deleteMany(); integration must never aim at the app DB.
+ * Requires both URLs defined and rejects when host/port/database matches (same physical DB even if credentials/query differ).
+ * Call before mutating DATABASE_URL — `DATABASE_URL` here is still the application value from `.env`.
+ */
+function assertIntegrationDoesNotTargetAppDatabase(baseTestDbUrl: string, database?: string): void {
+  const testUrl = baseTestDbUrl.trim()
+  if (!testUrl) {
+    throw new Error('TEST_DATABASE_URL is required for integration tests')
+  }
+
+  const appUrl = process.env.DATABASE_URL?.trim()
+  if (!appUrl) {
+    throw new Error(
+      'DATABASE_URL is required for integration tests so TEST_DATABASE_URL can be verified as distinct from the application database.',
+    )
+  }
+
+  const failDistinct = (detail: string) => {
+    throw new Error(
+      `${detail} Integration tests require TEST_DATABASE_URL to target a different Postgres database than DATABASE_URL ` +
+        '(cleanDb() would wipe the application database otherwise).',
+    )
+  }
+
+  const appTarget = pgConnectionTarget(appUrl)
+  if (pgConnectionTarget(testUrl) === appTarget) {
+    failDistinct(`TEST_DATABASE_URL resolves to ${appTarget}, same host/port/database as DATABASE_URL.`)
+  }
+
+  if (database) {
+    const derived = withDatabase(baseTestDbUrl, database)
+    if (pgConnectionTarget(derived) === appTarget) {
+      failDistinct(`Derived test URL resolves to ${appTarget}, same host/port/database as DATABASE_URL.`)
+    }
+  }
+}
+
 function withDatabase(connectionString: string, database: string): string {
   const url = new URL(connectionString)
   url.pathname = `/${database}`
@@ -38,10 +84,8 @@ export function configureIntegrationEnv(schema?: string, database?: string) {
   process.env.FRONTEND_ORIGIN ||= 'http://localhost:5173'
   process.env.PORT ||= '3001'
 
-  const baseTestDbUrl = process.env.TEST_DATABASE_URL
-  if (!baseTestDbUrl) {
-    throw new Error('TEST_DATABASE_URL is required for integration tests')
-  }
+  const baseTestDbUrl = process.env.TEST_DATABASE_URL ?? ''
+  assertIntegrationDoesNotTargetAppDatabase(baseTestDbUrl, database)
 
   let dbUrl = baseTestDbUrl
   if (database) {
