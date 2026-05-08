@@ -4,13 +4,13 @@ import { authenticate } from '../middleware/authenticate.js'
 import { getAddresses } from '../services/accountService.js'
 import {
   createOrder,
-  getOrderByIdForWebhook,
+  getOrderByIdForStripeEvent,
   getRecentPendingOrdersByUser,
   getOrderByStripeSessionId,
   updateOrderStatus,
   updateOrderStripeSessionId,
 } from '../services/orderService.js'
-import { createCheckoutSession, constructWebhookEvent } from '../services/stripeService.js'
+import { createCheckoutSession, constructStripeEvent } from '../services/stripeService.js'
 import { PRODUCTS } from '../data/products.js'
 import { EventBus } from '../events/EventBus.js'
 
@@ -26,15 +26,15 @@ export async function checkoutRoutes(app: FastifyInstance, opts: CheckoutRouteOp
       .map((item) => `${item.productId}:${item.quantity}`)
       .join('|')
 
-  // Override the JSON parser for this entire plugin scope so that the webhook
+  // Override the JSON parser for this entire plugin scope so that the Stripe events
   // route receives a raw Buffer for signature verification.  The create-session
   // handler manually JSON.parses its buffer below.
   // Both routes in this plugin need the raw Buffer:
   // - create-session: receives application/json from the client; manually JSON.parses below
-  // - webhooks/stripe: Fastify inject sends Buffer payloads as application/octet-stream;
+  // - stripe-events: Fastify inject sends Buffer payloads as application/octet-stream;
   //                    real Stripe POSTs use application/json
   // Parse every request body in this plugin scope as a raw Buffer.
-  // create-session manually JSON.parses below; webhooks/stripe needs the raw
+  // create-session manually JSON.parses below; stripe-events needs the raw
   // bytes for Stripe signature verification. The catch-all '*' also covers
   // requests sent with no Content-Type (e.g. Fastify inject with a Buffer payload).
   const rawBufferParser = (_req: any, body: Buffer, done: any) => done(null, body)
@@ -146,9 +146,9 @@ export async function checkoutRoutes(app: FastifyInstance, opts: CheckoutRouteOp
     },
   )
 
-  // ── POST /api/webhooks/stripe ─────────────────────────────────────────────────
+  // ── POST /api/stripe-events ───────────────────────────────────────────────────
 
-  app.post('/api/webhooks/stripe', async (request, reply) => {
+  app.post('/api/stripe-events', async (request, reply) => {
     const signature = request.headers['stripe-signature']
     if (!signature || typeof signature !== 'string') {
       return reply.status(400).send({ error: 'Missing stripe-signature header' })
@@ -156,7 +156,7 @@ export async function checkoutRoutes(app: FastifyInstance, opts: CheckoutRouteOp
 
     let event
     try {
-      event = constructWebhookEvent(
+      event = constructStripeEvent(
         request.body as Buffer,
         signature,
         process.env.STRIPE_WEBHOOK_SECRET ?? '',
@@ -187,7 +187,7 @@ export async function checkoutRoutes(app: FastifyInstance, opts: CheckoutRouteOp
       const orderId = charge.metadata?.orderId
       if (!orderId) return reply.send({ received: true })
 
-      const order = await getOrderByIdForWebhook(orderId)
+      const order = await getOrderByIdForStripeEvent(orderId)
       if (!order) return reply.send({ received: true })
       if (order.status === 'REFUNDED') return reply.send({ received: true })
 

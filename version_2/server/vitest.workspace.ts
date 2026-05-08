@@ -10,12 +10,36 @@ export default defineWorkspace([
     },
   },
   {
-    // Integration tests share a single Postgres DB — run files sequentially
-    // so concurrent cleanDb() calls don't race each other
+    // server - db integration tests in isolated schema
     extends: './vitest.config.ts',
     test: {
-      name: 'integration',
-      include: ['tests/integration/**/*.test.ts'],
+      name: 'server-db',
+      include: ['tests/integration/server_db.test.ts'],
+      setupFiles: ['tests/integration/setup_server_db.ts'],
+      pool: 'forks',
+      maxWorkers: 1,
+    },
+  },
+  {
+    // server - stripe - db integration tests in isolated schema
+    extends: './vitest.config.ts',
+    test: {
+      name: 'server-stripe-db',
+      include: ['tests/integration/server_stripe_db.test.ts'],
+      setupFiles: ['tests/integration/setup_server_stripe_db.ts'],
+      pool: 'forks',
+      maxWorkers: 1,
+    },
+  },
+  {
+    // server - stripe integration tests
+    extends: './vitest.config.ts',
+    test: {
+      name: 'server-stripe',
+      include: ['tests/integration/server_stripe.test.ts'],
+      setupFiles: ['tests/integration/setup.ts'],
+      pool: 'forks',
+      maxWorkers: 1,
     },
   },
 ])

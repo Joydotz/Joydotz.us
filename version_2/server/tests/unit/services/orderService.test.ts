@@ -13,10 +13,10 @@
  *                          returns empty array when the user has no orders
  *   getOrderById         — scopes lookup to the requesting user so one user
  *                          cannot read another user's order; returns null on miss
- *   getOrderByIdForWebhook — unscoped lookup by order ID for trusted Stripe
- *                          webhook events; includes user email for event payloads
+ *   getOrderByIdForStripeEvent — unscoped lookup by order ID for trusted Stripe
+ *                          events; includes user email for event payloads
  *   getOrderByStripeSessionId — looks up an order by Stripe session ID for use
- *                          in the webhook handler; returns null on miss
+ *                          in the Stripe events handler; returns null on miss
  *   getRecentPendingOrdersByUser — returns newest pending checkout attempts so
  *                          create-session can reuse equivalent in-flight intents
  *   updateOrderStripeSessionId — replaces placeholder session id with real `cs_...`
@@ -44,7 +44,7 @@ const OrderStatus = {
 
 // ── Mock Prisma ───────────────────────────────────────────────────────────────
 
-vi.mock('../../src/db/client', () => ({
+vi.mock('../../../src/db/client', () => ({
   prisma: {
     order: {
       create: vi.fn(),
@@ -56,19 +56,19 @@ vi.mock('../../src/db/client', () => ({
   },
 }))
 
-import { prisma } from '../../src/db/client'
+import { prisma } from '../../../src/db/client'
 import {
   createOrder,
   getOrdersByUser,
   getOrderById,
-  getOrderByIdForWebhook,
+  getOrderByIdForStripeEvent,
   getOrderByStripeSessionId,
   getRecentPendingOrdersByUser,
   updateOrderStripeSessionId,
   updateOrderStatus,
   shipOrder,
   markDelivered,
-} from '../../src/services/orderService'
+} from '../../../src/services/orderService'
 
 const mockCreate   = vi.mocked(prisma.order.create)
 const mockFindMany = vi.mocked(prisma.order.findMany)
@@ -145,7 +145,7 @@ beforeEach(() => {
 //
 // Creates a new order in PENDING status alongside its line items in a single
 // Prisma nested write. The order starts as PENDING because payment has not yet
-// been confirmed — the webhook handler transitions it to PAID later.
+// been confirmed — the Stripe events handler transitions it to PAID later.
 //
 // Critically, product name and price are snapshotted from the caller's input
 // at the moment of creation. This means order history remains accurate even if
@@ -251,11 +251,11 @@ describe('getOrderById', () => {
   })
 })
 
-describe('getOrderByIdForWebhook', () => {
+describe('getOrderByIdForStripeEvent', () => {
   it('returns the order by id without user scope', async () => {
     mockFindUnique.mockResolvedValue(DB_ORDER as any)
 
-    const result = await getOrderByIdForWebhook(ORDER_ID)
+    const result = await getOrderByIdForStripeEvent(ORDER_ID)
 
     expect(mockFindUnique).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -268,7 +268,7 @@ describe('getOrderByIdForWebhook', () => {
   it('returns null when order does not exist', async () => {
     mockFindUnique.mockResolvedValue(null)
 
-    const result = await getOrderByIdForWebhook('missing-order-id')
+    const result = await getOrderByIdForStripeEvent('missing-order-id')
 
     expect(result).toBeNull()
   })
@@ -278,7 +278,7 @@ describe('getOrderByIdForWebhook', () => {
 // getOrderByStripeSessionId
 //
 // Looks up an order by its Stripe Checkout Session ID. Used exclusively by the
-// webhook handler when a checkout.session.completed event arrives — Stripe
+// Stripe events handler when a checkout.session.completed event arrives — Stripe
 // identifies the payment by session ID, not our internal order ID. Returns
 // null when the session ID is not found so the handler can respond gracefully.
 // ─────────────────────────────────────────────────────────────────────────────
@@ -339,7 +339,7 @@ describe('getRecentPendingOrdersByUser', () => {
 // updateOrderStripeSessionId
 //
 // After Stripe checkout.sessions.create returns, the order row must store the
-// real session id so webhook lookup by session.id succeeds.
+// real session id so Stripe events lookup by session.id succeeds.
 // ─────────────────────────────────────────────────────────────────────────────
 
 describe('updateOrderStripeSessionId', () => {
@@ -359,10 +359,10 @@ describe('updateOrderStripeSessionId', () => {
 // ─────────────────────────────────────────────────────────────────────────────
 // updateOrderStatus
 //
-// Transitions an order to a new status. Called by the webhook handler to mark
+// Transitions an order to a new status. Called by the Stripe events handler to mark
 // an order PAID on payment success, and REFUNDED when a charge.refunded event
 // arrives. The update is idempotent — applying the same status twice has no
-// side effects, which is important because Stripe may deliver the same webhook
+// side effects, which is important because Stripe may deliver the same event
 // event more than once.
 // ─────────────────────────────────────────────────────────────────────────────
 

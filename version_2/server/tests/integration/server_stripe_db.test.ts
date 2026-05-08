@@ -1,12 +1,14 @@
 /**
- * Checkout → Stripe webhook integration tests
+ * This file tests the complete checkout flow through three components: server, database and Stripe.
+ *
+ * Tests only run when Stripe env is valid:
+ *   STRIPE_SECRET_KEY is a non-placeholder key
+ *   STRIPE_WEBHOOK_SECRET is a non-placeholder secret
+ *   PRODUCTS contains at least one valid Stripe price_... id
  *
  * Exercises the real stack path:
  *   POST /api/checkout/create-session (JWT + DB + Stripe sessions.create)
- *   POST /api/webhooks/stripe (raw body + signature verification → PAID + ORDER_PAID)
- *
- * Opt-in when RUN_STRIPE_INTEGRATION=1 and real Stripe test credentials plus a valid
- * price_... in PRODUCTS / TEST_DATABASE_URL (same gates as stripeService.integration).
+ *   POST /api/stripe-events (raw body + signature verification → PAID + ORDER_PAID)
  */
 
 import { describe, it, expect, beforeAll, afterAll, beforeEach } from 'vitest'
@@ -17,21 +19,19 @@ import { MockEventBus } from '../../src/events/MockEventBus'
 import { PRODUCTS } from '../../src/data/products'
 import { cleanDb, testPrisma } from './helpers'
 
-const runStripeIntegration = process.env.RUN_STRIPE_INTEGRATION === '1'
 const stripeSecretKey = process.env.STRIPE_SECRET_KEY ?? ''
-const stripeWebhookSecret = process.env.STRIPE_WEBHOOK_SECRET ?? ''
+const stripeEventsSecret = process.env.STRIPE_WEBHOOK_SECRET ?? ''
 
 const catalogProduct = PRODUCTS.find((p) => p.stripePriceId.startsWith('price_'))
 const firstStripePriceProductId = catalogProduct?.id ?? ''
 
 const hasRealStripeKey =
   stripeSecretKey.startsWith('sk_test_') && stripeSecretKey !== 'sk_test_placeholder'
-const hasRealWebhookSecret =
-  stripeWebhookSecret.startsWith('whsec_') && stripeWebhookSecret !== 'whsec_test_placeholder'
+const hasRealStripeEventsSecret =
+  stripeEventsSecret.startsWith('whsec_') && stripeEventsSecret !== 'whsec_test_placeholder'
 const hasCatalogStripePrice = !!catalogProduct
 
-const shouldRun =
-  runStripeIntegration && hasRealStripeKey && hasRealWebhookSecret && hasCatalogStripePrice
+const shouldRun = hasRealStripeKey && hasRealStripeEventsSecret && hasCatalogStripePrice
 
 describe.runIf(shouldRun)('checkout Stripe flow integration', () => {
   let app: FastifyInstance
@@ -53,7 +53,7 @@ describe.runIf(shouldRun)('checkout Stripe flow integration', () => {
     eventBus.clear()
   })
 
-  it('persists cs_ session id on the order then webhook marks PAID', async () => {
+  it('persists cs_ session id on the order then stripe event marks PAID', async () => {
     const user = await testPrisma.user.create({
       data: {
         email: 'checkout-flow@example.com',
@@ -110,17 +110,17 @@ describe.runIf(shouldRun)('checkout Stripe flow integration', () => {
     const rawBody = Buffer.from(JSON.stringify(stripeEvent))
     const signature = Stripe.webhooks.generateTestHeaderString({
       payload: rawBody.toString(),
-      secret: stripeWebhookSecret,
+      secret: stripeEventsSecret,
     })
 
-    const webhookRes = await app.inject({
+    const stripeEventsRes = await app.inject({
       method: 'POST',
-      url: '/api/webhooks/stripe',
+      url: '/api/stripe-events',
       headers: { 'stripe-signature': signature },
       payload: rawBody,
     })
 
-    expect(webhookRes.statusCode).toBe(200)
+    expect(stripeEventsRes.statusCode).toBe(200)
 
     const orderPaid = await testPrisma.order.findUnique({ where: { id: orderId } })
     expect(orderPaid!.status).toBe('PAID')
@@ -186,12 +186,12 @@ describe.runIf(shouldRun)('checkout Stripe flow integration', () => {
     const paidRawBody = Buffer.from(JSON.stringify(paidEvent))
     const paidSignature = Stripe.webhooks.generateTestHeaderString({
       payload: paidRawBody.toString(),
-      secret: stripeWebhookSecret,
+      secret: stripeEventsSecret,
     })
 
     const paidRes = await app.inject({
       method: 'POST',
-      url: '/api/webhooks/stripe',
+      url: '/api/stripe-events',
       headers: { 'stripe-signature': paidSignature },
       payload: paidRawBody,
     })
@@ -211,12 +211,12 @@ describe.runIf(shouldRun)('checkout Stripe flow integration', () => {
     const refundedRawBody = Buffer.from(JSON.stringify(refundedEvent))
     const refundedSignature = Stripe.webhooks.generateTestHeaderString({
       payload: refundedRawBody.toString(),
-      secret: stripeWebhookSecret,
+      secret: stripeEventsSecret,
     })
 
     const firstRefundRes = await app.inject({
       method: 'POST',
-      url: '/api/webhooks/stripe',
+      url: '/api/stripe-events',
       headers: { 'stripe-signature': refundedSignature },
       payload: refundedRawBody,
     })
@@ -228,7 +228,7 @@ describe.runIf(shouldRun)('checkout Stripe flow integration', () => {
     // Stripe can redeliver the same event. Handler should be idempotent.
     const duplicateRefundRes = await app.inject({
       method: 'POST',
-      url: '/api/webhooks/stripe',
+      url: '/api/stripe-events',
       headers: { 'stripe-signature': refundedSignature },
       payload: refundedRawBody,
     })

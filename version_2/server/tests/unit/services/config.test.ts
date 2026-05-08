@@ -9,7 +9,7 @@ function setBaseEnv() {
 
 async function importConfig() {
   vi.resetModules()
-  return import('../../src/config')
+  return import('../../../src/config')
 }
 
 describe('config stripe env validation', () => {

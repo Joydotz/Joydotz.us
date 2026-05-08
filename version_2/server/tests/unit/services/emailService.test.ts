@@ -2,7 +2,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { Prisma } from '@prisma/client'
 
 // Mock the Prisma client before importing the service
-vi.mock('../../src/db/client', () => ({
+vi.mock('../../../src/db/client', () => ({
   prisma: {
     emailSubscriber: {
       create: vi.fn(),
@@ -10,8 +10,8 @@ vi.mock('../../src/db/client', () => ({
   },
 }))
 
-import { prisma } from '../../src/db/client'
-import { saveEmail } from '../../src/services/emailService'
+import { prisma } from '../../../src/db/client'
+import { saveEmail } from '../../../src/services/emailService'
 
 const mockCreate = vi.mocked(prisma.emailSubscriber.create)
 

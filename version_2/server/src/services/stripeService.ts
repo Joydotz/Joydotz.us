@@ -35,7 +35,7 @@ export async function createCheckoutSession(
   return { sessionId: session.id, url: session.url }
 }
 
-export function constructWebhookEvent(
+export function constructStripeEvent(
   rawBody: Buffer,
   signature: string,
   secret: string,

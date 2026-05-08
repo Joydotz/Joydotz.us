@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeAll, afterAll } from 'vitest'
 import { FastifyInstance } from 'fastify'
-import { buildApp } from '../../src/app'
-import { PRODUCTS } from '../../src/data/products'
+import { buildApp } from '../../../src/app'
+import { PRODUCTS } from '../../../src/data/products'
 
 let app: FastifyInstance
 

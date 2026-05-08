@@ -1,8 +1,8 @@
 /**
- * POST /api/webhooks/stripe route tests
+ * POST /api/stripe-events route tests
  *
  * Strategy:
- *   - stripeService.constructWebhookEvent is mocked to control signature
+ *   - stripeService.constructStripeEvent is mocked to control signature
  *     verification without real Stripe keys
  *   - orderService is mocked — no DB calls
  *   - MockEventBus is passed into buildApp to assert Kafka event publishing
@@ -27,36 +27,29 @@
 
 import { describe, it, expect, vi, beforeAll, afterAll, beforeEach } from 'vitest'
 import { FastifyInstance } from 'fastify'
-import { buildApp } from '../../src/app'
-import { MockEventBus } from '../../src/events/MockEventBus'
+import { buildApp } from '../../../src/app'
+import { MockEventBus } from '../../../src/events/MockEventBus'
+import { createMockUser } from '../../shared/fixtures'
 
 // ── Mocks ─────────────────────────────────────────────────────────────────────
 
-vi.mock('../../src/services/stripeService', () => ({
+vi.mock('../../../src/services/stripeService', () => ({
   createCheckoutSession: vi.fn(),
-  constructWebhookEvent: vi.fn(),
+  constructStripeEvent: vi.fn(),
 }))
 
-vi.mock('../../src/services/orderService', () => ({
-  createOrder: vi.fn(),
-  getRecentPendingOrdersByUser: vi.fn(),
-  getOrdersByUser: vi.fn(),
-  getOrderById: vi.fn(),
-  getOrderByIdForWebhook: vi.fn(),
-  getOrderByStripeSessionId: vi.fn(),
-  updateOrderStatus: vi.fn(),
-  updateOrderStripeSessionId: vi.fn(),
-  shipOrder: vi.fn(),
-  markDelivered: vi.fn(),
-}))
+vi.mock('../../../src/services/orderService', async () => {
+  const { buildOrderServiceMock: buildMock } = await import('../../shared/mocks/orderService')
+  return buildMock()
+})
 
-vi.mock('../../src/services/authService', () => ({
+vi.mock('../../../src/services/authService', () => ({
   signupUser: vi.fn(),
   loginUser: vi.fn(),
   getUserById: vi.fn(),
 }))
 
-vi.mock('../../src/services/accountService', () => ({
+vi.mock('../../../src/services/accountService', () => ({
   setNewsletterOptIn: vi.fn(),
   getAddresses: vi.fn(),
   createAddress: vi.fn(),
@@ -66,19 +59,19 @@ vi.mock('../../src/services/accountService', () => ({
   getOrders: vi.fn(),
 }))
 
-import { constructWebhookEvent } from '../../src/services/stripeService'
-import { getOrderByIdForWebhook, getOrderByStripeSessionId, updateOrderStatus } from '../../src/services/orderService'
+import { constructStripeEvent } from '../../../src/services/stripeService'
+import { getOrderByIdForStripeEvent, getOrderByStripeSessionId, updateOrderStatus } from '../../../src/services/orderService'
 
-const mockConstructEvent = vi.mocked(constructWebhookEvent)
+const mockConstructEvent = vi.mocked(constructStripeEvent)
 const mockGetOrderBySession = vi.mocked(getOrderByStripeSessionId)
-const mockGetOrderByIdForWebhook = vi.mocked(getOrderByIdForWebhook)
+const mockGetOrderByIdForStripeEvent = vi.mocked(getOrderByIdForStripeEvent)
 const mockUpdateOrderStatus = vi.mocked(updateOrderStatus)
 
 // ── Fixtures ──────────────────────────────────────────────────────────────────
 
 const SESSION_ID = 'cs_test_abc123'
 const ORDER_ID = 'order-001'
-const USER_ID = 'user-abc-123'
+const USER_ID = createMockUser().id
 
 const MOCK_ORDER_PENDING = {
   id: ORDER_ID,
@@ -153,7 +146,7 @@ describe('signature verification', () => {
   it('returns 400 when stripe-signature header is missing', async () => {
     const res = await app.inject({
       method: 'POST',
-      url: '/api/webhooks/stripe',
+      url: '/api/stripe-events',
       payload: RAW_BODY,
     })
 
@@ -167,7 +160,7 @@ describe('signature verification', () => {
 
     const res = await app.inject({
       method: 'POST',
-      url: '/api/webhooks/stripe',
+      url: '/api/stripe-events',
       headers: { 'stripe-signature': 'invalid-signature' },
       payload: RAW_BODY,
     })
@@ -184,7 +177,7 @@ describe('signature verification', () => {
 
     const res = await app.inject({
       method: 'POST',
-      url: '/api/webhooks/stripe',
+      url: '/api/stripe-events',
       headers: { 'stripe-signature': VALID_SIGNATURE },
       payload: tamperedBody,
     })
@@ -210,7 +203,7 @@ describe('checkout.session.completed', () => {
 
     const res = await app.inject({
       method: 'POST',
-      url: '/api/webhooks/stripe',
+      url: '/api/stripe-events',
       headers: { 'stripe-signature': VALID_SIGNATURE },
       payload: RAW_BODY,
     })
@@ -226,7 +219,7 @@ describe('checkout.session.completed', () => {
 
     await app.inject({
       method: 'POST',
-      url: '/api/webhooks/stripe',
+      url: '/api/stripe-events',
       headers: { 'stripe-signature': VALID_SIGNATURE },
       payload: RAW_BODY,
     })
@@ -243,7 +236,7 @@ describe('checkout.session.completed', () => {
 
     const res = await app.inject({
       method: 'POST',
-      url: '/api/webhooks/stripe',
+      url: '/api/stripe-events',
       headers: { 'stripe-signature': VALID_SIGNATURE },
       payload: RAW_BODY,
     })
@@ -259,7 +252,7 @@ describe('checkout.session.completed', () => {
 
     const res = await app.inject({
       method: 'POST',
-      url: '/api/webhooks/stripe',
+      url: '/api/stripe-events',
       headers: { 'stripe-signature': VALID_SIGNATURE },
       payload: RAW_BODY,
     })
@@ -282,12 +275,12 @@ describe('charge.refunded', () => {
 
   it('returns 200 and updates order to REFUNDED', async () => {
     mockConstructEvent.mockReturnValue(CHARGE_REFUNDED_EVENT as any)
-    mockGetOrderByIdForWebhook.mockResolvedValueOnce(MOCK_ORDER_PAID as any)
+    mockGetOrderByIdForStripeEvent.mockResolvedValueOnce(MOCK_ORDER_PAID as any)
     mockUpdateOrderStatus.mockResolvedValueOnce({ ...MOCK_ORDER_PAID, status: 'REFUNDED' } as any)
 
     const res = await app.inject({
       method: 'POST',
-      url: '/api/webhooks/stripe',
+      url: '/api/stripe-events',
       headers: { 'stripe-signature': VALID_SIGNATURE },
       payload: REFUND_RAW_BODY,
     })
@@ -298,12 +291,12 @@ describe('charge.refunded', () => {
 
   it('publishes ORDER_REFUNDED event to Kafka via EventBus', async () => {
     mockConstructEvent.mockReturnValue(CHARGE_REFUNDED_EVENT as any)
-    mockGetOrderByIdForWebhook.mockResolvedValueOnce(MOCK_ORDER_PAID as any)
+    mockGetOrderByIdForStripeEvent.mockResolvedValueOnce(MOCK_ORDER_PAID as any)
     mockUpdateOrderStatus.mockResolvedValueOnce({ ...MOCK_ORDER_PAID, status: 'REFUNDED' } as any)
 
     await app.inject({
       method: 'POST',
-      url: '/api/webhooks/stripe',
+      url: '/api/stripe-events',
       headers: { 'stripe-signature': VALID_SIGNATURE },
       payload: REFUND_RAW_BODY,
     })
@@ -315,11 +308,11 @@ describe('charge.refunded', () => {
 
   it('returns 200 immediately when order is already REFUNDED (idempotency)', async () => {
     mockConstructEvent.mockReturnValue(CHARGE_REFUNDED_EVENT as any)
-    mockGetOrderByIdForWebhook.mockResolvedValueOnce({ ...MOCK_ORDER_PAID, status: 'REFUNDED' } as any)
+    mockGetOrderByIdForStripeEvent.mockResolvedValueOnce({ ...MOCK_ORDER_PAID, status: 'REFUNDED' } as any)
 
     const res = await app.inject({
       method: 'POST',
-      url: '/api/webhooks/stripe',
+      url: '/api/stripe-events',
       headers: { 'stripe-signature': VALID_SIGNATURE },
       payload: REFUND_RAW_BODY,
     })
@@ -348,7 +341,7 @@ describe('unknown event types', () => {
 
     const res = await app.inject({
       method: 'POST',
-      url: '/api/webhooks/stripe',
+      url: '/api/stripe-events',
       headers: { 'stripe-signature': VALID_SIGNATURE },
       payload: Buffer.from('{}'),
     })

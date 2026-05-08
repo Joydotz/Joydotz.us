@@ -11,6 +11,5 @@ export default defineConfig({
       include: ['src/**'],
       exclude: ['src/server.ts'],
     },
-    setupFiles: ['tests/integration/setup.ts'],
   },
 })

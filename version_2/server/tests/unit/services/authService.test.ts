@@ -13,7 +13,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 
 // ── Mock Prisma ───────────────────────────────────────────────────────────────
 
-vi.mock('../../src/db/client', () => ({
+vi.mock('../../../src/db/client', () => ({
   prisma: {
     user: {
       findUnique: vi.fn(),
@@ -35,9 +35,9 @@ vi.mock('bcrypt', () => ({
   },
 }))
 
-import { prisma } from '../../src/db/client'
+import { prisma } from '../../../src/db/client'
 import bcrypt from 'bcrypt'
-import { signupUser, loginUser, getUserById } from '../../src/services/authService'
+import { signupUser, loginUser, getUserById } from '../../../src/services/authService'
 
 const mockFindUnique = vi.mocked(prisma.user.findUnique)
 const mockCreate = vi.mocked(prisma.user.create)

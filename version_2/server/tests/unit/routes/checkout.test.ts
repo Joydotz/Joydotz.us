@@ -24,19 +24,20 @@
 
 import { describe, it, expect, vi, beforeAll, afterAll, beforeEach } from 'vitest'
 import { FastifyInstance } from 'fastify'
-import { buildApp } from '../../src/app'
-import { MockEventBus } from '../../src/events/MockEventBus'
-import { PRODUCTS } from '../../src/data/products'
+import { buildApp } from '../../../src/app'
+import { MockEventBus } from '../../../src/events/MockEventBus'
+import { PRODUCTS } from '../../../src/data/products'
+import { createMockAddress, createMockUser } from '../../shared/fixtures'
 
 // ── Mocks ─────────────────────────────────────────────────────────────────────
 
-vi.mock('../../src/services/authService', () => ({
+vi.mock('../../../src/services/authService', () => ({
   signupUser: vi.fn(),
   loginUser: vi.fn(),
   getUserById: vi.fn(),
 }))
 
-vi.mock('../../src/services/accountService', () => ({
+vi.mock('../../../src/services/accountService', () => ({
   setNewsletterOptIn: vi.fn(),
   getAddresses: vi.fn(),
   createAddress: vi.fn(),
@@ -46,28 +47,20 @@ vi.mock('../../src/services/accountService', () => ({
   getOrders: vi.fn(),
 }))
 
-vi.mock('../../src/services/orderService', () => ({
-  createOrder: vi.fn(),
-  getRecentPendingOrdersByUser: vi.fn(),
-  getOrdersByUser: vi.fn(),
-  getOrderById: vi.fn(),
-  getOrderByIdForWebhook: vi.fn(),
-  getOrderByStripeSessionId: vi.fn(),
-  updateOrderStatus: vi.fn(),
-  updateOrderStripeSessionId: vi.fn(),
-  shipOrder: vi.fn(),
-  markDelivered: vi.fn(),
-}))
+vi.mock('../../../src/services/orderService', async () => {
+  const { buildOrderServiceMock: buildMock } = await import('../../shared/mocks/orderService')
+  return buildMock()
+})
 
-vi.mock('../../src/services/stripeService', () => ({
+vi.mock('../../../src/services/stripeService', () => ({
   createCheckoutSession: vi.fn(),
-  constructWebhookEvent: vi.fn(),
+  constructStripeEvent: vi.fn(),
 }))
 
-import { loginUser } from '../../src/services/authService'
-import { getAddresses } from '../../src/services/accountService'
-import { createOrder, getRecentPendingOrdersByUser, updateOrderStripeSessionId } from '../../src/services/orderService'
-import { createCheckoutSession } from '../../src/services/stripeService'
+import { loginUser } from '../../../src/services/authService'
+import { getAddresses } from '../../../src/services/accountService'
+import { createOrder, getRecentPendingOrdersByUser, updateOrderStripeSessionId } from '../../../src/services/orderService'
+import { createCheckoutSession } from '../../../src/services/stripeService'
 
 const mockLogin = vi.mocked(loginUser)
 const mockGetAddresses = vi.mocked(getAddresses)
@@ -76,27 +69,8 @@ const mockGetRecentPendingOrdersByUser = vi.mocked(getRecentPendingOrdersByUser)
 const mockCreateCheckoutSession = vi.mocked(createCheckoutSession)
 const mockUpdateOrderStripeSessionId = vi.mocked(updateOrderStripeSessionId)
 
-// ── Fixtures ──────────────────────────────────────────────────────────────────
-
-const MOCK_USER = {
-  id: 'user-abc-123',
-  email: 'test@example.com',
-  newsletterOptIn: false,
-  createdAt: new Date('2026-01-01'),
-}
-
-const MOCK_ADDRESS = {
-  id: 'addr-001',
-  userId: MOCK_USER.id,
-  line1: '969 Cox Rd',
-  line2: null,
-  city: 'Gastonia',
-  state: 'NC',
-  postal_code: '28054',
-  country: 'US',
-  isDefault: true,
-  createdAt: new Date('2026-01-01'),
-}
+const MOCK_USER = createMockUser()
+const MOCK_ADDRESS = createMockAddress(MOCK_USER.id)
 
 const MOCK_ORDER = {
   id: 'order-001',

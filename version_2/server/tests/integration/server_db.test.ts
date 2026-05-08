@@ -1,30 +1,9 @@
 /**
- * orderService integration tests
+ * This file specifically tests the server - database flow.
  *
  * Runs against the real test database (joydotz_test on port 5434).
  * Every test starts with a clean database — all tables are wiped in
  * beforeEach so tests are fully isolated from one another.
- *
- * Unlike the unit tests, these tests verify the full round-trip:
- * data written by the service is actually persisted and can be read
- * back with the correct shape, relations, and field values.
- *
- * Covered:
- *   createOrder          — persists order + items in one transaction;
- *                          verifies nested relations are returned;
- *                          verifies price/name snapshot is stored correctly
- *   getOrdersByUser      — returns only orders belonging to the requesting
- *                          user; orders are newest-first; includes items
- *                          and address
- *   getOrderById         — returns order with correct relations when userId
- *                          matches; returns null for a different user's order
- *   getOrderByStripeSessionId — returns correct order by session ID;
- *                          returns null for unknown session
- *   updateOrderStatus    — transitions through PAID, SHIPPED, CANCELLED,
- *                          REFUNDED; verifies persisted status; idempotent
- *   shipOrder            — sets SHIPPED status, trackingNumber, and
- *                          shippedAt in one update
- *   markDelivered        — sets DELIVERED status and deliveredAt timestamp
  */
 
 import { describe, it, expect, beforeEach, afterAll } from 'vitest'
@@ -327,7 +306,7 @@ describe('getOrderById', () => {
 // ─────────────────────────────────────────────────────────────────────────────
 // getOrderByStripeSessionId
 //
-// Used by the webhook handler to look up an order when Stripe fires a
+// Used by the Stripe events handler to look up an order when Stripe fires a
 // checkout.session.completed event. The session ID is the only identifier
 // Stripe provides in the event payload.
 // ─────────────────────────────────────────────────────────────────────────────
@@ -361,7 +340,7 @@ describe('getOrderByStripeSessionId', () => {
 // ─────────────────────────────────────────────────────────────────────────────
 // updateOrderStatus
 //
-// Transitions an order to any valid status. The webhook handler uses this to
+// Transitions an order to any valid status. The Stripe events handler uses this to
 // mark orders PAID. The admin uses it for CANCELLED and REFUNDED.
 // Applying the same status twice (idempotency) does not throw.
 // ─────────────────────────────────────────────────────────────────────────────

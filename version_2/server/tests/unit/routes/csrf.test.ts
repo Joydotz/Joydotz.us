@@ -11,15 +11,15 @@
 
 import { describe, it, expect, vi, beforeAll, afterAll, beforeEach } from 'vitest'
 import { FastifyInstance } from 'fastify'
-import { buildApp } from '../../src/app'
+import { buildApp } from '../../../src/app'
 
 // ── Mocks ─────────────────────────────────────────────────────────────────────
 
-vi.mock('../../src/services/emailService', () => ({
+vi.mock('../../../src/services/emailService', () => ({
   saveEmail: vi.fn().mockResolvedValue({ created: true }),
 }))
 
-vi.mock('../../src/services/authService', () => ({
+vi.mock('../../../src/services/authService', () => ({
   signupUser: vi.fn(),
   loginUser: vi.fn(),
   getUserById: vi.fn(),

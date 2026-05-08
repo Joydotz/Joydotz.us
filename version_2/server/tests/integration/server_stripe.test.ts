@@ -1,9 +1,7 @@
 /**
- * stripeService integration tests
+ * This file tests the server - Stripe integration.
  *
- * These tests hit real Stripe test-mode behavior (no SDK mocks).
- * They are opt-in and only run when:
- *   RUN_STRIPE_INTEGRATION=1
+ * Tests only run when Stripe env is valid:
  *   STRIPE_SECRET_KEY is a non-placeholder key
  *   STRIPE_WEBHOOK_SECRET is a non-placeholder secret
  *   PRODUCTS contains at least one valid Stripe price_... id
@@ -11,12 +9,11 @@
 
 import { describe, it, expect } from 'vitest'
 import Stripe from 'stripe'
-import { constructWebhookEvent, createCheckoutSession } from '../../src/services/stripeService'
+import { constructStripeEvent, createCheckoutSession } from '../../src/services/stripeService'
 import { PRODUCTS } from '../../src/data/products'
 
-const runStripeIntegration = process.env.RUN_STRIPE_INTEGRATION === '1'
 const stripeSecretKey = process.env.STRIPE_SECRET_KEY ?? ''
-const stripeWebhookSecret = process.env.STRIPE_WEBHOOK_SECRET ?? ''
+const stripeEventsSecret = process.env.STRIPE_WEBHOOK_SECRET ?? ''
 const frontendOrigin = process.env.FRONTEND_ORIGIN ?? 'http://localhost:5173'
 
 const firstStripePriceId =
@@ -24,12 +21,11 @@ const firstStripePriceId =
 
 const hasRealStripeKey =
   stripeSecretKey.startsWith('sk_test_') && stripeSecretKey !== 'sk_test_placeholder'
-const hasRealWebhookSecret =
-  stripeWebhookSecret.startsWith('whsec_') && stripeWebhookSecret !== 'whsec_test_placeholder'
+const hasRealStripeEventsSecret =
+  stripeEventsSecret.startsWith('whsec_') && stripeEventsSecret !== 'whsec_test_placeholder'
 const hasCatalogStripePrice = firstStripePriceId.startsWith('price_')
 
-const shouldRun =
-  runStripeIntegration && hasRealStripeKey && hasRealWebhookSecret && hasCatalogStripePrice
+const shouldRun = hasRealStripeKey && hasRealStripeEventsSecret && hasCatalogStripePrice
 
 describe.runIf(shouldRun)('stripeService integration (real Stripe)', () => {
   it('creates a real Checkout Session in Stripe test mode', async () => {
@@ -142,7 +138,7 @@ describe.runIf(shouldRun)('stripeService integration (real Stripe)', () => {
     expect(first.sessionId).not.toBe(second.sessionId)
   })
 
-  it('verifies a valid Stripe webhook signature and rejects invalid signatures', () => {
+  it('verifies a valid Stripe events signature and rejects invalid signatures', () => {
     const payload = {
       id: 'evt_integration_001',
       type: 'checkout.session.completed',
@@ -152,10 +148,10 @@ describe.runIf(shouldRun)('stripeService integration (real Stripe)', () => {
 
     const validSignature = Stripe.webhooks.generateTestHeaderString({
       payload: rawBody.toString(),
-      secret: stripeWebhookSecret,
+      secret: stripeEventsSecret,
     })
 
-    const event = constructWebhookEvent(rawBody, validSignature, stripeWebhookSecret)
+    const event = constructStripeEvent(rawBody, validSignature, stripeEventsSecret)
     expect(event.id).toBe('evt_integration_001')
     expect(event.type).toBe('checkout.session.completed')
 
@@ -165,7 +161,7 @@ describe.runIf(shouldRun)('stripeService integration (real Stripe)', () => {
     })
 
     expect(() =>
-      constructWebhookEvent(rawBody, invalidSignature, stripeWebhookSecret),
+      constructStripeEvent(rawBody, invalidSignature, stripeEventsSecret),
     ).toThrow()
   })
 
@@ -181,12 +177,12 @@ describe.runIf(shouldRun)('stripeService integration (real Stripe)', () => {
     const oldTimestamp = Math.floor(Date.now() / 1000) - 3600
     const oldSignature = Stripe.webhooks.generateTestHeaderString({
       payload: rawBody.toString(),
-      secret: stripeWebhookSecret,
+      secret: stripeEventsSecret,
       timestamp: oldTimestamp,
     })
 
     expect(() =>
-      constructWebhookEvent(rawBody, oldSignature, stripeWebhookSecret),
+      constructStripeEvent(rawBody, oldSignature, stripeEventsSecret),
     ).toThrow()
   })
 
@@ -200,7 +196,7 @@ describe.runIf(shouldRun)('stripeService integration (real Stripe)', () => {
 
     const signature = Stripe.webhooks.generateTestHeaderString({
       payload: originalRawBody.toString(),
-      secret: stripeWebhookSecret,
+      secret: stripeEventsSecret,
     })
 
     const tamperedPayload = {
@@ -210,7 +206,7 @@ describe.runIf(shouldRun)('stripeService integration (real Stripe)', () => {
     const tamperedRawBody = Buffer.from(JSON.stringify(tamperedPayload))
 
     expect(() =>
-      constructWebhookEvent(tamperedRawBody, signature, stripeWebhookSecret),
+      constructStripeEvent(tamperedRawBody, signature, stripeEventsSecret),
     ).toThrow()
   })
 })

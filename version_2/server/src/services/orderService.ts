@@ -57,7 +57,7 @@ export async function getOrderById(orderId: string, userId: string) {
   })
 }
 
-export async function getOrderByIdForWebhook(orderId: string) {
+export async function getOrderByIdForStripeEvent(orderId: string) {
   return prisma.order.findUnique({
     where: { id: orderId },
     include: { items: true, address: true, user: { select: { email: true } } },

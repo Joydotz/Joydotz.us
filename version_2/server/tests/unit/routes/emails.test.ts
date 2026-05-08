@@ -1,13 +1,13 @@
 import { describe, it, expect, vi, beforeAll, afterAll, beforeEach } from 'vitest'
 import { FastifyInstance } from 'fastify'
-import { buildApp } from '../../src/app'
+import { buildApp } from '../../../src/app'
 
 // Mock the email service so tests never touch the database
-vi.mock('../../src/services/emailService', () => ({
+vi.mock('../../../src/services/emailService', () => ({
   saveEmail: vi.fn().mockResolvedValue({ created: true }),
 }))
 
-import { saveEmail } from '../../src/services/emailService'
+import { saveEmail } from '../../../src/services/emailService'
 
 const mockSaveEmail = vi.mocked(saveEmail)
 

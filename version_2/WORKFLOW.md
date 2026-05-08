@@ -49,7 +49,7 @@ npx vitest run
 - **Stack**: Fastify v4, Prisma v7 + @prisma/adapter-pg, Vitest, KafkaJS, Stripe
 - **Test database**: joydotz_test on port 5434 — never use the dev database in tests
 - **Event system**: All side effects (emails, notifications) go through `EventBus`.
-  Routes and webhook handlers receive an `EventBus` instance via dependency
+  Routes and stripe event handlers receive an `EventBus` instance via dependency
   injection. Tests always use `MockEventBus`.
 - **CSRF**: All state-changing routes are protected. Tests use `skipCsrf: true`
   via `buildApp({ skipCsrf: true })`.
@@ -62,6 +62,6 @@ npx vitest run
 - **Order status**: PENDING → PAID → SHIPPED → DELIVERED. Also FAILED,
   CANCELLED, REFUNDED.
 - **Stripe**: `stripeService.ts` is the only file that imports the Stripe SDK.
-  Webhook signature verification is mandatory — never skip it.
+  Stripe Event signature verification is mandatory — never skip it.
 - **Kafka**: `KafkaEventBus` publishes to the `order-events` topic.
   `KafkaWorker` consumes it and dispatches to handlers in `src/events/handlers.ts`.

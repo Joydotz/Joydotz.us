@@ -13,17 +13,18 @@
 
 import { describe, it, expect, vi, beforeAll, afterAll, beforeEach } from 'vitest'
 import { FastifyInstance } from 'fastify'
-import { buildApp } from '../../src/app'
+import { buildApp } from '../../../src/app'
+import { createMockUser } from '../../shared/fixtures'
 
 // ── Mocks ─────────────────────────────────────────────────────────────────────
 
-vi.mock('../../src/services/authService', () => ({
+vi.mock('../../../src/services/authService', () => ({
   signupUser: vi.fn(),
   loginUser: vi.fn(),
   getUserById: vi.fn(),
 }))
 
-vi.mock('../../src/services/accountService', () => ({
+vi.mock('../../../src/services/accountService', () => ({
   setNewsletterOptIn: vi.fn(),
   getAddresses: vi.fn(),
   createAddress: vi.fn(),
@@ -32,20 +33,12 @@ vi.mock('../../src/services/accountService', () => ({
   setDefaultAddress: vi.fn(),
 }))
 
-vi.mock('../../src/services/orderService', () => ({
-  getRecentPendingOrdersByUser: vi.fn(),
-  getOrdersByUser: vi.fn(),
-  getOrderById: vi.fn(),
-  getOrderByIdForWebhook: vi.fn(),
-  createOrder: vi.fn(),
-  getOrderByStripeSessionId: vi.fn(),
-  updateOrderStatus: vi.fn(),
-  updateOrderStripeSessionId: vi.fn(),
-  shipOrder: vi.fn(),
-  markDelivered: vi.fn(),
-}))
+vi.mock('../../../src/services/orderService', async () => {
+  const { buildOrderServiceMock: buildMock } = await import('../../shared/mocks/orderService')
+  return buildMock()
+})
 
-import { loginUser } from '../../src/services/authService'
+import { loginUser } from '../../../src/services/authService'
 import {
   setNewsletterOptIn,
   getAddresses,
@@ -53,8 +46,8 @@ import {
   updateAddress,
   deleteAddress,
   setDefaultAddress,
-} from '../../src/services/accountService'
-import { getOrdersByUser } from '../../src/services/orderService'
+} from '../../../src/services/accountService'
+import { getOrdersByUser } from '../../../src/services/orderService'
 
 const mockLogin = vi.mocked(loginUser)
 const mockSetNewsletter = vi.mocked(setNewsletterOptIn)
@@ -67,12 +60,7 @@ const mockGetOrders = vi.mocked(getOrdersByUser)
 
 // ── Fixtures ──────────────────────────────────────────────────────────────────
 
-const MOCK_USER = {
-  id: 'user-abc-123',
-  email: 'test@example.com',
-  newsletterOptIn: false,
-  createdAt: new Date('2026-01-01'),
-}
+const MOCK_USER = createMockUser()
 
 const MOCK_ADDRESS = {
   id: 'addr-001',

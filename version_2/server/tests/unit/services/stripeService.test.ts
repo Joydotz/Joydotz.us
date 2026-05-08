@@ -12,7 +12,7 @@
  *                           on API errors; throws when Stripe returns a null
  *                           url; handles empty line items
  *
- *   constructWebhookEvent — happy path returns parsed Stripe event; throws
+ *   constructStripeEvent — happy path returns parsed Stripe event; throws
  *                           on invalid signature; throws on tampered payload;
  *                           throws on wrong secret; throws on empty signature;
  *                           passes rawBody as Buffer to the SDK unchanged
@@ -48,8 +48,8 @@ vi.mock('stripe', () => {
 
 import {
   createCheckoutSession,
-  constructWebhookEvent,
-} from '../../src/services/stripeService'
+  constructStripeEvent,
+} from '../../../src/services/stripeService'
 
 // ── Fixtures ──────────────────────────────────────────────────────────────────
 
@@ -95,7 +95,7 @@ beforeEach(() => {
 //
 // Wraps stripe.checkout.sessions.create(). The session is created in payment
 // mode with the provided line items, success/cancel URLs, and metadata.
-// Metadata embeds orderId and userId so the webhook handler can identify
+// Metadata embeds orderId and userId so the Stripe events handler can identify
 // which order to update when Stripe fires checkout.session.completed.
 //
 // Returns sessionId and url. The url is the Stripe-hosted payment page the
@@ -223,10 +223,10 @@ describe('createCheckoutSession', () => {
 })
 
 // ─────────────────────────────────────────────────────────────────────────────
-// constructWebhookEvent
+// constructStripeEvent
 //
 // Wraps stripe.webhooks.constructEvent(). Verifies the Stripe-Signature header
-// against the raw request body bytes and the webhook signing secret.
+// against the raw request body bytes and the Stripe events signing secret.
 //
 // Must receive the raw Buffer body — not parsed JSON. Stripe's signature
 // algorithm hashes the exact bytes Stripe sent. Re-serialising the JSON will
@@ -234,10 +234,10 @@ describe('createCheckoutSession', () => {
 // legitimate events.
 //
 // Throws a Stripe.errors.StripeSignatureVerificationError for any signature
-// mismatch. The webhook route must catch this and return 400.
+// mismatch. The Stripe events route must catch this and return 400.
 // ─────────────────────────────────────────────────────────────────────────────
 
-describe('constructWebhookEvent', () => {
+describe('constructStripeEvent', () => {
   const RAW_BODY = Buffer.from(JSON.stringify(STRIPE_EVENT))
   const VALID_SIGNATURE = 't=1234567890,v1=abc123'
   const WEBHOOK_SECRET = 'whsec_test_secret'
@@ -245,7 +245,7 @@ describe('constructWebhookEvent', () => {
   it('returns the parsed Stripe event when the signature is valid', () => {
     mockConstructEvent.mockReturnValue(STRIPE_EVENT)
 
-    const event = constructWebhookEvent(RAW_BODY, VALID_SIGNATURE, WEBHOOK_SECRET)
+    const event = constructStripeEvent(RAW_BODY, VALID_SIGNATURE, WEBHOOK_SECRET)
 
     expect(event.type).toBe('checkout.session.completed')
     expect(event.id).toBe('evt_test_abc123')
@@ -254,7 +254,7 @@ describe('constructWebhookEvent', () => {
   it('passes the raw Buffer body to the Stripe SDK unchanged', () => {
     mockConstructEvent.mockReturnValue(STRIPE_EVENT)
 
-    constructWebhookEvent(RAW_BODY, VALID_SIGNATURE, WEBHOOK_SECRET)
+    constructStripeEvent(RAW_BODY, VALID_SIGNATURE, WEBHOOK_SECRET)
 
     expect(mockConstructEvent).toHaveBeenCalledWith(
       RAW_BODY,
@@ -269,7 +269,7 @@ describe('constructWebhookEvent', () => {
     })
 
     expect(() =>
-      constructWebhookEvent(RAW_BODY, 'invalid-signature', WEBHOOK_SECRET),
+      constructStripeEvent(RAW_BODY, 'invalid-signature', WEBHOOK_SECRET),
     ).toThrow()
   })
 
@@ -279,17 +279,17 @@ describe('constructWebhookEvent', () => {
     })
 
     expect(() =>
-      constructWebhookEvent(RAW_BODY, '', WEBHOOK_SECRET),
+      constructStripeEvent(RAW_BODY, '', WEBHOOK_SECRET),
     ).toThrow()
   })
 
-  it('throws when the webhook secret is wrong', () => {
+  it('throws when the Stripe events secret is wrong', () => {
     mockConstructEvent.mockImplementation(() => {
       throw new Error('No signatures found matching the expected signature for payload')
     })
 
     expect(() =>
-      constructWebhookEvent(RAW_BODY, VALID_SIGNATURE, 'wrong-secret'),
+      constructStripeEvent(RAW_BODY, VALID_SIGNATURE, 'wrong-secret'),
     ).toThrow()
   })
 
@@ -301,7 +301,7 @@ describe('constructWebhookEvent', () => {
     const tamperedBody = Buffer.from('{"type":"payment_intent.succeeded","data":{}}')
 
     expect(() =>
-      constructWebhookEvent(tamperedBody, VALID_SIGNATURE, WEBHOOK_SECRET),
+      constructStripeEvent(tamperedBody, VALID_SIGNATURE, WEBHOOK_SECRET),
     ).toThrow()
   })
 })

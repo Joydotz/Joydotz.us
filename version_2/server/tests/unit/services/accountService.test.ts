@@ -11,7 +11,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 
 // ── Mock Prisma ───────────────────────────────────────────────────────────────
 
-vi.mock('../../src/db/client', () => ({
+vi.mock('../../../src/db/client', () => ({
   prisma: {
     user: {
       update: vi.fn(),
@@ -32,7 +32,7 @@ vi.mock('../../src/db/client', () => ({
   },
 }))
 
-import { prisma } from '../../src/db/client'
+import { prisma } from '../../../src/db/client'
 import {
   setNewsletterOptIn,
   getAddresses,
@@ -40,7 +40,7 @@ import {
   updateAddress,
   deleteAddress,
   setDefaultAddress,
-} from '../../src/services/accountService'
+} from '../../../src/services/accountService'
 
 const mockUserUpdate = vi.mocked(prisma.user.update)
 const mockSubscriberUpsert = vi.mocked(prisma.emailSubscriber.upsert)
