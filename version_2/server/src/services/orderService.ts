@@ -89,6 +89,18 @@ export async function updateOrderStatus(orderId: string, status: 'PENDING' | 'PA
   })
 }
 
+/**
+ * Hosted Checkout succeeded (Stripe says paid). Atomically PENDING → PAID only once.
+ * Used by webhooks and by GET /api/checkout/order-by-session so local dev works without stripe listen.
+ */
+export async function tryMarkOrderPaidAfterCheckout(orderId: string): Promise<boolean> {
+  const result = await prisma.order.updateMany({
+    where: { id: orderId, status: 'PENDING' },
+    data: { status: 'PAID' },
+  })
+  return result.count === 1
+}
+
 /** Replace placeholder session id with the real Stripe Checkout Session id (`cs_...`) after sessions.create succeeds. */
 export async function updateOrderStripeSessionId(orderId: string, stripeSessionId: string) {
   return prisma.order.update({

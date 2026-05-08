@@ -2,6 +2,7 @@ import { FastifyInstance, FastifyReply } from 'fastify'
 import { z } from 'zod'
 import { signupUser, loginUser, getUserById } from '../services/authService.js'
 import { authenticate } from '../middleware/authenticate.js'
+import { csrfProtectionForMutations } from '../middleware/csrfForMutations.js'
 import { safe } from '../lib/validation.js'
 
 const signupSchema = z.object({
@@ -22,7 +23,8 @@ function setCookie(reply: FastifyReply, token: string) {
   // Session cookie: no maxAge = expires when browser closes
   reply.setCookie(COOKIE_NAME, token, {
     httpOnly: true,
-    sameSite: 'strict',
+    // Match CSRF cookie — Strict strips cookies on return navigations from hosted Stripe Checkout.
+    sameSite: 'lax',
     secure: process.env.NODE_ENV === 'production',
     path: '/',
   })
@@ -34,7 +36,7 @@ interface AuthRouteOptions {
 
 export async function authRoutes(app: FastifyInstance, opts: AuthRouteOptions = {}) {
   if (!opts.skipCsrf) {
-    app.addHook('preHandler', app.csrfProtection as any) // type mismatch between @fastify/csrf-protection v6 and Fastify v4 hook overloads
+    app.addHook('preHandler', csrfProtectionForMutations(app))
   }
 
   app.post('/api/auth/signup', {

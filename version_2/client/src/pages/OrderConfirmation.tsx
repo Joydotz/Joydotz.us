@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useSearchParams } from 'react-router-dom'
 import { useCart } from '../context/CartContext'
-import { fetchOrder, type Order } from '../lib/api'
+import { fetchOrder, fetchOrderByCheckoutSession, type Order } from '../lib/api'
 
 const fmt = (cents: number) => `$${(cents / 100).toFixed(2)}`
 
@@ -17,23 +17,52 @@ const STATUS_LABEL: Record<Order['status'], string> = {
 
 export default function OrderConfirmation() {
   const { clearCart } = useCart()
+  const [searchParams] = useSearchParams()
+  const sessionId = searchParams.get('session_id')
+
   const [order, setOrder] = useState<Order | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(false)
 
   useEffect(() => {
-    const orderId = sessionStorage.getItem('joydotz_pending_order')
-    if (!orderId) { setLoading(false); setError(true); return }
+    let cancelled = false
 
-    fetchOrder(orderId)
-      .then((o) => {
-        setOrder(o)
-        clearCart()
-        sessionStorage.removeItem('joydotz_pending_order')
-      })
-      .catch(() => setError(true))
-      .finally(() => setLoading(false))
-  }, [])
+    async function load() {
+      try {
+        if (sessionId) {
+          const o = await fetchOrderByCheckoutSession(sessionId)
+          if (!cancelled) {
+            setOrder(o)
+            clearCart()
+            sessionStorage.removeItem('joydotz_pending_order')
+          }
+          return
+        }
+
+        const orderId = sessionStorage.getItem('joydotz_pending_order')
+        if (!orderId) {
+          setError(true)
+          return
+        }
+
+        const o = await fetchOrder(orderId)
+        if (!cancelled) {
+          setOrder(o)
+          clearCart()
+          sessionStorage.removeItem('joydotz_pending_order')
+        }
+      } catch {
+        if (!cancelled) setError(true)
+      } finally {
+        if (!cancelled) setLoading(false)
+      }
+    }
+
+    void load()
+    return () => {
+      cancelled = true
+    }
+  }, [sessionId, clearCart])
 
   // ── Loading ───────────────────────────────────────────────────────────────
   if (loading) {

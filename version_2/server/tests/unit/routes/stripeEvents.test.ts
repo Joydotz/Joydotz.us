@@ -36,6 +36,7 @@ import { createMockUser } from '../../shared/fixtures'
 vi.mock('../../../src/services/stripeService', () => ({
   createCheckoutSession: vi.fn(),
   constructStripeEvent: vi.fn(),
+  retrieveCheckoutSession: vi.fn(),
 }))
 
 vi.mock('../../../src/services/orderService', async () => {
@@ -60,11 +61,17 @@ vi.mock('../../../src/services/accountService', () => ({
 }))
 
 import { constructStripeEvent } from '../../../src/services/stripeService'
-import { getOrderByIdForStripeEvent, getOrderByStripeSessionId, updateOrderStatus } from '../../../src/services/orderService'
+import {
+  getOrderByIdForStripeEvent,
+  getOrderByStripeSessionId,
+  tryMarkOrderPaidAfterCheckout,
+  updateOrderStatus,
+} from '../../../src/services/orderService'
 
 const mockConstructEvent = vi.mocked(constructStripeEvent)
 const mockGetOrderBySession = vi.mocked(getOrderByStripeSessionId)
 const mockGetOrderByIdForStripeEvent = vi.mocked(getOrderByIdForStripeEvent)
+const mockTryMarkOrderPaidAfterCheckout = vi.mocked(tryMarkOrderPaidAfterCheckout)
 const mockUpdateOrderStatus = vi.mocked(updateOrderStatus)
 
 // ── Fixtures ──────────────────────────────────────────────────────────────────
@@ -198,8 +205,10 @@ describe('signature verification', () => {
 describe('checkout.session.completed', () => {
   it('returns 200 and updates order to PAID', async () => {
     mockConstructEvent.mockReturnValue(SESSION_COMPLETED_EVENT as any)
-    mockGetOrderBySession.mockResolvedValueOnce(MOCK_ORDER_PENDING as any)
-    mockUpdateOrderStatus.mockResolvedValueOnce({ ...MOCK_ORDER_PENDING, status: 'PAID' } as any)
+    mockGetOrderBySession
+      .mockResolvedValueOnce(MOCK_ORDER_PENDING as any)
+      .mockResolvedValueOnce(MOCK_ORDER_PAID as any)
+    mockTryMarkOrderPaidAfterCheckout.mockResolvedValueOnce(true)
 
     const res = await app.inject({
       method: 'POST',
@@ -209,13 +218,16 @@ describe('checkout.session.completed', () => {
     })
 
     expect(res.statusCode).toBe(200)
-    expect(mockUpdateOrderStatus).toHaveBeenCalledWith(ORDER_ID, 'PAID')
+    expect(mockTryMarkOrderPaidAfterCheckout).toHaveBeenCalledWith(ORDER_ID)
+    expect(mockUpdateOrderStatus).not.toHaveBeenCalled()
   })
 
   it('publishes ORDER_PAID event to Kafka via EventBus', async () => {
     mockConstructEvent.mockReturnValue(SESSION_COMPLETED_EVENT as any)
-    mockGetOrderBySession.mockResolvedValueOnce(MOCK_ORDER_PENDING as any)
-    mockUpdateOrderStatus.mockResolvedValueOnce({ ...MOCK_ORDER_PENDING, status: 'PAID' } as any)
+    mockGetOrderBySession
+      .mockResolvedValueOnce(MOCK_ORDER_PENDING as any)
+      .mockResolvedValueOnce(MOCK_ORDER_PAID as any)
+    mockTryMarkOrderPaidAfterCheckout.mockResolvedValueOnce(true)
 
     await app.inject({
       method: 'POST',
@@ -233,6 +245,7 @@ describe('checkout.session.completed', () => {
   it('returns 200 immediately when order is already PAID (idempotency)', async () => {
     mockConstructEvent.mockReturnValue(SESSION_COMPLETED_EVENT as any)
     mockGetOrderBySession.mockResolvedValueOnce(MOCK_ORDER_PAID as any)
+    mockTryMarkOrderPaidAfterCheckout.mockResolvedValueOnce(false)
 
     const res = await app.inject({
       method: 'POST',
@@ -242,6 +255,7 @@ describe('checkout.session.completed', () => {
     })
 
     expect(res.statusCode).toBe(200)
+    expect(mockTryMarkOrderPaidAfterCheckout).toHaveBeenCalledWith(ORDER_ID)
     expect(mockUpdateOrderStatus).not.toHaveBeenCalled()
     expect(eventBus.eventsOf('ORDER_PAID')).toHaveLength(0)
   })
@@ -258,6 +272,7 @@ describe('checkout.session.completed', () => {
     })
 
     expect(res.statusCode).toBe(200)
+    expect(mockTryMarkOrderPaidAfterCheckout).not.toHaveBeenCalled()
     expect(mockUpdateOrderStatus).not.toHaveBeenCalled()
   })
 })

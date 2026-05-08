@@ -1,5 +1,5 @@
 import { createContext, useContext, useEffect, useState, ReactNode } from 'react'
-import { getMe, logout as apiLogout, type User } from '../lib/api'
+import { getMe, logout as apiLogout, preloadCsrf, type User } from '../lib/api'
 
 interface AuthContextValue {
   user: User | null
@@ -15,6 +15,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
+    void preloadCsrf()
     getMe()
       .then(setUser)
       .finally(() => setLoading(false))

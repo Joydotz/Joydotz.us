@@ -2,6 +2,7 @@ import { FastifyInstance } from 'fastify'
 import { z } from 'zod'
 import { saveEmail } from '../services/emailService'
 import { safe } from '../lib/validation.js'
+import { csrfProtectionForMutations } from '../middleware/csrfForMutations.js'
 
 const bodySchema = z.object({
   email: safe(z.string().email().max(255)),
@@ -18,7 +19,7 @@ export async function emailRoutes(
   opts: EmailRouteOptions,
 ) {
   if (!opts.skipCsrf) {
-    app.addHook('preHandler', app.csrfProtection as any) // type mismatch between @fastify/csrf-protection v6 and Fastify v4 hook overloads
+    app.addHook('preHandler', csrfProtectionForMutations(app))
   }
 
   app.post(

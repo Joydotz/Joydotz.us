@@ -46,14 +46,8 @@ export default function App() {
                   </ProtectedRoute>
                 }
               />
-              <Route
-                path="/order-confirmation"
-                element={
-                  <ProtectedRoute>
-                    <OrderConfirmation />
-                  </ProtectedRoute>
-                }
-              />
+              {/* Public: Stripe redirects here before cookies/auth may be ready; loads order via session_id query */}
+              <Route path="/order-confirmation" element={<OrderConfirmation />} />
             </Route>
           </Routes>
         </CartProvider>

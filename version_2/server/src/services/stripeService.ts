@@ -35,6 +35,11 @@ export async function createCheckoutSession(
   return { sessionId: session.id, url: session.url }
 }
 
+/** Used to verify return from hosted Checkout before exposing order details (no JWT required). */
+export async function retrieveCheckoutSession(sessionId: string) {
+  return stripe.checkout.sessions.retrieve(sessionId)
+}
+
 export function constructStripeEvent(
   rawBody: Buffer,
   signature: string,

@@ -21,6 +21,8 @@
  *                          create-session can reuse equivalent in-flight intents
  *   updateOrderStripeSessionId — replaces placeholder session id with real `cs_...`
  *                          after Checkout Session creation succeeds
+ *   tryMarkOrderPaidAfterCheckout — atomic PENDING→PAID; returns whether this
+ *                          call performed the transition (webhook vs browser)
  *   updateOrderStatus    — transitions an order to PAID, SHIPPED, DELIVERED,
  *                          CANCELLED, or REFUNDED
  *   shipOrder            — sets SHIPPED status, trackingNumber, and shippedAt
@@ -52,6 +54,7 @@ vi.mock('../../../src/db/client', () => ({
       findFirst: vi.fn(),
       findUnique: vi.fn(),
       update: vi.fn(),
+      updateMany: vi.fn(),
     },
   },
 }))
@@ -65,6 +68,7 @@ import {
   getOrderByStripeSessionId,
   getRecentPendingOrdersByUser,
   updateOrderStripeSessionId,
+  tryMarkOrderPaidAfterCheckout,
   updateOrderStatus,
   shipOrder,
   markDelivered,
@@ -75,6 +79,7 @@ const mockFindMany = vi.mocked(prisma.order.findMany)
 const mockFindFirst = vi.mocked(prisma.order.findFirst)
 const mockFindUnique = vi.mocked(prisma.order.findUnique)
 const mockUpdate   = vi.mocked(prisma.order.update)
+const mockUpdateMany = vi.mocked(prisma.order.updateMany)
 
 // ── Fixtures ──────────────────────────────────────────────────────────────────
 
@@ -357,13 +362,41 @@ describe('updateOrderStripeSessionId', () => {
 })
 
 // ─────────────────────────────────────────────────────────────────────────────
+// tryMarkOrderPaidAfterCheckout
+//
+// Single conditional update PENDING→PAID so webhook and thank-you GET reconcile
+// without double ORDER_PAID side effects.
+// ─────────────────────────────────────────────────────────────────────────────
+
+describe('tryMarkOrderPaidAfterCheckout', () => {
+  it('returns true when one row transitioned from PENDING to PAID', async () => {
+    mockUpdateMany.mockResolvedValue({ count: 1 } as any)
+
+    const transitioned = await tryMarkOrderPaidAfterCheckout(ORDER_ID)
+
+    expect(transitioned).toBe(true)
+    expect(mockUpdateMany).toHaveBeenCalledWith({
+      where: { id: ORDER_ID, status: OrderStatus.PENDING },
+      data: { status: OrderStatus.PAID },
+    })
+  })
+
+  it('returns false when order was already PAID or not PENDING', async () => {
+    mockUpdateMany.mockResolvedValue({ count: 0 } as any)
+
+    const transitioned = await tryMarkOrderPaidAfterCheckout(ORDER_ID)
+
+    expect(transitioned).toBe(false)
+  })
+})
+
+// ─────────────────────────────────────────────────────────────────────────────
 // updateOrderStatus
 //
-// Transitions an order to a new status. Called by the Stripe events handler to mark
-// an order PAID on payment success, and REFUNDED when a charge.refunded event
-// arrives. The update is idempotent — applying the same status twice has no
-// side effects, which is important because Stripe may deliver the same event
-// event more than once.
+// Transitions an order to a new status. Used for REFUNDED and admin flows;
+// PAID from Checkout uses tryMarkOrderPaidAfterCheckout for idempotency across
+// webhook + browser. Applying the same status twice via updateOrderStatus has
+// no semantic issue when callers guard appropriately.
 // ─────────────────────────────────────────────────────────────────────────────
 
 describe('updateOrderStatus', () => {

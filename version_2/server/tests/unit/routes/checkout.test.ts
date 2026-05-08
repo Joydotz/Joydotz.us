@@ -55,19 +55,29 @@ vi.mock('../../../src/services/orderService', async () => {
 vi.mock('../../../src/services/stripeService', () => ({
   createCheckoutSession: vi.fn(),
   constructStripeEvent: vi.fn(),
+  retrieveCheckoutSession: vi.fn(),
 }))
 
 import { loginUser } from '../../../src/services/authService'
 import { getAddresses } from '../../../src/services/accountService'
-import { createOrder, getRecentPendingOrdersByUser, updateOrderStripeSessionId } from '../../../src/services/orderService'
-import { createCheckoutSession } from '../../../src/services/stripeService'
+import {
+  createOrder,
+  getOrderByStripeSessionId,
+  getRecentPendingOrdersByUser,
+  tryMarkOrderPaidAfterCheckout,
+  updateOrderStripeSessionId,
+} from '../../../src/services/orderService'
+import { createCheckoutSession, retrieveCheckoutSession } from '../../../src/services/stripeService'
 
 const mockLogin = vi.mocked(loginUser)
 const mockGetAddresses = vi.mocked(getAddresses)
 const mockCreateOrder = vi.mocked(createOrder)
 const mockGetRecentPendingOrdersByUser = vi.mocked(getRecentPendingOrdersByUser)
 const mockCreateCheckoutSession = vi.mocked(createCheckoutSession)
+const mockRetrieveCheckoutSession = vi.mocked(retrieveCheckoutSession)
 const mockUpdateOrderStripeSessionId = vi.mocked(updateOrderStripeSessionId)
+const mockGetOrderByStripeSessionId = vi.mocked(getOrderByStripeSessionId)
+const mockTryMarkOrderPaidAfterCheckout = vi.mocked(tryMarkOrderPaidAfterCheckout)
 
 const MOCK_USER = createMockUser()
 const MOCK_ADDRESS = createMockAddress(MOCK_USER.id)
@@ -91,6 +101,17 @@ const MOCK_ORDER = {
       imageUrl: null,
     },
   ],
+}
+
+const MOCK_ORDER_WITH_RELATIONS = {
+  ...MOCK_ORDER,
+  address: MOCK_ADDRESS,
+  user: { email: MOCK_USER.email },
+}
+
+const MOCK_ORDER_PAID_WITH_RELATIONS = {
+  ...MOCK_ORDER_WITH_RELATIONS,
+  status: 'PAID' as const,
 }
 
 // Mirrors exactly what the frontend sends at checkout
@@ -512,6 +533,130 @@ describe('duplicate checkout guard', () => {
 // has already been created in the database at this point — Stripe's own
 // PaymentIntent expiry (24 hours) and our retry flow handle cleanup.
 // ─────────────────────────────────────────────────────────────────────────────
+
+// ─────────────────────────────────────────────────────────────────────────────
+// GET /api/checkout/order-by-session — thank-you page after hosted Checkout
+// ─────────────────────────────────────────────────────────────────────────────
+
+describe('GET /api/checkout/order-by-session', () => {
+  it('returns 400 when session_id is missing', async () => {
+    const res = await app.inject({ method: 'GET', url: '/api/checkout/order-by-session' })
+    expect(res.statusCode).toBe(400)
+  })
+
+  it('returns 400 when session_id has invalid shape', async () => {
+    const res = await app.inject({
+      method: 'GET',
+      url: '/api/checkout/order-by-session?session_id=not_a_session',
+    })
+    expect(res.statusCode).toBe(400)
+  })
+
+  it('returns 404 when Stripe retrieve fails', async () => {
+    mockRetrieveCheckoutSession.mockRejectedValueOnce(new Error('no such session'))
+
+    const res = await app.inject({
+      method: 'GET',
+      url: '/api/checkout/order-by-session?session_id=cs_test_xyz',
+    })
+
+    expect(res.statusCode).toBe(404)
+    expect(mockGetOrderByStripeSessionId).not.toHaveBeenCalled()
+  })
+
+  it('returns 404 when payment is not completed yet', async () => {
+    mockRetrieveCheckoutSession.mockResolvedValueOnce({
+      id: 'cs_test_xyz',
+      payment_status: 'unpaid',
+      metadata: { orderId: 'order-001' },
+    } as any)
+
+    const res = await app.inject({
+      method: 'GET',
+      url: '/api/checkout/order-by-session?session_id=cs_test_xyz',
+    })
+
+    expect(res.statusCode).toBe(404)
+    expect(mockGetOrderByStripeSessionId).not.toHaveBeenCalled()
+  })
+
+  it('returns 404 when metadata orderId is missing', async () => {
+    mockRetrieveCheckoutSession.mockResolvedValueOnce({
+      id: 'cs_test_xyz',
+      payment_status: 'paid',
+      metadata: {},
+    } as any)
+
+    const res = await app.inject({
+      method: 'GET',
+      url: '/api/checkout/order-by-session?session_id=cs_test_xyz',
+    })
+
+    expect(res.statusCode).toBe(404)
+  })
+
+  it('returns 404 when DB order id does not match Stripe metadata', async () => {
+    mockRetrieveCheckoutSession.mockResolvedValueOnce({
+      id: 'cs_test_xyz',
+      payment_status: 'paid',
+      metadata: { orderId: 'order-999' },
+    } as any)
+    mockGetOrderByStripeSessionId.mockResolvedValueOnce({
+      ...MOCK_ORDER_WITH_RELATIONS,
+      id: 'order-001',
+    } as any)
+
+    const res = await app.inject({
+      method: 'GET',
+      url: '/api/checkout/order-by-session?session_id=cs_test_xyz',
+    })
+
+    expect(res.statusCode).toBe(404)
+  })
+
+  it('returns 200 with order when Stripe paid and DB matches metadata', async () => {
+    mockRetrieveCheckoutSession.mockResolvedValueOnce({
+      id: 'cs_test_abc123',
+      payment_status: 'paid',
+      metadata: { orderId: 'order-001', userId: MOCK_USER.id },
+    } as any)
+    mockGetOrderByStripeSessionId
+      .mockResolvedValueOnce(MOCK_ORDER_WITH_RELATIONS as any)
+      .mockResolvedValueOnce(MOCK_ORDER_PAID_WITH_RELATIONS as any)
+    mockTryMarkOrderPaidAfterCheckout.mockResolvedValueOnce(true)
+
+    const res = await app.inject({
+      method: 'GET',
+      url: '/api/checkout/order-by-session?session_id=cs_test_abc123',
+    })
+
+    expect(res.statusCode).toBe(200)
+    expect(res.json().order.id).toBe('order-001')
+    expect(res.json().order.status).toBe('PAID')
+    expect(mockTryMarkOrderPaidAfterCheckout).toHaveBeenCalledWith('order-001')
+    expect(mockGetOrderByStripeSessionId).toHaveBeenCalledWith('cs_test_abc123')
+    expect(eventBus.eventsOf('ORDER_PAID')).toHaveLength(1)
+  })
+
+  it('does not call tryMark or publish when order is already PAID', async () => {
+    mockRetrieveCheckoutSession.mockResolvedValueOnce({
+      id: 'cs_test_abc123',
+      payment_status: 'paid',
+      metadata: { orderId: 'order-001', userId: MOCK_USER.id },
+    } as any)
+    mockGetOrderByStripeSessionId.mockResolvedValueOnce(MOCK_ORDER_PAID_WITH_RELATIONS as any)
+
+    const res = await app.inject({
+      method: 'GET',
+      url: '/api/checkout/order-by-session?session_id=cs_test_abc123',
+    })
+
+    expect(res.statusCode).toBe(200)
+    expect(res.json().order.status).toBe('PAID')
+    expect(mockTryMarkOrderPaidAfterCheckout).not.toHaveBeenCalled()
+    expect(eventBus.eventsOf('ORDER_PAID')).toHaveLength(0)
+  })
+})
 
 describe('Stripe errors', () => {
   it('returns 500 when Stripe API call fails', async () => {

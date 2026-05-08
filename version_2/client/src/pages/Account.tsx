@@ -23,6 +23,7 @@ export default function Account() {
 
   const [addresses, setAddresses] = useState<Address[]>([])
   const [orders, setOrders] = useState<Order[]>([])
+  const [accountLoadError, setAccountLoadError] = useState<string | null>(null)
   const [showAddForm, setShowAddForm] = useState(false)
   const [editingId, setEditingId] = useState<string | null>(null)
   const [deletingId, setDeletingId] = useState<string | null>(null)
@@ -30,8 +31,15 @@ export default function Account() {
   const [newsletterSaving, setNewsletterSaving] = useState(false)
 
   useEffect(() => {
-    fetchAddresses().then(setAddresses).catch(() => {})
-    fetchOrders().then(setOrders).catch(() => {})
+    ;(async () => {
+      try {
+        const [addrs, ords] = await Promise.all([fetchAddresses(), fetchOrders()])
+        setAddresses(addrs)
+        setOrders(ords)
+      } catch {
+        setAccountLoadError('Could not load addresses or orders. Try refreshing or signing in again.')
+      }
+    })()
   }, [])
 
   useEffect(() => {
@@ -89,6 +97,11 @@ export default function Account() {
 
   return (
     <div className="max-w-7xl mx-auto px-8 pt-12 pb-32">
+      {accountLoadError && (
+        <p className="mb-6 text-error text-sm font-body bg-error/10 border border-error/20 rounded-xl px-4 py-3">
+          {accountLoadError}
+        </p>
+      )}
       {/* Header */}
       <div className="flex items-center justify-between mb-12">
         <div className="flex items-center gap-3">

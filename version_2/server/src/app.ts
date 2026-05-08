@@ -51,7 +51,9 @@ export function buildApp(opts: AppOptions = {}) {
     sessionPlugin: '@fastify/cookie',
     cookieOpts: {
       httpOnly: true,
-      sameSite: 'strict',
+      // Lax so JWT + CSRF cookies survive top-level redirects back from Stripe Checkout (cross-site).
+      // Strict breaks post-payment return with Vite proxying `/api` on the dev SPA origin.
+      sameSite: 'lax',
       secure: process.env.NODE_ENV === 'production',
       path: '/',
     },

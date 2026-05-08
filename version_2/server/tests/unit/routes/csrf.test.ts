@@ -25,6 +25,15 @@ vi.mock('../../../src/services/authService', () => ({
   getUserById: vi.fn(),
 }))
 
+import { loginUser, getUserById } from '../../../src/services/authService'
+
+const MOCK_USER_FOR_ME = {
+  id: 'user-csrf-me',
+  email: 'csrf-me-test@example.com',
+  newsletterOptIn: false,
+  createdAt: new Date('2026-01-01'),
+}
+
 // ── Setup ─────────────────────────────────────────────────────────────────────
 
 let app: FastifyInstance
@@ -257,5 +266,36 @@ describe('CSRF exemption — GET requests', () => {
   it('GET /api/csrf-token itself passes without a CSRF token', async () => {
     const res = await app.inject({ method: 'GET', url: '/api/csrf-token' })
     expect(res.statusCode).toBe(200)
+  })
+
+  it('GET /api/auth/me passes without x-csrf-token when JWT cookie is present', async () => {
+    vi.mocked(loginUser).mockResolvedValueOnce(MOCK_USER_FOR_ME)
+    vi.mocked(getUserById).mockResolvedValueOnce(MOCK_USER_FOR_ME)
+
+    const { token, cookie: csrfSetCookie } = await getCsrfCredentials()
+    const csrfPair = csrfSetCookie.split(';')[0]
+
+    const loginRes = await app.inject({
+      method: 'POST',
+      url: '/api/auth/login',
+      headers: { cookie: csrfPair, 'x-csrf-token': token },
+      payload: { email: MOCK_USER_FOR_ME.email, password: 'password123' },
+    })
+    expect(loginRes.statusCode).toBe(200)
+
+    const raw = loginRes.headers['set-cookie']
+    const setCookies = Array.isArray(raw) ? raw : [raw]
+    const jwtLine = setCookies.find((s) => String(s).startsWith('token='))
+    const jwtPair = jwtLine?.split(';')[0]?.trim() ?? ''
+    expect(jwtPair.startsWith('token=')).toBe(true)
+
+    const meRes = await app.inject({
+      method: 'GET',
+      url: '/api/auth/me',
+      headers: { cookie: `${csrfPair}; ${jwtPair}` },
+    })
+
+    expect(meRes.statusCode).toBe(200)
+    expect(meRes.json().user.email).toBe(MOCK_USER_FOR_ME.email)
   })
 })

@@ -57,6 +57,15 @@ async function getCsrfToken(): Promise<string> {
   return csrfToken
 }
 
+/** Fetch CSRF token early so POSTs work after cold loads (e.g. return from Stripe Checkout). */
+export async function preloadCsrf(): Promise<void> {
+  try {
+    await getCsrfToken()
+  } catch {
+    /* ignore — next POST will retry getCsrfToken */
+  }
+}
+
 const STATE_CHANGING_METHODS = new Set(['POST', 'DELETE', 'PATCH', 'PUT'])
 
 async function request<T>(url: string, options?: RequestInit): Promise<T> {
@@ -176,6 +185,13 @@ export async function fetchOrders(): Promise<Order[]> {
 
 export async function fetchOrder(id: string): Promise<Order> {
   const data = await request<{ order: Order }>(`/api/account/orders/${id}`)
+  return data.order
+}
+
+/** Thank-you page after hosted Stripe Checkout — no auth; `session_id` is in the return URL. */
+export async function fetchOrderByCheckoutSession(sessionId: string): Promise<Order> {
+  const q = new URLSearchParams({ session_id: sessionId })
+  const data = await request<{ order: Order }>(`/api/checkout/order-by-session?${q}`)
   return data.order
 }
 

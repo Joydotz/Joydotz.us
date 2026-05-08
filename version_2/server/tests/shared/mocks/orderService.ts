@@ -8,6 +8,7 @@ export function buildOrderServiceMock() {
     getOrderById: vi.fn(),
     getOrderByIdForStripeEvent: vi.fn(),
     getOrderByStripeSessionId: vi.fn(),
+    tryMarkOrderPaidAfterCheckout: vi.fn(),
     updateOrderStatus: vi.fn(),
     updateOrderStripeSessionId: vi.fn(),
     shipOrder: vi.fn(),

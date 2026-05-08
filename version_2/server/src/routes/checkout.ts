@@ -7,10 +7,15 @@ import {
   getOrderByIdForStripeEvent,
   getRecentPendingOrdersByUser,
   getOrderByStripeSessionId,
+  tryMarkOrderPaidAfterCheckout,
   updateOrderStatus,
   updateOrderStripeSessionId,
 } from '../services/orderService.js'
-import { createCheckoutSession, constructStripeEvent } from '../services/stripeService.js'
+import {
+  createCheckoutSession,
+  constructStripeEvent,
+  retrieveCheckoutSession,
+} from '../services/stripeService.js'
 import { PRODUCTS } from '../data/products.js'
 import { EventBus } from '../events/EventBus.js'
 
@@ -40,6 +45,59 @@ export async function checkoutRoutes(app: FastifyInstance, opts: CheckoutRouteOp
   const rawBufferParser = (_req: any, body: Buffer, done: any) => done(null, body)
   app.addContentTypeParser('application/json', { parseAs: 'buffer', bodyLimit: 1024 * 1024 }, rawBufferParser)
   app.addContentTypeParser('*', { parseAs: 'buffer', bodyLimit: 1024 * 1024 }, rawBufferParser)
+
+  const checkoutSessionIdSchema = z.string().regex(/^cs_[a-zA-Z0-9_]+$/)
+
+  // ── GET /api/checkout/order-by-session — post-Stripe return (no auth) ────────
+
+  app.get('/api/checkout/order-by-session', async (request, reply) => {
+    const parsed = z
+      .object({ session_id: checkoutSessionIdSchema })
+      .safeParse(request.query)
+    if (!parsed.success) {
+      return reply.status(400).send({ error: 'Invalid session' })
+    }
+
+    let stripeSession
+    try {
+      stripeSession = await retrieveCheckoutSession(parsed.data.session_id)
+    } catch {
+      return reply.status(404).send({ error: 'Session not found' })
+    }
+
+    if (stripeSession.payment_status !== 'paid') {
+      return reply.status(404).send({ error: 'Payment not completed' })
+    }
+
+    const orderIdMeta = stripeSession.metadata?.orderId
+    if (!orderIdMeta || typeof orderIdMeta !== 'string') {
+      return reply.status(404).send({ error: 'Order not found' })
+    }
+
+    let order = await getOrderByStripeSessionId(stripeSession.id)
+    if (!order || order.id !== orderIdMeta) {
+      return reply.status(404).send({ error: 'Order not found' })
+    }
+
+    // Webhooks often miss localhost — reconcile PAID from Stripe when payment succeeded.
+    if (order.status === 'PENDING') {
+      const transitioned = await tryMarkOrderPaidAfterCheckout(order.id)
+      if (transitioned) {
+        const paid = await getOrderByStripeSessionId(stripeSession.id)
+        if (paid) {
+          order = paid
+          await opts.eventBus.publish('ORDER_PAID', {
+            orderId: paid.id,
+            userId: paid.userId,
+            email: paid.user.email,
+            total: paid.total,
+          })
+        }
+      }
+    }
+
+    return reply.send({ order })
+  })
 
   // ── POST /api/checkout/create-session ────────────────────────────────────────
 
@@ -171,17 +229,20 @@ export async function checkoutRoutes(app: FastifyInstance, opts: CheckoutRouteOp
       const order = await getOrderByStripeSessionId(session.id)
       if (!order) return reply.send({ received: true })
 
-      // Idempotency guard — skip if already processed
-      if (order.status === 'PAID') return reply.send({ received: true })
+      const transitioned = await tryMarkOrderPaidAfterCheckout(order.id)
+      if (transitioned) {
+        const paid = await getOrderByStripeSessionId(session.id)
+        if (paid) {
+          await opts.eventBus.publish('ORDER_PAID', {
+            orderId: paid.id,
+            userId: paid.userId,
+            email: paid.user.email,
+            total: paid.total,
+          })
+        }
+      }
 
-      await updateOrderStatus(order.id, 'PAID')
-
-      await opts.eventBus.publish('ORDER_PAID', {
-        orderId: order.id,
-        userId: order.userId,
-        email: order.user.email,
-        total: order.total,
-      })
+      return reply.send({ received: true })
     } else if (event.type === 'charge.refunded') {
       const charge = event.data.object as unknown as { metadata: { orderId: string } }
       const orderId = charge.metadata?.orderId

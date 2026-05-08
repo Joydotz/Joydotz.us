@@ -1,6 +1,7 @@
 import { FastifyInstance } from 'fastify'
 import { z } from 'zod'
 import { authenticate } from '../middleware/authenticate.js'
+import { csrfProtectionForMutations } from '../middleware/csrfForMutations.js'
 import {
   setNewsletterOptIn,
   getAddresses,
@@ -31,7 +32,7 @@ export async function accountRoutes(app: FastifyInstance, opts: AccountRouteOpti
   // All account routes require authentication and CSRF verification
   app.addHook('preHandler', authenticate)
   if (!opts.skipCsrf) {
-    app.addHook('preHandler', app.csrfProtection as any) // type mismatch between @fastify/csrf-protection v6 and Fastify v4 hook overloads
+    app.addHook('preHandler', csrfProtectionForMutations(app))
   }
 
   // ── POST /api/account/news — toggle newsletter opt-in ──────────────────────

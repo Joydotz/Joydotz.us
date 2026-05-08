@@ -208,6 +208,71 @@ I need the backend to be reliable and fully tested before I can start on the fro
 - [ ] **Checkout page**
 - [ ] **Order confirmation page**
 
+## Guest checkout (shadow user) — planned
+
+**Priority:** Deferred behind emergent issues; do not start until those are settled.
+
+**Goal:** Let visitors **pay without signing up first**, while keeping today’s invariant that every **`Order`** has a real **`userId`** and **`addressId`** (both relationally valid). Achieved by creating a **minimal `User` row** per guest (“shadow user”) plus **`Address`** rows exactly like a normal account.
+
+### Why shadow user (vs nullable `Order.userId`)
+
+- Avoids redesigning **`Order`**, **`Address`**, webhooks, and queries that assume **`order.user.email`** exists.
+- Tradeoff: **`User`** accumulates guest rows unless merged/upgraded later.
+
+### Database
+
+- Add **`User.isGuest`** (boolean, default `false`).
+- Keep **`passwordHash` required:** store a **random bcrypt hash** that is never used for login (guests cannot password-login until upgraded).
+- **`email`** stays **`@unique`** — conflict policy is mandatory (below).
+
+### Backend services
+
+- **`createShadowUserWithAddress`** (transaction): create **`User`** (`isGuest: true`, email, newsletter flag if desired, unusable hash) + **`Address`** (same fields as today; first address **`isDefault`** matches existing **`createAddress`** behavior).
+
+**Email conflicts (pick one rule set and document in API errors):**
+
+- Email exists and **`isGuest === false`** → **409** / “Log in to complete checkout” (never attach a guest order to someone else’s account silently).
+- Email exists and **`isGuest === true`** → either **reuse + update default address** from checkout or **reject**; choose one for MVP and stick to it.
+
+### HTTP shape (recommended: two-step “pattern A”)
+
+1. **`POST /api/auth/guest`** (name TBD) — body: **email + address fields** (+ CSRF). Creates shadow user + default address; responds with the **same session/JWT cookie** shape as normal login so **`authenticate`** is unchanged.
+2. Existing **`POST /api/checkout/create-session`** — unchanged contract: **`addressId` + `items`**, still requires auth after step 1.
+
+**Alternative “pattern B”:** single **`create-session`** body union (authenticated vs guest payload). More branching in one handler; only worth it if frontend strongly prefers one round-trip.
+
+### Auth behavior
+
+- **`login` / `signup`:** reject or branch so **`isGuest`** users **cannot** password-login until **account upgrade** sets a real password and **`isGuest → false`** (future flow).
+- **`authenticate`:** no change once guest has a cookie.
+
+### Frontend (when implemented)
+
+- **Cart** remains public.
+- **Checkout:** guest path collects **email + address** (inline form already planned on checkout for logged-in empty address book; guest flow extends this with email). Call guest bootstrap → then **`create-session`**.
+- **Order confirmation:** **`success_url`** already includes **`session_id`**; ensure auth cookie survives Stripe redirect or add a **narrow public read** by **`session_id`** later if cookie loss appears in the wild.
+
+### Webhooks / events
+
+- **`checkout.session.completed`:** no semantic change — metadata still carries **`orderId`** / **`userId`**; **`order.user.email`** resolves via shadow **`User`**.
+
+### Abuse / ops
+
+- Rate-limit guest bootstrap by **IP** (and optionally **email hash**).
+- Metrics: **`isGuest`** user counts vs paid conversions.
+
+### Tests
+
+- Guest bootstrap creates **`User` + `Address`**, **`isGuest === true`**.
+- Conflict: existing non-guest email → expected error.
+- **`create-session`** after bootstrap reuses existing checkout tests’ assumptions (pending-intent reuse, **`cs_...`** persistence, metadata).
+
+### Follow-up (post-MVP)
+
+- **Upgrade path:** guest completes purchase → email magic link or “Set password” to merge **`isGuest`** into a full account without duplicate **`email`**.
+
+---
+
 ## Future Work
 
 ### Email templates
