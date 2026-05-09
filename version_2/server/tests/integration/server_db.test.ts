@@ -48,7 +48,7 @@ const ORDER_ITEMS = [
   {
     productId: 'softwing-butterfly',
     name: 'Softwing Butterfly',
-    priceAtPurchase: 2200,
+    priceAtPurchase: 500,
     quantity: 1,
     imageUrl: 'https://example.com/image.jpg',
   },
@@ -88,7 +88,7 @@ describe('createOrder', () => {
       userId: user.id,
       addressId: address.id,
       stripeSessionId: 'cs_test_integration_001',
-      total: 5800,
+      total: 4100,
       items: ORDER_ITEMS,
     })
 
@@ -99,7 +99,7 @@ describe('createOrder', () => {
 
     expect(persisted).not.toBeNull()
     expect(persisted!.status).toBe('PENDING')
-    expect(persisted!.total).toBe(5800)
+    expect(persisted!.total).toBe(4100)
     expect(persisted!.items).toHaveLength(2)
   })
 
@@ -110,7 +110,7 @@ describe('createOrder', () => {
       userId: user.id,
       addressId: address.id,
       stripeSessionId: 'cs_test_integration_002',
-      total: 2200,
+      total: 500,
       items: [ORDER_ITEMS[0]],
     })
 
@@ -124,13 +124,13 @@ describe('createOrder', () => {
       userId: user.id,
       addressId: address.id,
       stripeSessionId: 'cs_test_integration_003',
-      total: 2200,
+      total: 500,
       items: [ORDER_ITEMS[0]],
     })
 
     const item = order.items[0]
     expect(item.name).toBe('Softwing Butterfly')
-    expect(item.priceAtPurchase).toBe(2200)
+    expect(item.priceAtPurchase).toBe(500)
     expect(item.productId).toBe('softwing-butterfly')
   })
 
@@ -141,7 +141,7 @@ describe('createOrder', () => {
       userId: user.id,
       addressId: address.id,
       stripeSessionId: 'cs_test_duplicate',
-      total: 2200,
+      total: 500,
       items: [ORDER_ITEMS[0]],
     })
 
@@ -150,7 +150,7 @@ describe('createOrder', () => {
         userId: user.id,
         addressId: address.id,
         stripeSessionId: 'cs_test_duplicate',
-        total: 2200,
+        total: 500,
         items: [ORDER_ITEMS[0]],
       }),
     ).rejects.toThrow()
@@ -172,7 +172,7 @@ describe('getOrdersByUser', () => {
       userId: user.id,
       addressId: address.id,
       stripeSessionId: 'cs_test_list_001',
-      total: 2200,
+      total: 500,
       items: [ORDER_ITEMS[0]],
     })
 
@@ -199,7 +199,7 @@ describe('getOrdersByUser', () => {
       userId: user.id,
       addressId: address.id,
       stripeSessionId: 'cs_test_order_001',
-      total: 2200,
+      total: 500,
       items: [ORDER_ITEMS[0]],
     })
 
@@ -232,7 +232,7 @@ describe('getOrdersByUser', () => {
       userId: user.id,
       addressId: address.id,
       stripeSessionId: 'cs_test_other_user',
-      total: 2200,
+      total: 500,
       items: [ORDER_ITEMS[0]],
     })
 
@@ -266,7 +266,7 @@ describe('getOrderById', () => {
       userId: user.id,
       addressId: address.id,
       stripeSessionId: 'cs_test_byid_001',
-      total: 2200,
+      total: 500,
       items: [ORDER_ITEMS[0]],
     })
 
@@ -285,7 +285,7 @@ describe('getOrderById', () => {
       userId: user.id,
       addressId: address.id,
       stripeSessionId: 'cs_test_byid_002',
-      total: 2200,
+      total: 500,
       items: [ORDER_ITEMS[0]],
     })
 
@@ -319,7 +319,7 @@ describe('getOrderByStripeSessionId', () => {
       userId: user.id,
       addressId: address.id,
       stripeSessionId: 'cs_test_session_001',
-      total: 2200,
+      total: 500,
       items: [ORDER_ITEMS[0]],
     })
 
@@ -350,7 +350,7 @@ describe('updateOrderStatus', () => {
     const { user, address } = await seedUserAndAddress()
     const order = await createOrder({
       userId: user.id, addressId: address.id,
-      stripeSessionId: 'cs_test_status_001', total: 2200, items: [ORDER_ITEMS[0]],
+      stripeSessionId: 'cs_test_status_001', total: 500, items: [ORDER_ITEMS[0]],
     })
 
     await updateOrderStatus(order.id, 'PAID')
@@ -363,7 +363,7 @@ describe('updateOrderStatus', () => {
     const { user, address } = await seedUserAndAddress()
     const order = await createOrder({
       userId: user.id, addressId: address.id,
-      stripeSessionId: 'cs_test_status_002', total: 2200, items: [ORDER_ITEMS[0]],
+      stripeSessionId: 'cs_test_status_002', total: 500, items: [ORDER_ITEMS[0]],
     })
     await updateOrderStatus(order.id, 'PAID')
 
@@ -377,7 +377,7 @@ describe('updateOrderStatus', () => {
     const { user, address } = await seedUserAndAddress()
     const order = await createOrder({
       userId: user.id, addressId: address.id,
-      stripeSessionId: 'cs_test_status_003', total: 2200, items: [ORDER_ITEMS[0]],
+      stripeSessionId: 'cs_test_status_003', total: 500, items: [ORDER_ITEMS[0]],
     })
     await updateOrderStatus(order.id, 'PAID')
 
@@ -391,7 +391,7 @@ describe('updateOrderStatus', () => {
     const { user, address } = await seedUserAndAddress()
     const order = await createOrder({
       userId: user.id, addressId: address.id,
-      stripeSessionId: 'cs_test_status_004', total: 2200, items: [ORDER_ITEMS[0]],
+      stripeSessionId: 'cs_test_status_004', total: 500, items: [ORDER_ITEMS[0]],
     })
 
     await updateOrderStatus(order.id, 'PAID')
@@ -413,7 +413,7 @@ describe('shipOrder', () => {
     const { user, address } = await seedUserAndAddress()
     const order = await createOrder({
       userId: user.id, addressId: address.id,
-      stripeSessionId: 'cs_test_ship_001', total: 2200, items: [ORDER_ITEMS[0]],
+      stripeSessionId: 'cs_test_ship_001', total: 500, items: [ORDER_ITEMS[0]],
     })
     await updateOrderStatus(order.id, 'PAID')
 
@@ -439,7 +439,7 @@ describe('markDelivered', () => {
     const { user, address } = await seedUserAndAddress()
     const order = await createOrder({
       userId: user.id, addressId: address.id,
-      stripeSessionId: 'cs_test_deliver_001', total: 2200, items: [ORDER_ITEMS[0]],
+      stripeSessionId: 'cs_test_deliver_001', total: 500, items: [ORDER_ITEMS[0]],
     })
     await updateOrderStatus(order.id, 'PAID')
     await shipOrder(order.id, '1Z999AA10123456784')
@@ -464,13 +464,13 @@ describe('duplicate stripeSessionId', () => {
 
     await createOrder({
       userId: user.id, addressId: address.id,
-      stripeSessionId: 'cs_test_duplicate_001', total: 2200, items: [ORDER_ITEMS[0]],
+      stripeSessionId: 'cs_test_duplicate_001', total: 500, items: [ORDER_ITEMS[0]],
     })
 
     await expect(
       createOrder({
         userId: user.id, addressId: address.id,
-        stripeSessionId: 'cs_test_duplicate_001', total: 2200, items: [ORDER_ITEMS[0]],
+        stripeSessionId: 'cs_test_duplicate_001', total: 500, items: [ORDER_ITEMS[0]],
       }),
     ).rejects.toThrow()
   })
@@ -479,8 +479,8 @@ describe('duplicate stripeSessionId', () => {
     const { user, address } = await seedUserAndAddress()
 
     const results = await Promise.allSettled([
-      createOrder({ userId: user.id, addressId: address.id, stripeSessionId: 'cs_test_concurrent_001', total: 2200, items: [ORDER_ITEMS[0]] }),
-      createOrder({ userId: user.id, addressId: address.id, stripeSessionId: 'cs_test_concurrent_001', total: 2200, items: [ORDER_ITEMS[0]] }),
+      createOrder({ userId: user.id, addressId: address.id, stripeSessionId: 'cs_test_concurrent_001', total: 500, items: [ORDER_ITEMS[0]] }),
+      createOrder({ userId: user.id, addressId: address.id, stripeSessionId: 'cs_test_concurrent_001', total: 500, items: [ORDER_ITEMS[0]] }),
     ])
 
     expect(results.filter((r) => r.status === 'fulfilled')).toHaveLength(1)
@@ -500,7 +500,7 @@ describe('foreign key violations', () => {
     const { user } = await seedUserAndAddress()
 
     await expect(
-      createOrder({ userId: user.id, addressId: 'non-existent-address-id', stripeSessionId: 'cs_test_fk_001', total: 2200, items: [ORDER_ITEMS[0]] }),
+      createOrder({ userId: user.id, addressId: 'non-existent-address-id', stripeSessionId: 'cs_test_fk_001', total: 500, items: [ORDER_ITEMS[0]] }),
     ).rejects.toThrow()
   })
 
@@ -508,7 +508,7 @@ describe('foreign key violations', () => {
     const { address } = await seedUserAndAddress()
 
     await expect(
-      createOrder({ userId: 'non-existent-user-id', addressId: address.id, stripeSessionId: 'cs_test_fk_002', total: 2200, items: [ORDER_ITEMS[0]] }),
+      createOrder({ userId: 'non-existent-user-id', addressId: address.id, stripeSessionId: 'cs_test_fk_002', total: 500, items: [ORDER_ITEMS[0]] }),
     ).rejects.toThrow()
   })
 
@@ -516,7 +516,7 @@ describe('foreign key violations', () => {
     const { user } = await seedUserAndAddress()
 
     await expect(
-      createOrder({ userId: user.id, addressId: 'non-existent-address-id', stripeSessionId: 'cs_test_fk_003', total: 2200, items: [ORDER_ITEMS[0]] }),
+      createOrder({ userId: user.id, addressId: 'non-existent-address-id', stripeSessionId: 'cs_test_fk_003', total: 500, items: [ORDER_ITEMS[0]] }),
     ).rejects.toThrow()
 
     const order = await testPrisma.order.findUnique({ where: { stripeSessionId: 'cs_test_fk_003' } })
@@ -532,7 +532,7 @@ describe('onDelete: Restrict on Address', () => {
   it('prevents deleting an address that has orders', async () => {
     const { user, address } = await seedUserAndAddress()
 
-    await createOrder({ userId: user.id, addressId: address.id, stripeSessionId: 'cs_test_restrict_001', total: 2200, items: [ORDER_ITEMS[0]] })
+    await createOrder({ userId: user.id, addressId: address.id, stripeSessionId: 'cs_test_restrict_001', total: 500, items: [ORDER_ITEMS[0]] })
 
     await expect(
       testPrisma.address.delete({ where: { id: address.id } }),
@@ -556,7 +556,7 @@ describe('concurrent status updates', () => {
   it('both updates resolve and the final status is valid', async () => {
     const { user, address } = await seedUserAndAddress()
 
-    const order = await createOrder({ userId: user.id, addressId: address.id, stripeSessionId: 'cs_test_concurrent_status_001', total: 2200, items: [ORDER_ITEMS[0]] })
+    const order = await createOrder({ userId: user.id, addressId: address.id, stripeSessionId: 'cs_test_concurrent_status_001', total: 500, items: [ORDER_ITEMS[0]] })
 
     const results = await Promise.allSettled([
       updateOrderStatus(order.id, 'PAID'),

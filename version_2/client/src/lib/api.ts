@@ -9,6 +9,14 @@ export interface Product {
   imageUrl: string
 }
 
+/** Merchandising fields only — from GET /api/catalog (no Stripe call). */
+export interface CatalogListingProduct {
+  id: string
+  name: string
+  description: string
+  imageUrl: string
+}
+
 export interface User {
   id: string
   email: string
@@ -93,6 +101,11 @@ async function request<T>(url: string, options?: RequestInit): Promise<T> {
 
 export async function fetchProducts(): Promise<Product[]> {
   const data = await request<{ products: Product[] }>('/api/products')
+  return data.products
+}
+
+export async function fetchCatalog(): Promise<CatalogListingProduct[]> {
+  const data = await request<{ products: CatalogListingProduct[] }>('/api/catalog')
   return data.products
 }
 

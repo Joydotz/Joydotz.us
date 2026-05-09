@@ -1,13 +1,14 @@
 import { useEffect, useState } from 'react'
-import { fetchProducts, type Product } from '../../lib/api'
+import { Link } from 'react-router-dom'
+import { fetchCatalog, type CatalogListingProduct } from '../../lib/api'
 
 export default function Collection() {
-  const [products, setProducts] = useState<Product[]>([])
+  const [products, setProducts] = useState<CatalogListingProduct[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(false)
 
   useEffect(() => {
-    fetchProducts()
+    fetchCatalog()
       .then(setProducts)
       .catch(() => setError(true))
       .finally(() => setLoading(false))
@@ -28,7 +29,6 @@ export default function Collection() {
                 <div className="h-4 bg-surface-container-low rounded w-3/4" />
                 <div className="h-3 bg-surface-container-low rounded w-full" />
                 <div className="h-3 bg-surface-container-low rounded w-2/3" />
-                <div className="h-10 bg-surface-container-low rounded-full mt-4" />
               </div>
             </div>
           ))}
@@ -44,9 +44,11 @@ export default function Collection() {
       {!loading && !error && (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
           {products.map((product) => (
-            <div
+            <Link
               key={product.id}
-              className="bg-surface-container-lowest rounded-xl p-4 flex flex-col group shadow-[0_8px_30px_rgb(0,0,0,0.04)] hover:shadow-[0_20px_50px_rgba(126,85,70,0.1)] transition-all duration-500"
+              to="/shop"
+              aria-label={`Shop — ${product.name}`}
+              className="bg-surface-container-lowest rounded-xl p-4 flex flex-col group shadow-[0_8px_30px_rgb(0,0,0,0.04)] hover:shadow-[0_20px_50px_rgba(126,85,70,0.1)] transition-all duration-500 h-full focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
             >
               <div className="aspect-square rounded-lg overflow-hidden mb-6 bg-surface-container-low">
                 <img
@@ -56,18 +58,12 @@ export default function Collection() {
                 />
               </div>
               <div className="flex flex-col flex-grow space-y-2 px-2">
-                <div className="flex justify-between items-start">
-                  <h3 className="font-headline font-bold text-lg text-on-surface">{product.name}</h3>
-                  <span className="font-body font-bold text-primary">{product.displayPrice}</span>
-                </div>
+                <h3 className="font-headline font-bold text-lg text-on-surface">{product.name}</h3>
                 <p className="text-sm text-on-surface-variant font-body leading-relaxed flex-grow">
                   {product.description}
                 </p>
-                <button className="mt-4 w-full py-3 bg-secondary text-on-secondary rounded-full font-bold text-sm hover:scale-[1.02] active:scale-[0.98] transition-all">
-                  Add to Bag
-                </button>
               </div>
-            </div>
+            </Link>
           ))}
         </div>
       )}

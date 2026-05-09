@@ -6,9 +6,21 @@ vi.mock('../../../src/services/emailService', () => ({
   saveEmail: vi.fn().mockResolvedValue({ created: true }),
 }))
 
+vi.mock('../../../src/services/stripeService', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('../../../src/services/stripeService')>()
+  return {
+    ...actual,
+    retrieveStripePricesByIds: vi.fn(),
+  }
+})
+
+import { retrieveStripePricesByIds } from '../../../src/services/stripeService'
+import { wireRetrieveStripePricesByIdsMock } from '../../shared/stripePriceMocks'
+
 let app: FastifyInstance
 
 beforeAll(async () => {
+  wireRetrieveStripePricesByIdsMock(vi.mocked(retrieveStripePricesByIds))
   // Rate limiting ON — this is what tests the defense
   app = buildApp({ logger: false, skipRateLimit: false, skipCsrf: true })
   await app.ready()

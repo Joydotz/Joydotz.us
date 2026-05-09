@@ -14,8 +14,8 @@
  *                       array, unknown productId, quantity < 1
  *   Address ownership — 404 when address does not exist or belongs to
  *                       another user
- *   Price integrity   — server always looks up price from products.ts;
- *                       any price field sent by the client is ignored
+ *   Price integrity   — server looks up amounts from Stripe Prices via
+ *                       stripePriceId; any client-sent price is ignored
  *   Happy path        — 200 with { url, orderId }; createOrder called with
  *                       correct server-side prices; createCheckoutSession
  *                       called with correct line items and metadata
@@ -28,6 +28,7 @@ import { buildApp } from '../../../src/app'
 import { MockEventBus } from '../../../src/events/MockEventBus'
 import { PRODUCTS } from '../../../src/data/products'
 import { createMockAddress, createMockUser } from '../../shared/fixtures'
+import { wireRetrieveStripePricesByIdsMock } from '../../shared/stripePriceMocks'
 
 // ── Mocks ─────────────────────────────────────────────────────────────────────
 
@@ -56,6 +57,7 @@ vi.mock('../../../src/services/stripeService', () => ({
   createCheckoutSession: vi.fn(),
   constructStripeEvent: vi.fn(),
   retrieveCheckoutSession: vi.fn(),
+  retrieveStripePricesByIds: vi.fn(),
 }))
 
 import { loginUser } from '../../../src/services/authService'
@@ -67,7 +69,11 @@ import {
   tryMarkOrderPaidAfterCheckout,
   updateOrderStripeSessionId,
 } from '../../../src/services/orderService'
-import { createCheckoutSession, retrieveCheckoutSession } from '../../../src/services/stripeService'
+import {
+  createCheckoutSession,
+  retrieveCheckoutSession,
+  retrieveStripePricesByIds,
+} from '../../../src/services/stripeService'
 
 const mockLogin = vi.mocked(loginUser)
 const mockGetAddresses = vi.mocked(getAddresses)
@@ -75,6 +81,7 @@ const mockCreateOrder = vi.mocked(createOrder)
 const mockGetRecentPendingOrdersByUser = vi.mocked(getRecentPendingOrdersByUser)
 const mockCreateCheckoutSession = vi.mocked(createCheckoutSession)
 const mockRetrieveCheckoutSession = vi.mocked(retrieveCheckoutSession)
+const mockRetrieveStripePricesByIds = vi.mocked(retrieveStripePricesByIds)
 const mockUpdateOrderStripeSessionId = vi.mocked(updateOrderStripeSessionId)
 const mockGetOrderByStripeSessionId = vi.mocked(getOrderByStripeSessionId)
 const mockTryMarkOrderPaidAfterCheckout = vi.mocked(tryMarkOrderPaidAfterCheckout)
@@ -88,7 +95,7 @@ const MOCK_ORDER = {
   addressId: MOCK_ADDRESS.id,
   status: 'PENDING',
   stripeSessionId: 'cs_test_abc123',
-  total: 2200,
+  total: 500,
   createdAt: new Date('2026-01-01'),
   items: [
     {
@@ -96,7 +103,7 @@ const MOCK_ORDER = {
       orderId: 'order-001',
       productId: 'softwing-butterfly',
       name: 'Softwing Butterfly',
-      priceAtPurchase: 2200,
+      priceAtPurchase: 500,
       quantity: 1,
       imageUrl: null,
     },
@@ -149,6 +156,7 @@ beforeEach(() => {
   vi.clearAllMocks()
   mockGetRecentPendingOrdersByUser.mockResolvedValue([])
   eventBus.clear()
+  wireRetrieveStripePricesByIdsMock(mockRetrieveStripePricesByIds)
 })
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -309,9 +317,8 @@ describe('address ownership', () => {
 // ─────────────────────────────────────────────────────────────────────────────
 // Price integrity
 //
-// Product prices are always looked up server-side from products.ts. Any price
-// field sent by the client must be ignored. This prevents a client from
-// manipulating the total by sending a lower price.
+// Product amounts come from Stripe Prices (stripePriceId). Any price field sent
+// by the client must be ignored so totals cannot be manipulated.
 // ─────────────────────────────────────────────────────────────────────────────
 
 describe('price integrity', () => {
@@ -335,7 +342,7 @@ describe('price integrity', () => {
     })
 
     const orderCall = mockCreateOrder.mock.calls[0][0]
-    expect(orderCall.items[0].priceAtPurchase).toBe(2200) // real price from products.ts
+    expect(orderCall.items[0].priceAtPurchase).toBe(500) // from mocked Stripe Price unit_amount
   })
 
   it('calculates total server-side from product prices and quantities', async () => {
@@ -350,7 +357,7 @@ describe('price integrity', () => {
       method: 'POST',
       url: '/api/checkout/create-session',
       headers: { cookie: sessionCookie },
-      // softwing-butterfly: 2200 × 2 = 4400
+      // softwing-butterfly: 500 × 2 = 1000
       payload: {
         addressId: MOCK_ADDRESS.id,
         items: [{ productId: 'softwing-butterfly', quantity: 2 }],
@@ -358,7 +365,7 @@ describe('price integrity', () => {
     })
 
     const orderCall = mockCreateOrder.mock.calls[0][0]
-    expect(orderCall.total).toBe(4400)
+    expect(orderCall.total).toBe(1000)
   })
 })
 
@@ -464,7 +471,7 @@ describe('duplicate checkout guard', () => {
       id: 'order-existing-001',
       addressId: MOCK_ADDRESS.id,
       status: 'PENDING',
-      total: 2200,
+      total: 500,
       items: [{ productId: 'softwing-butterfly', quantity: 1 }],
     }
 
@@ -498,7 +505,7 @@ describe('duplicate checkout guard', () => {
       id: 'order-existing-002',
       addressId: MOCK_ADDRESS.id,
       status: 'PENDING',
-      total: 2200,
+      total: 500,
       items: [{ productId: 'softwing-butterfly', quantity: 1 }],
     }
 

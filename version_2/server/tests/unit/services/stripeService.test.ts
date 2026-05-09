@@ -16,6 +16,11 @@
  *                           on invalid signature; throws on tampered payload;
  *                           throws on wrong secret; throws on empty signature;
  *                           passes rawBody as Buffer to the SDK unchanged
+ *
+ *   retrieveStripePricesByIds — fetches Price.unit_amount per id; caches results;
+ *                               dedupes concurrent/in-batch requests
+ *
+ *   formatStripeUnitAmount — locale currency string from Stripe minor units
  */
 
 import { describe, it, expect, vi, beforeEach } from 'vitest'
@@ -26,9 +31,10 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 // declarations into the same hoisted scope so they are available inside the
 // factory.
 
-const { mockSessionCreate, mockConstructEvent } = vi.hoisted(() => ({
+const { mockSessionCreate, mockConstructEvent, mockPricesRetrieve } = vi.hoisted(() => ({
   mockSessionCreate: vi.fn(),
   mockConstructEvent: vi.fn(),
+  mockPricesRetrieve: vi.fn(),
 }))
 
 vi.mock('stripe', () => {
@@ -42,13 +48,19 @@ vi.mock('stripe', () => {
       webhooks: {
         constructEvent: mockConstructEvent,
       },
+      prices: {
+        retrieve: mockPricesRetrieve,
+      },
     })),
   }
 })
 
 import {
+  clearStripePriceCacheForTests,
   createCheckoutSession,
   constructStripeEvent,
+  formatStripeUnitAmount,
+  retrieveStripePricesByIds,
 } from '../../../src/services/stripeService'
 
 // ── Fixtures ──────────────────────────────────────────────────────────────────
@@ -88,6 +100,7 @@ const STRIPE_EVENT = {
 
 beforeEach(() => {
   vi.clearAllMocks()
+  clearStripePriceCacheForTests()
 })
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -303,5 +316,41 @@ describe('constructStripeEvent', () => {
     expect(() =>
       constructStripeEvent(tamperedBody, VALID_SIGNATURE, WEBHOOK_SECRET),
     ).toThrow()
+  })
+})
+
+describe('retrieveStripePricesByIds', () => {
+  it('returns unit amounts from Stripe Price objects', async () => {
+    mockPricesRetrieve.mockResolvedValue({ unit_amount: 2500, currency: 'usd' })
+
+    const map = await retrieveStripePricesByIds(['price_test_a'])
+
+    expect(mockPricesRetrieve).toHaveBeenCalledWith('price_test_a')
+    expect(map.get('price_test_a')).toEqual({ unitAmount: 2500, currency: 'usd' })
+  })
+
+  it('dedupes ids and uses cache on repeat calls', async () => {
+    mockPricesRetrieve.mockResolvedValue({ unit_amount: 99, currency: 'usd' })
+
+    await retrieveStripePricesByIds(['price_z'])
+    await retrieveStripePricesByIds(['price_z'])
+
+    expect(mockPricesRetrieve).toHaveBeenCalledTimes(1)
+  })
+
+  it('throws when Stripe returns no unit_amount', async () => {
+    mockPricesRetrieve.mockResolvedValue({ unit_amount: null, currency: 'usd' })
+
+    await expect(retrieveStripePricesByIds(['price_tiered'])).rejects.toThrow(/unit_amount/)
+  })
+})
+
+describe('formatStripeUnitAmount', () => {
+  it('formats USD cents', () => {
+    expect(formatStripeUnitAmount(499, 'usd')).toBe('$4.99')
+  })
+
+  it('formats zero-decimal currencies', () => {
+    expect(formatStripeUnitAmount(500, 'jpy')).toMatch(/500/)
   })
 })

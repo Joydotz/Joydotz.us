@@ -37,6 +37,7 @@ vi.mock('../../../src/services/stripeService', () => ({
   createCheckoutSession: vi.fn(),
   constructStripeEvent: vi.fn(),
   retrieveCheckoutSession: vi.fn(),
+  retrieveStripePricesByIds: vi.fn(),
 }))
 
 vi.mock('../../../src/services/orderService', async () => {
@@ -86,7 +87,7 @@ const MOCK_ORDER_PENDING = {
   addressId: 'addr-001',
   status: 'PENDING',
   stripeSessionId: SESSION_ID,
-  total: 2200,
+  total: 500,
   createdAt: new Date('2026-01-01'),
   items: [],
   address: { line1: '969 Cox Rd', city: 'Gastonia', state: 'NC', postal_code: '28054', country: 'US' },

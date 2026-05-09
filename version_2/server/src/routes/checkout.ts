@@ -15,6 +15,7 @@ import {
   createCheckoutSession,
   constructStripeEvent,
   retrieveCheckoutSession,
+  retrieveStripePricesByIds,
 } from '../services/stripeService.js'
 import { PRODUCTS } from '../data/products.js'
 import { EventBus } from '../events/EventBus.js'
@@ -133,19 +134,35 @@ export async function checkoutRoutes(app: FastifyInstance, opts: CheckoutRouteOp
         return reply.status(404).send({ error: 'Address not found' })
       }
 
-      // 3. Resolve products server-side — never trust client prices
+      // 3. Resolve SKUs server-side; amounts always from Stripe Prices — never trust client prices
       const productMap = new Map(PRODUCTS.map((p) => [p.id, p]))
-      const resolvedItems = []
+      const preliminary: { product: (typeof PRODUCTS)[number]; quantity: number }[] = []
       for (const item of items) {
         const product = productMap.get(item.productId)
         if (!product) {
           return reply.status(400).send({ error: `Unknown product: ${item.productId}` })
         }
+        preliminary.push({ product, quantity: item.quantity })
+      }
+
+      let priceSnapshots: Map<string, { unitAmount: number; currency: string }>
+      try {
+        priceSnapshots = await retrieveStripePricesByIds(preliminary.map((x) => x.product.stripePriceId))
+      } catch {
+        return reply.status(503).send({ error: 'Pricing unavailable' })
+      }
+
+      const resolvedItems = []
+      for (const { product, quantity } of preliminary) {
+        const snap = priceSnapshots.get(product.stripePriceId)
+        if (!snap) {
+          return reply.status(503).send({ error: 'Pricing unavailable' })
+        }
         resolvedItems.push({
           productId: product.id,
           name: product.name,
-          priceAtPurchase: product.price,
-          quantity: item.quantity,
+          priceAtPurchase: snap.unitAmount,
+          quantity,
           imageUrl: product.imageUrl,
           stripePriceId: product.stripePriceId,
         })

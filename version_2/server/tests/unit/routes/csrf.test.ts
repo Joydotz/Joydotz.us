@@ -19,6 +19,14 @@ vi.mock('../../../src/services/emailService', () => ({
   saveEmail: vi.fn().mockResolvedValue({ created: true }),
 }))
 
+vi.mock('../../../src/services/stripeService', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('../../../src/services/stripeService')>()
+  return {
+    ...actual,
+    retrieveStripePricesByIds: vi.fn(),
+  }
+})
+
 vi.mock('../../../src/services/authService', () => ({
   signupUser: vi.fn(),
   loginUser: vi.fn(),
@@ -26,6 +34,8 @@ vi.mock('../../../src/services/authService', () => ({
 }))
 
 import { loginUser, getUserById } from '../../../src/services/authService'
+import { retrieveStripePricesByIds } from '../../../src/services/stripeService'
+import { wireRetrieveStripePricesByIdsMock } from '../../shared/stripePriceMocks'
 
 const MOCK_USER_FOR_ME = {
   id: 'user-csrf-me',
@@ -39,6 +49,7 @@ const MOCK_USER_FOR_ME = {
 let app: FastifyInstance
 
 beforeAll(async () => {
+  wireRetrieveStripePricesByIdsMock(vi.mocked(retrieveStripePricesByIds))
   // CSRF ON — this is the whole point of this test file
   app = buildApp({ logger: false, skipRateLimit: true, skipCsrf: false })
   await app.ready()
@@ -260,6 +271,11 @@ describe('Cross-origin POST requests', () => {
 describe('CSRF exemption — GET requests', () => {
   it('GET /api/products passes without a CSRF token', async () => {
     const res = await app.inject({ method: 'GET', url: '/api/products' })
+    expect(res.statusCode).toBe(200)
+  })
+
+  it('GET /api/catalog passes without a CSRF token', async () => {
+    const res = await app.inject({ method: 'GET', url: '/api/catalog' })
     expect(res.statusCode).toBe(200)
   })
 

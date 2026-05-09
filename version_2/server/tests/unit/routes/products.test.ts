@@ -1,17 +1,81 @@
-import { describe, it, expect, beforeAll, afterAll } from 'vitest'
+import { describe, it, expect, vi, beforeAll, afterAll } from 'vitest'
 import { FastifyInstance } from 'fastify'
 import { buildApp } from '../../../src/app'
 import { PRODUCTS } from '../../../src/data/products'
 
+vi.mock('../../../src/services/stripeService', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('../../../src/services/stripeService')>()
+  return {
+    ...actual,
+    retrieveStripePricesByIds: vi.fn(),
+  }
+})
+
+import { retrieveStripePricesByIds } from '../../../src/services/stripeService'
+import { UNIT_AMOUNTS_BY_PRODUCT_ID, wireRetrieveStripePricesByIdsMock } from '../../shared/stripePriceMocks'
+
 let app: FastifyInstance
 
 beforeAll(async () => {
+  wireRetrieveStripePricesByIdsMock(vi.mocked(retrieveStripePricesByIds))
   app = buildApp({ logger: false })
   await app.ready()
 })
 
 afterAll(async () => {
   await app.close()
+})
+
+// ─────────────────────────────────────────────────────────────────────────────
+// GET /api/catalog — static merchandising (no Stripe)
+// ─────────────────────────────────────────────────────────────────────────────
+
+describe('GET /api/catalog', () => {
+  it('returns 200', async () => {
+    const res = await app.inject({ method: 'GET', url: '/api/catalog' })
+    expect(res.statusCode).toBe(200)
+  })
+
+  it('returns three SKUs without price fields', async () => {
+    const res = await app.inject({ method: 'GET', url: '/api/catalog' })
+    const { products } = res.json<{ products: Record<string, unknown>[] }>()
+    expect(products).toHaveLength(3)
+    for (const p of products) {
+      expect(p).toHaveProperty('id')
+      expect(p).toHaveProperty('name')
+      expect(p).toHaveProperty('description')
+      expect(p).toHaveProperty('imageUrl')
+      expect(p).not.toHaveProperty('price')
+      expect(p).not.toHaveProperty('displayPrice')
+      expect(p).not.toHaveProperty('stripePriceId')
+    }
+  })
+
+  it('matches PRODUCTS ids and copy', async () => {
+    const res = await app.inject({ method: 'GET', url: '/api/catalog' })
+    const { products } = res.json<{ products: { id: string; name: string }[] }>()
+    expect(products.map((p) => p.id).sort()).toEqual(PRODUCTS.map((p) => p.id).sort())
+    expect(products.find((p) => p.id === PRODUCTS[0].id)?.name).toBe(PRODUCTS[0].name)
+  })
+
+  it('never exposes Stripe price ids — only merchandising keys', async () => {
+    const res = await app.inject({ method: 'GET', url: '/api/catalog' })
+    const { products } = res.json<{ products: Record<string, unknown>[] }>()
+    const allowedSorted = ['description', 'id', 'imageUrl', 'name']
+    const forbiddenStripePriceKeys = [
+      'stripePriceId',
+      'priceId',
+      'price_id',
+      'stripe_price_id',
+      'default_price',
+    ]
+    for (const p of products) {
+      expect(Object.keys(p).sort()).toEqual(allowedSorted)
+      for (const key of forbiddenStripePriceKeys) {
+        expect(p).not.toHaveProperty(key)
+      }
+    }
+  })
 })
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -81,6 +145,6 @@ describe('GET /api/products', () => {
     expect(products).toHaveLength(PRODUCTS.length)
     expect(products[0].id).toBe(PRODUCTS[0].id)
     expect(products[0].name).toBe(PRODUCTS[0].name)
-    expect(products[0].price).toBe(PRODUCTS[0].price)
+    expect(products[0].price).toBe(UNIT_AMOUNTS_BY_PRODUCT_ID[PRODUCTS[0].id])
   })
 })

@@ -93,7 +93,7 @@ const DB_ORDER_ITEM = {
   orderId: ORDER_ID,
   productId: 'softwing-butterfly',
   name: 'Softwing Butterfly',
-  priceAtPurchase: 2200,
+  priceAtPurchase: 500,
   quantity: 1,
   imageUrl: 'https://example.com/image.jpg',
 }
@@ -117,7 +117,7 @@ const DB_ORDER = {
   addressId: ADDRESS_ID,
   status: OrderStatus.PENDING,
   stripeSessionId: SESSION_ID,
-  total: 2200,
+  total: 500,
   createdAt: new Date('2026-01-01T00:00:00.000Z'),
   items: [DB_ORDER_ITEM],
   address: DB_ADDRESS,
@@ -127,12 +127,12 @@ const CREATE_INPUT = {
   userId: USER_ID,
   addressId: ADDRESS_ID,
   stripeSessionId: SESSION_ID,
-  total: 2200,
+  total: 500,
   items: [
     {
       productId: 'softwing-butterfly',
       name: 'Softwing Butterfly',
-      priceAtPurchase: 2200,
+      priceAtPurchase: 500,
       quantity: 1,
       imageUrl: 'https://example.com/image.jpg',
     },
@@ -169,7 +169,7 @@ describe('createOrder', () => {
           userId: USER_ID,
           addressId: ADDRESS_ID,
           stripeSessionId: SESSION_ID,
-          total: 2200,
+          total: 500,
           status: OrderStatus.PENDING,
         }),
       }),
@@ -186,7 +186,7 @@ describe('createOrder', () => {
 
     const call = mockCreate.mock.calls[0][0] as any
     const item = call.data.items.create[0]
-    expect(item.priceAtPurchase).toBe(2200)
+    expect(item.priceAtPurchase).toBe(500)
     expect(item.name).toBe('Softwing Butterfly')
   })
 })
