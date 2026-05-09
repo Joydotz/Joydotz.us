@@ -10,8 +10,18 @@ import {
   deleteAddress,
   setDefaultAddress,
 } from '../services/accountService.js'
-import { getOrdersByUser, getOrderById } from '../services/orderService.js'
+import {
+  dismissPendingOrder,
+  getOrderById,
+  getPaidOrdersByUser,
+  getResumablePendingOrdersByUser,
+  updateShippingAddressForPaidOrder,
+} from '../services/orderService.js'
+import { retrieveCheckoutSession } from '../services/stripeService.js'
 import { safeAddr } from '../lib/validation.js'
+
+const RESUME_CHECKOUT_WINDOW_MS = 60 * 60 * 1000
+const checkoutSessionIdRegex = /^cs_[a-zA-Z0-9_]+$/
 
 const addressSchema = z.object({
   line1: safeAddr(z.string().trim().min(1).max(255)),
@@ -121,12 +131,85 @@ export async function accountRoutes(app: FastifyInstance, opts: AccountRouteOpti
     }
   })
 
-  // ── GET /api/account/orders — list all orders for the logged-in user ─────────
+  // ── GET /api/account/orders/incomplete — recent unpaid checkouts (resume UX) ─
+
+  app.get('/api/account/orders/incomplete', async (request, reply) => {
+    const { sub } = request.user as { sub: string }
+    const orders = await getResumablePendingOrdersByUser(sub, RESUME_CHECKOUT_WINDOW_MS)
+    return reply.send({ orders })
+  })
+
+  // ── GET /api/account/orders — paid/shipped history (no PENDING / CANCELLED) ──
 
   app.get('/api/account/orders', async (request, reply) => {
     const { sub } = request.user as { sub: string }
-    const orders = await getOrdersByUser(sub)
+    const orders = await getPaidOrdersByUser(sub)
     return reply.send({ orders })
+  })
+
+  // ── POST /api/account/orders/:id/resume-checkout — Stripe Checkout URL ───────
+
+  app.post('/api/account/orders/:id/resume-checkout', async (request, reply) => {
+    const { sub } = request.user as { sub: string }
+    const { id } = request.params as { id: string }
+
+    const order = await getOrderById(id, sub)
+    if (!order || order.status !== 'PENDING') {
+      return reply.status(404).send({ error: 'Order not found' })
+    }
+
+    const minCreated = Date.now() - RESUME_CHECKOUT_WINDOW_MS
+    if (order.createdAt.getTime() < minCreated) {
+      return reply.status(410).send({ error: 'Checkout window expired' })
+    }
+
+    if (!checkoutSessionIdRegex.test(order.stripeSessionId)) {
+      return reply.status(410).send({ error: 'Checkout session unavailable' })
+    }
+
+    let session
+    try {
+      session = await retrieveCheckoutSession(order.stripeSessionId)
+    } catch {
+      return reply.status(410).send({ error: 'Checkout session unavailable' })
+    }
+
+    if (session.status !== 'open' || !session.url) {
+      return reply.status(410).send({ error: 'Checkout session no longer available' })
+    }
+
+    return reply.send({ url: session.url })
+  })
+
+  // ── POST /api/account/orders/:id/dismiss-incomplete — hide resume strip ───────
+
+  app.post('/api/account/orders/:id/dismiss-incomplete', async (request, reply) => {
+    const { sub } = request.user as { sub: string }
+    const { id } = request.params as { id: string }
+
+    const dismissed = await dismissPendingOrder(id, sub)
+    if (!dismissed) return reply.status(404).send({ error: 'Order not found' })
+    return reply.send({ success: true })
+  })
+
+  // ── POST /api/account/orders/:id/shipping-address — PAID orders only ─────────
+
+  app.post('/api/account/orders/:id/shipping-address', async (request, reply) => {
+    const { sub } = request.user as { sub: string }
+    const { id } = request.params as { id: string }
+
+    const result = addressSchema.safeParse(request.body)
+    if (!result.success) {
+      return reply.status(400).send({ error: 'Invalid address' })
+    }
+
+    try {
+      const address = await updateShippingAddressForPaidOrder(id, sub, result.data)
+      return reply.send({ address })
+    } catch (err: any) {
+      if (err.code === 'NOT_FOUND') return reply.status(404).send({ error: 'Order not found' })
+      throw err
+    }
   })
 
   // ── GET /api/account/orders/:id — get a single order by ID ───────────────────

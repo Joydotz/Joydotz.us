@@ -47,7 +47,7 @@ import {
   deleteAddress,
   setDefaultAddress,
 } from '../../../src/services/accountService'
-import { getOrdersByUser } from '../../../src/services/orderService'
+import { getPaidOrdersByUser } from '../../../src/services/orderService'
 
 const mockLogin = vi.mocked(loginUser)
 const mockSetNewsletter = vi.mocked(setNewsletterOptIn)
@@ -56,7 +56,7 @@ const mockCreateAddress = vi.mocked(createAddress)
 const mockUpdateAddress = vi.mocked(updateAddress)
 const mockDeleteAddress = vi.mocked(deleteAddress)
 const mockSetDefault = vi.mocked(setDefaultAddress)
-const mockGetOrders = vi.mocked(getOrdersByUser)
+const mockGetPaidOrders = vi.mocked(getPaidOrdersByUser)
 
 // ── Fixtures ──────────────────────────────────────────────────────────────────
 
@@ -831,7 +831,7 @@ describe('POST /api/account/addresses/:id/default', () => {
 describe('GET /api/account/orders', () => {
   describe('authenticated', () => {
     it('returns 200 and an empty array before any orders exist', async () => {
-      mockGetOrders.mockResolvedValueOnce([])
+      mockGetPaidOrders.mockResolvedValueOnce([])
 
       const res = await app.inject({
         method: 'GET',
@@ -843,8 +843,8 @@ describe('GET /api/account/orders', () => {
       expect(res.json().orders).toEqual([])
     })
 
-    it('calls getOrders with the correct userId', async () => {
-      mockGetOrders.mockResolvedValueOnce([])
+    it('calls getPaidOrdersByUser with the correct userId', async () => {
+      mockGetPaidOrders.mockResolvedValueOnce([])
 
       await app.inject({
         method: 'GET',
@@ -852,11 +852,11 @@ describe('GET /api/account/orders', () => {
         headers: { cookie: sessionCookie },
       })
 
-      expect(mockGetOrders).toHaveBeenCalledWith(MOCK_USER.id)
+      expect(mockGetPaidOrders).toHaveBeenCalledWith(MOCK_USER.id)
     })
 
     it('returns 500 when the service throws unexpectedly', async () => {
-      mockGetOrders.mockRejectedValueOnce(new Error('DB is down'))
+      mockGetPaidOrders.mockRejectedValueOnce(new Error('DB is down'))
 
       const res = await app.inject({
         method: 'GET',

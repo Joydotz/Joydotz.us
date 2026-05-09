@@ -196,6 +196,33 @@ export async function fetchOrders(): Promise<Order[]> {
   return data.orders
 }
 
+/** Unpaid checkout drafts from the last hour — shown as “resume” on the account page. */
+export async function fetchIncompleteOrders(): Promise<Order[]> {
+  const data = await request<{ orders: Order[] }>('/api/account/orders/incomplete')
+  return data.orders
+}
+
+export async function resumeIncompleteCheckout(orderId: string): Promise<{ url: string }> {
+  return request<{ url: string }>(`/api/account/orders/${orderId}/resume-checkout`, {
+    method: 'POST',
+  })
+}
+
+export async function dismissIncompleteOrder(orderId: string): Promise<void> {
+  await request(`/api/account/orders/${orderId}/dismiss-incomplete`, {
+    method: 'POST',
+  })
+}
+
+/** Update ship-to address on a PAID order before it ships. Other statuses are not editable via API. */
+export async function updateOrderShippingAddress(orderId: string, input: AddressInput): Promise<Address> {
+  const data = await request<{ address: Address }>(`/api/account/orders/${orderId}/shipping-address`, {
+    method: 'POST',
+    body: JSON.stringify(input),
+  })
+  return data.address
+}
+
 export async function fetchOrder(id: string): Promise<Order> {
   const data = await request<{ order: Order }>(`/api/account/orders/${id}`)
   return data.order

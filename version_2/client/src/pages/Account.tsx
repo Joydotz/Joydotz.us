@@ -9,11 +9,26 @@ import {
   setDefaultAddress,
   updateNewsletter,
   fetchOrders,
+  fetchIncompleteOrders,
+  resumeIncompleteCheckout,
+  dismissIncompleteOrder,
+  updateOrderShippingAddress,
   type Address,
   type AddressInput,
   type Order,
 } from '../lib/api'
 import AddressForm from '../components/AddressForm'
+
+function orderShippingToInput(addr: Order['address']): AddressInput {
+  return {
+    line1: addr.line1,
+    line2: addr.line2 ?? '',
+    city: addr.city,
+    state: addr.state,
+    postal_code: addr.postal_code,
+    country: addr.country,
+  }
+}
 
 // ── Main page ─────────────────────────────────────────────────────────────────
 
@@ -23,19 +38,29 @@ export default function Account() {
 
   const [addresses, setAddresses] = useState<Address[]>([])
   const [orders, setOrders] = useState<Order[]>([])
+  const [incompleteOrders, setIncompleteOrders] = useState<Order[]>([])
+  const [resumingOrderId, setResumingOrderId] = useState<string | null>(null)
+  const [dismissingOrderId, setDismissingOrderId] = useState<string | null>(null)
+  const [resumeCheckoutError, setResumeCheckoutError] = useState<string | null>(null)
   const [accountLoadError, setAccountLoadError] = useState<string | null>(null)
   const [showAddForm, setShowAddForm] = useState(false)
   const [editingId, setEditingId] = useState<string | null>(null)
   const [deletingId, setDeletingId] = useState<string | null>(null)
+  const [editingShippingOrderId, setEditingShippingOrderId] = useState<string | null>(null)
   const [newsletterOptIn, setNewsletterOptIn] = useState(user?.newsletterOptIn ?? false)
   const [newsletterSaving, setNewsletterSaving] = useState(false)
 
   useEffect(() => {
     ;(async () => {
       try {
-        const [addrs, ords] = await Promise.all([fetchAddresses(), fetchOrders()])
+        const [addrs, ords, incomplete] = await Promise.all([
+          fetchAddresses(),
+          fetchOrders(),
+          fetchIncompleteOrders(),
+        ])
         setAddresses(addrs)
         setOrders(ords)
+        setIncompleteOrders(incomplete)
       } catch {
         setAccountLoadError('Could not load addresses or orders. Try refreshing or signing in again.')
       }
@@ -95,6 +120,46 @@ export default function Account() {
     )
   }
 
+  async function handleSaveOrderShipping(orderId: string, input: AddressInput) {
+    const address = await updateOrderShippingAddress(orderId, input)
+    setOrders((prev) =>
+      prev.map((o) => (o.id === orderId ? { ...o, address } : o)),
+    )
+    setAddresses((prev) =>
+      prev.map((a) => (a.id === address.id ? { ...a, ...address } : a)),
+    )
+    setEditingShippingOrderId(null)
+  }
+
+  async function handleResumeCheckout(orderId: string) {
+    setResumeCheckoutError(null)
+    setResumingOrderId(orderId)
+    try {
+      const { url } = await resumeIncompleteCheckout(orderId)
+      window.location.href = url
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Could not resume checkout.'
+      setResumeCheckoutError(message)
+    } finally {
+      setResumingOrderId(null)
+    }
+  }
+
+  async function handleDismissIncomplete(orderId: string) {
+    setDismissingOrderId(orderId)
+    try {
+      await dismissIncompleteOrder(orderId)
+      setIncompleteOrders((prev) => prev.filter((o) => o.id !== orderId))
+    } catch {
+      /* user can retry */
+    } finally {
+      setDismissingOrderId(null)
+    }
+  }
+
+  const hasOrderHistory = orders.length > 0
+  const showFullOrdersEmptyState = orders.length === 0 && incompleteOrders.length === 0
+
   return (
     <div className="max-w-7xl mx-auto px-8 pt-12 pb-32">
       {accountLoadError && (
@@ -127,9 +192,66 @@ export default function Account() {
 
         {/* Orders — spans 7 cols */}
         <div className="lg:col-span-7 bg-surface-container-lowest rounded-xl p-8 shadow-[0_8px_30px_rgb(0,0,0,0.04)]">
+          {incompleteOrders.length > 0 && (
+            <div className="mb-8 space-y-3">
+              <p className="text-xs font-bold uppercase tracking-widest text-on-surface-variant font-label">
+                continue where you left off:
+              </p>
+              {resumeCheckoutError && (
+                <p className="text-error text-sm font-body bg-error/10 border border-error/20 rounded-xl px-4 py-3">
+                  {resumeCheckoutError}
+                </p>
+              )}
+              {incompleteOrders.map((order) => (
+                <div
+                  key={order.id}
+                  className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border border-primary/20 bg-primary/5 rounded-xl p-5"
+                >
+                  <div className="space-y-1 min-w-0">
+                    <p className="text-sm font-body text-on-surface">
+                      cart total{' '}
+                      <span className="font-black font-headline text-primary">
+                        ${(order.total / 100).toFixed(2)}
+                      </span>
+                      <span className="text-on-surface-variant">
+                        {' '}
+                        · started{' '}
+                        {new Date(order.createdAt).toLocaleTimeString('en-US', {
+                          hour: 'numeric',
+                          minute: '2-digit',
+                        })}
+                      </span>
+                    </p>
+                    <p className="text-xs text-on-surface-variant font-body truncate">
+                      {order.items.map((i) => `${i.name} × ${i.quantity}`).join(' · ')}
+                    </p>
+                  </div>
+                  <div className="flex flex-wrap gap-2 shrink-0">
+                    <button
+                      type="button"
+                      onClick={() => handleResumeCheckout(order.id)}
+                      disabled={resumingOrderId === order.id}
+                      className="px-5 py-2.5 rounded-full bg-primary text-on-primary text-xs font-bold hover:opacity-90 transition-all disabled:opacity-40"
+                    >
+                      {resumingOrderId === order.id ? 'opening…' : 'continue checkout'}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleDismissIncomplete(order.id)}
+                      disabled={dismissingOrderId === order.id}
+                      className="px-5 py-2.5 rounded-full border border-outline-variant/40 text-on-surface-variant text-xs font-bold hover:bg-surface-container transition-all disabled:opacity-40"
+                    >
+                      {dismissingOrderId === order.id ? 'dismissing…' : 'dismiss'}
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+
           <h2 className="text-xs font-bold uppercase tracking-widest text-primary font-label mb-6">orders</h2>
 
-          {orders.length === 0 ? (
+          {showFullOrdersEmptyState ? (
             <div className="flex flex-col items-center justify-center py-16 text-center space-y-4">
               <div className="w-14 h-14 rounded-full bg-surface-container flex items-center justify-center text-on-surface-variant">
                 <span className="material-symbols-outlined text-2xl">shopping_bag</span>
@@ -145,6 +267,14 @@ export default function Account() {
                 shop now
               </Link>
             </div>
+          ) : !hasOrderHistory ? (
+            <p className="text-sm text-on-surface-variant font-body py-2">
+              no completed orders yet — finish checkout above or{' '}
+              <Link to="/shop" className="font-bold text-primary hover:opacity-80">
+                keep shopping
+              </Link>
+              .
+            </p>
           ) : (
             <div className="space-y-4">
               {orders.map((order) => (
@@ -190,6 +320,48 @@ export default function Account() {
                     <span className="text-sm font-black font-headline text-primary">
                       ${(order.total / 100).toFixed(2)}
                     </span>
+                  </div>
+
+                  <div className="pt-3 border-t border-outline-variant/20 space-y-3">
+                    <div className="flex items-start justify-between gap-2">
+                      <p className="text-xs font-bold uppercase tracking-widest text-on-surface-variant font-label">
+                        shipping address
+                      </p>
+                      {order.status === 'PAID' && editingShippingOrderId !== order.id && (
+                        <button
+                          type="button"
+                          onClick={() => setEditingShippingOrderId(order.id)}
+                          className="text-xs font-bold text-primary hover:opacity-70 shrink-0"
+                        >
+                          edit
+                        </button>
+                      )}
+                    </div>
+
+                    {editingShippingOrderId === order.id ? (
+                      <div className="border border-outline-variant/40 rounded-xl p-4">
+                        <AddressForm
+                          initial={orderShippingToInput(order.address)}
+                          onSave={(input) => handleSaveOrderShipping(order.id, input)}
+                          onCancel={() => setEditingShippingOrderId(null)}
+                          submitLabel="save shipping address"
+                        />
+                      </div>
+                    ) : (
+                      <div className="text-sm font-body text-on-surface leading-relaxed space-y-0.5">
+                        <p>{order.address.line1}</p>
+                        {order.address.line2 ? <p>{order.address.line2}</p> : null}
+                        <p>
+                          {order.address.city}, {order.address.state} {order.address.postal_code}
+                        </p>
+                        <p>{order.address.country}</p>
+                        {order.status !== 'PAID' && (
+                          <p className="text-xs text-on-surface-variant pt-2">
+                            shipping address can only be changed while the order is paid and not yet shipped.
+                          </p>
+                        )}
+                      </div>
+                    )}
                   </div>
                 </div>
               ))}

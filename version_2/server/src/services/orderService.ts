@@ -1,4 +1,5 @@
 import { prisma } from '../db/client.js'
+import type { AddressInput } from './accountService.js'
 
 export interface OrderItemInput {
   productId: string
@@ -47,6 +48,80 @@ export async function getOrdersByUser(userId: string) {
     where: { userId },
     include: { items: true, address: true },
     orderBy: { createdAt: 'desc' },
+  })
+}
+
+/** Order history on the account page — excludes drafts and user-cancelled / swept abandons. */
+export async function getPaidOrdersByUser(userId: string) {
+  return prisma.order.findMany({
+    where: { userId, status: { notIn: ['PENDING', 'CANCELLED'] } },
+    include: { items: true, address: true },
+    orderBy: { createdAt: 'desc' },
+  })
+}
+
+/** Recent unpaid checkouts the user may resume (within `resumeWindowMs`). */
+export async function getResumablePendingOrdersByUser(userId: string, resumeWindowMs = 60 * 60 * 1000) {
+  const since = new Date(Date.now() - resumeWindowMs)
+  return prisma.order.findMany({
+    where: {
+      userId,
+      status: 'PENDING',
+      createdAt: { gte: since },
+    },
+    include: { items: true, address: true },
+    orderBy: { createdAt: 'desc' },
+  })
+}
+
+/** Marks stale unpaid drafts cancelled so they do not clutter lookups forever. */
+export async function sweepStalePendingOrders(maxAgeMs = 24 * 60 * 60 * 1000) {
+  const cutoff = new Date(Date.now() - maxAgeMs)
+  const result = await prisma.order.updateMany({
+    where: { status: 'PENDING', createdAt: { lt: cutoff } },
+    data: { status: 'CANCELLED' },
+  })
+  return result.count
+}
+
+/** User dismissed “resume checkout” — cancel only if still pending and owned by `userId`. */
+export async function dismissPendingOrder(orderId: string, userId: string): Promise<boolean> {
+  const result = await prisma.order.updateMany({
+    where: { id: orderId, userId, status: 'PENDING' },
+    data: { status: 'CANCELLED' },
+  })
+  return result.count === 1
+}
+
+/** Update ship-to address while order is PAID and not yet fulfilled (only status that allows edits). */
+export async function updateShippingAddressForPaidOrder(orderId: string, userId: string, input: AddressInput) {
+  const order = await prisma.order.findFirst({
+    where: { id: orderId, userId, status: 'PAID' },
+    select: { addressId: true },
+  })
+  if (!order) {
+    throw Object.assign(new Error('Order not found'), { code: 'NOT_FOUND' })
+  }
+
+  const owned = await prisma.address.findFirst({
+    where: { id: order.addressId, userId },
+  })
+  if (!owned) {
+    throw Object.assign(new Error('Order not found'), { code: 'NOT_FOUND' })
+  }
+
+  const line2 = input.line2?.trim() ? input.line2.trim() : null
+
+  return prisma.address.update({
+    where: { id: owned.id },
+    data: {
+      line1: input.line1.trim(),
+      line2,
+      city: input.city.trim(),
+      state: input.state.trim(),
+      postal_code: input.postal_code.trim(),
+      country: input.country.trim(),
+    },
   })
 }
 

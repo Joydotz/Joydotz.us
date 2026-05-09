@@ -56,17 +56,26 @@ vi.mock('../../../src/db/client', () => ({
       update: vi.fn(),
       updateMany: vi.fn(),
     },
+    address: {
+      findFirst: vi.fn(),
+      update: vi.fn(),
+    },
   },
 }))
 
 import { prisma } from '../../../src/db/client'
 import {
   createOrder,
+  dismissPendingOrder,
   getOrdersByUser,
+  getPaidOrdersByUser,
   getOrderById,
   getOrderByIdForStripeEvent,
   getOrderByStripeSessionId,
   getRecentPendingOrdersByUser,
+  getResumablePendingOrdersByUser,
+  sweepStalePendingOrders,
+  updateShippingAddressForPaidOrder,
   updateOrderStripeSessionId,
   tryMarkOrderPaidAfterCheckout,
   updateOrderStatus,
@@ -80,6 +89,8 @@ const mockFindFirst = vi.mocked(prisma.order.findFirst)
 const mockFindUnique = vi.mocked(prisma.order.findUnique)
 const mockUpdate   = vi.mocked(prisma.order.update)
 const mockUpdateMany = vi.mocked(prisma.order.updateMany)
+const mockAddressFindFirst = vi.mocked(prisma.address.findFirst)
+const mockAddressUpdate = vi.mocked(prisma.address.update)
 
 // ── Fixtures ──────────────────────────────────────────────────────────────────
 
@@ -221,6 +232,142 @@ describe('getOrdersByUser', () => {
     const result = await getOrdersByUser(USER_ID)
 
     expect(result).toEqual([])
+  })
+})
+
+describe('getPaidOrdersByUser', () => {
+  it('excludes PENDING and CANCELLED orders from history', async () => {
+    mockFindMany.mockResolvedValue([] as any)
+
+    await getPaidOrdersByUser(USER_ID)
+
+    expect(mockFindMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: { userId: USER_ID, status: { notIn: [OrderStatus.PENDING, OrderStatus.CANCELLED] } },
+      }),
+    )
+  })
+})
+
+describe('getResumablePendingOrdersByUser', () => {
+  it('scopes to recent PENDING orders for the user', async () => {
+    mockFindMany.mockResolvedValue([] as any)
+
+    await getResumablePendingOrdersByUser(USER_ID)
+
+    expect(mockFindMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: {
+          userId: USER_ID,
+          status: OrderStatus.PENDING,
+          createdAt: { gte: expect.any(Date) },
+        },
+      }),
+    )
+  })
+})
+
+describe('sweepStalePendingOrders', () => {
+  it('cancels PENDING orders older than the cutoff', async () => {
+    vi.useFakeTimers()
+    try {
+      vi.setSystemTime(new Date('2026-06-01T12:00:00.000Z'))
+      mockUpdateMany.mockResolvedValue({ count: 3 } as any)
+
+      const n = await sweepStalePendingOrders()
+
+      expect(n).toBe(3)
+      expect(mockUpdateMany).toHaveBeenCalledWith({
+        where: {
+          status: OrderStatus.PENDING,
+          createdAt: { lt: new Date('2026-05-31T12:00:00.000Z') },
+        },
+        data: { status: OrderStatus.CANCELLED },
+      })
+    } finally {
+      vi.useRealTimers()
+    }
+  })
+})
+
+describe('dismissPendingOrder', () => {
+  it('returns true when a pending order was cancelled', async () => {
+    mockUpdateMany.mockResolvedValue({ count: 1 } as any)
+
+    const ok = await dismissPendingOrder(ORDER_ID, USER_ID)
+
+    expect(ok).toBe(true)
+    expect(mockUpdateMany).toHaveBeenCalledWith({
+      where: { id: ORDER_ID, userId: USER_ID, status: OrderStatus.PENDING },
+      data: { status: OrderStatus.CANCELLED },
+    })
+  })
+
+  it('returns false when no row matched', async () => {
+    mockUpdateMany.mockResolvedValue({ count: 0 } as any)
+
+    const ok = await dismissPendingOrder(ORDER_ID, USER_ID)
+
+    expect(ok).toBe(false)
+  })
+})
+
+describe('updateShippingAddressForPaidOrder', () => {
+  const shippingInput = {
+    line1: '100 New St',
+    line2: '',
+    city: 'Gastonia',
+    state: 'NC',
+    postal_code: '28054',
+    country: 'US',
+  }
+
+  it('updates the order shipping address when status is PAID', async () => {
+    mockFindFirst.mockResolvedValueOnce({ addressId: ADDRESS_ID } as any)
+    mockAddressFindFirst.mockResolvedValueOnce(DB_ADDRESS as any)
+    const updated = { ...DB_ADDRESS, line1: '100 New St' }
+    mockAddressUpdate.mockResolvedValueOnce(updated as any)
+
+    const result = await updateShippingAddressForPaidOrder(ORDER_ID, USER_ID, shippingInput)
+
+    expect(mockFindFirst).toHaveBeenCalledWith({
+      where: { id: ORDER_ID, userId: USER_ID, status: OrderStatus.PAID },
+      select: { addressId: true },
+    })
+    expect(mockAddressFindFirst).toHaveBeenCalledWith({
+      where: { id: ADDRESS_ID, userId: USER_ID },
+    })
+    expect(mockAddressUpdate).toHaveBeenCalledWith({
+      where: { id: ADDRESS_ID },
+      data: {
+        line1: '100 New St',
+        line2: null,
+        city: 'Gastonia',
+        state: 'NC',
+        postal_code: '28054',
+        country: 'US',
+      },
+    })
+    expect(result.line1).toBe('100 New St')
+  })
+
+  it('throws NOT_FOUND when order is not PAID or missing', async () => {
+    mockFindFirst.mockResolvedValueOnce(null)
+
+    await expect(updateShippingAddressForPaidOrder(ORDER_ID, USER_ID, shippingInput)).rejects.toMatchObject({
+      code: 'NOT_FOUND',
+    })
+    expect(mockAddressUpdate).not.toHaveBeenCalled()
+  })
+
+  it('throws NOT_FOUND when address is not owned by user', async () => {
+    mockFindFirst.mockResolvedValueOnce({ addressId: ADDRESS_ID } as any)
+    mockAddressFindFirst.mockResolvedValueOnce(null)
+
+    await expect(updateShippingAddressForPaidOrder(ORDER_ID, USER_ID, shippingInput)).rejects.toMatchObject({
+      code: 'NOT_FOUND',
+    })
+    expect(mockAddressUpdate).not.toHaveBeenCalled()
   })
 })
 

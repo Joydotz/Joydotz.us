@@ -1,6 +1,7 @@
 import 'dotenv/config'
 import { buildApp } from './app'
 import { config } from './config'
+import { startPendingOrderSweeper } from './jobs/pendingOrderSweeper.js'
 
 const app = buildApp({ logger: true })
 
@@ -9,4 +10,5 @@ app.listen({ port: config.PORT, host: '0.0.0.0' }, (err) => {
     app.log.error(err)
     process.exit(1)
   }
+  startPendingOrderSweeper(app.log)
 })
