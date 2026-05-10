@@ -5,6 +5,8 @@ import { fetchOrder, fetchOrderByCheckoutSession, type Order } from '../lib/api'
 
 const fmt = (cents: number) => `$${(cents / 100).toFixed(2)}`
 
+const SUPPORT_EMAIL = import.meta.env.VITE_SUPPORT_EMAIL ?? 'contact@joydotz.us'
+
 const STATUS_LABEL: Record<Order['status'], string> = {
   PENDING: 'pending',
   PAID: 'paid',
@@ -19,23 +21,48 @@ export default function OrderConfirmation() {
   const { clearCart } = useCart()
   const [searchParams] = useSearchParams()
   const sessionId = searchParams.get('session_id')
+  /** Dev-only: `/order-confirmation?stall_preview=1` shows the stalled UI without polling. Ignored in production builds. */
+  const stallPreviewDev =
+    import.meta.env.DEV && ['1', 'true'].includes((searchParams.get('stall_preview') ?? '').toLowerCase())
 
   const [order, setOrder] = useState<Order | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(false)
+  /** Session-return poll exhausted without confirming PAID in our system — payment may still have succeeded. */
+  const [confirmationStalled, setConfirmationStalled] = useState(false)
 
   useEffect(() => {
     let cancelled = false
 
+    if (stallPreviewDev) {
+      setConfirmationStalled(true)
+      setLoading(false)
+      return
+    }
+
+    const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms))
+
     async function load() {
       try {
         if (sessionId) {
-          const o = await fetchOrderByCheckoutSession(sessionId)
-          if (!cancelled) {
-            setOrder(o)
-            clearCart()
-            sessionStorage.removeItem('joydotz_pending_order')
+          const deadline = Date.now() + 120_000
+          let delayMs = 600
+          const maxDelayMs = 8000
+          while (!cancelled && Date.now() < deadline) {
+            const result = await fetchOrderByCheckoutSession(sessionId)
+            if (cancelled) return
+            if (result.status === 'ready') {
+              setOrder(result.order)
+              clearCart()
+              sessionStorage.removeItem('joydotz_pending_order')
+              return
+            }
+            const remaining = deadline - Date.now()
+            if (remaining <= 0) break
+            await sleep(Math.min(delayMs, remaining))
+            delayMs = Math.min(maxDelayMs, Math.floor(delayMs * 1.8))
           }
+          if (!cancelled) setConfirmationStalled(true)
           return
         }
 
@@ -62,13 +89,62 @@ export default function OrderConfirmation() {
     return () => {
       cancelled = true
     }
-  }, [sessionId, clearCart])
+  }, [sessionId, clearCart, stallPreviewDev])
 
   // ── Loading ───────────────────────────────────────────────────────────────
   if (loading) {
     return (
-      <div className="max-w-7xl mx-auto px-8 pt-16 pb-32 flex items-center justify-center min-h-[60vh]">
+      <div className="max-w-7xl mx-auto px-8 pt-16 pb-32 flex flex-col items-center justify-center min-h-[60vh] text-center gap-3">
         <div className="text-on-surface-variant font-body animate-pulse">confirming your order…</div>
+        {sessionId && (
+          <p className="text-xs text-on-surface-variant/80 font-body max-w-sm">
+            waiting for payment confirmation from Stripe — this usually takes a few seconds.
+          </p>
+        )}
+      </div>
+    )
+  }
+
+  // ── Confirmation stalled (paid at Stripe; our confirmation lagged) ───────
+  if (confirmationStalled) {
+    const mailto = `mailto:${SUPPORT_EMAIL}?subject=${encodeURIComponent('Order confirmation help')}`
+    return (
+      <div className="relative overflow-hidden">
+        <div className="absolute top-0 right-[5%] w-96 h-96 bg-secondary-container/15 rounded-full blur-[120px] -z-10" />
+        <section className="max-w-7xl mx-auto px-8 pt-16 pb-32 flex flex-col items-center justify-center min-h-[60vh] text-center space-y-6">
+          <div className="w-16 h-16 rounded-full bg-surface-container flex items-center justify-center text-primary">
+            <span className="material-symbols-outlined text-3xl">schedule</span>
+          </div>
+          <h1 className="text-4xl font-black font-headline tracking-tighter">We&apos;re still confirming your payment.</h1>
+          <div className="text-on-surface-variant font-body max-w-md leading-relaxed space-y-3">
+            <p>Stripe accepted your payment, but confirming your order on our side is taking longer than usual.</p>
+            <p>Please don&apos;t pay again. Check your email and your account for updates.</p>
+            <p>
+              If your order still hasn&apos;t appeared, email us at{' '}
+              <a
+                href={`mailto:${SUPPORT_EMAIL}`}
+                className="text-primary font-semibold underline underline-offset-2 hover:opacity-90"
+              >
+                {SUPPORT_EMAIL}
+              </a>
+              .
+            </p>
+          </div>
+          <div className="flex flex-col sm:flex-row gap-3 items-center">
+            <Link
+              to="/account"
+              className="px-8 py-3 bg-primary text-on-primary rounded-full font-bold text-sm hover:scale-105 transition-all"
+            >
+              view account
+            </Link>
+            <a
+              href={mailto}
+              className="px-8 py-3 rounded-full font-bold text-sm border border-outline-variant text-on-surface hover:bg-surface-container transition-all"
+            >
+              email support
+            </a>
+          </div>
+        </section>
       </div>
     )
   }

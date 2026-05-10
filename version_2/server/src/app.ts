@@ -78,6 +78,7 @@ export function buildApp(opts: AppOptions = {}) {
   })
 
   const eventBus = opts.eventBus ?? new MockEventBus()
+  app.decorate('eventBus', eventBus)
 
   app.register(productRoutes)
   app.register(emailRoutes, { skipRateLimit: opts.skipRateLimit ?? false, skipCsrf: opts.skipCsrf ?? false })

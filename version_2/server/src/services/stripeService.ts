@@ -1,4 +1,5 @@
 import Stripe from 'stripe'
+import { PRODUCTS } from '../data/products.js'
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY ?? '')
 
@@ -121,9 +122,73 @@ export async function createCheckoutSession(
   return { sessionId: session.id, url: session.url }
 }
 
-/** Used to verify return from hosted Checkout before exposing order details (no JWT required). */
+/** Used to read Checkout Session state from Stripe (thank-you page UX only — never mark PAID here). */
 export async function retrieveCheckoutSession(sessionId: string) {
   return stripe.checkout.sessions.retrieve(sessionId)
+}
+
+/** Dev / explicit debug: run before starting Checkout so misconfigured Stripe fails fast. */
+export function shouldVerifyStripeBeforeCheckout(): boolean {
+  if (process.env.STRIPE_CHECKOUT_READINESS === '0') return false
+  if (process.env.STRIPE_CHECKOUT_READINESS === '1') return true
+  return process.env.NODE_ENV === 'development'
+}
+
+export interface StripeCheckoutReadinessResult {
+  ok: boolean
+  pricesReachable: boolean
+  webhookSecretConfigured: boolean
+  dashboardWebhookEndpointsCount: number | null
+  hints: string[]
+}
+
+/**
+ * Reuses the same Price reads as checkout totals, plus webhook-secret and (best-effort)
+ * Dashboard webhook endpoint listing — confirms Stripe API access and that signed events can be verified.
+ * Stripe CLI `listen` does not create Dashboard endpoints; absence is normal locally if hints explain it.
+ */
+export async function verifyStripeCheckoutReadiness(): Promise<StripeCheckoutReadinessResult> {
+  const hints: string[] = []
+
+  let pricesReachable = false
+  try {
+    const ids = [...new Set(PRODUCTS.map((p) => p.stripePriceId))]
+    await retrieveStripePricesByIds(ids)
+    pricesReachable = true
+  } catch {
+    hints.push('Could not load catalog prices from Stripe — check STRIPE_SECRET_KEY and price IDs.')
+  }
+
+  const webhookSecretConfigured = Boolean(process.env.STRIPE_WEBHOOK_SECRET?.trim())
+  if (!webhookSecretConfigured) {
+    hints.push(
+      'STRIPE_WEBHOOK_SECRET is missing — webhooks cannot be verified. Run `stripe listen --forward-to …/api/stripe-events` and set the signing secret.',
+    )
+  }
+
+  let dashboardWebhookEndpointsCount: number | null = null
+  try {
+    const listed = await stripe.webhookEndpoints.list({ limit: 25 })
+    dashboardWebhookEndpointsCount = listed.data.length
+    if (listed.data.length === 0) {
+      hints.push(
+        'No webhook endpoints in Stripe Dashboard — normal for local dev when using only Stripe CLI forwarding.',
+      )
+    }
+  } catch {
+    dashboardWebhookEndpointsCount = null
+    hints.push('Could not list Stripe webhook endpoints (API key may lack permission).')
+  }
+
+  const ok = pricesReachable && webhookSecretConfigured
+
+  return {
+    ok,
+    pricesReachable,
+    webhookSecretConfigured,
+    dashboardWebhookEndpointsCount,
+    hints,
+  }
 }
 
 export function constructStripeEvent(

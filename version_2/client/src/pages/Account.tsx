@@ -202,6 +202,7 @@ export default function Account() {
                   {resumeCheckoutError}
                 </p>
               )}
+              <div className="max-h-[min(40vh,22rem)] overflow-y-auto overscroll-y-contain space-y-3 pr-1 [scrollbar-gutter:stable]">
               {incompleteOrders.map((order) => (
                 <div
                   key={order.id}
@@ -246,6 +247,7 @@ export default function Account() {
                   </div>
                 </div>
               ))}
+              </div>
             </div>
           )}
 
@@ -276,7 +278,7 @@ export default function Account() {
               .
             </p>
           ) : (
-            <div className="space-y-4">
+            <div className="max-h-[min(70vh,40rem)] overflow-y-auto overscroll-y-contain space-y-4 pr-1 [scrollbar-gutter:stable]">
               {orders.map((order) => (
                 <div
                   key={order.id}

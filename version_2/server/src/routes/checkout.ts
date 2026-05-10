@@ -11,11 +11,14 @@ import {
   updateOrderStatus,
   updateOrderStripeSessionId,
 } from '../services/orderService.js'
+import { reconcilePaidCheckoutFromStripeSession } from '../services/checkoutSessionReconcile.js'
 import {
   createCheckoutSession,
   constructStripeEvent,
   retrieveCheckoutSession,
   retrieveStripePricesByIds,
+  shouldVerifyStripeBeforeCheckout,
+  verifyStripeCheckoutReadiness,
 } from '../services/stripeService.js'
 import { PRODUCTS } from '../data/products.js'
 import { EventBus } from '../events/EventBus.js'
@@ -75,26 +78,20 @@ export async function checkoutRoutes(app: FastifyInstance, opts: CheckoutRouteOp
       return reply.status(404).send({ error: 'Order not found' })
     }
 
-    let order = await getOrderByStripeSessionId(stripeSession.id)
+    const order = await getOrderByStripeSessionId(stripeSession.id)
     if (!order || order.id !== orderIdMeta) {
       return reply.status(404).send({ error: 'Order not found' })
     }
 
-    // Webhooks often miss localhost — reconcile PAID from Stripe when payment succeeded.
     if (order.status === 'PENDING') {
-      const transitioned = await tryMarkOrderPaidAfterCheckout(order.id)
-      if (transitioned) {
-        const paid = await getOrderByStripeSessionId(stripeSession.id)
-        if (paid) {
-          order = paid
-          await opts.eventBus.publish('ORDER_PAID', {
-            orderId: paid.id,
-            userId: paid.userId,
-            email: paid.user.email,
-            total: paid.total,
-          })
-        }
+      const reconciled = await reconcilePaidCheckoutFromStripeSession(stripeSession, opts.eventBus)
+      if (reconciled?.order.status === 'PAID') {
+        return reply.send({ order: reconciled.order })
       }
+      return reply.status(202).send({
+        awaitingWebhook: true,
+        message: 'Payment received — confirming your order.',
+      })
     }
 
     return reply.send({ order })
@@ -107,6 +104,16 @@ export async function checkoutRoutes(app: FastifyInstance, opts: CheckoutRouteOp
     { preHandler: [authenticate, ...(opts.skipCsrf ? [] : [app.csrfProtection as any])] },
     async (request, reply) => {
       const { sub: userId } = request.user as { sub: string }
+
+      if (shouldVerifyStripeBeforeCheckout()) {
+        const readiness = await verifyStripeCheckoutReadiness()
+        if (!readiness.ok) {
+          return reply.status(503).send({
+            error: 'Stripe is not ready for checkout',
+            stripeReadiness: readiness,
+          })
+        }
+      }
 
       // 1. Validate body
       const schema = z.object({

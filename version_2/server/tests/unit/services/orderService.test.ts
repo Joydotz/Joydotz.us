@@ -22,7 +22,7 @@
  *   updateOrderStripeSessionId — replaces placeholder session id with real `cs_...`
  *                          after Checkout Session creation succeeds
  *   tryMarkOrderPaidAfterCheckout — atomic PENDING→PAID; returns whether this
- *                          call performed the transition (webhook vs browser)
+ *                          call performed the transition (webhook / poll / sweeper)
  *   updateOrderStatus    — transitions an order to PAID, SHIPPED, DELIVERED,
  *                          CANCELLED, or REFUNDED
  *   shipOrder            — sets SHIPPED status, trackingNumber, and shippedAt
@@ -74,7 +74,6 @@ import {
   getOrderByStripeSessionId,
   getRecentPendingOrdersByUser,
   getResumablePendingOrdersByUser,
-  sweepStalePendingOrders,
   updateShippingAddressForPaidOrder,
   updateOrderStripeSessionId,
   tryMarkOrderPaidAfterCheckout,
@@ -264,29 +263,6 @@ describe('getResumablePendingOrdersByUser', () => {
         },
       }),
     )
-  })
-})
-
-describe('sweepStalePendingOrders', () => {
-  it('cancels PENDING orders older than the cutoff', async () => {
-    vi.useFakeTimers()
-    try {
-      vi.setSystemTime(new Date('2026-06-01T12:00:00.000Z'))
-      mockUpdateMany.mockResolvedValue({ count: 3 } as any)
-
-      const n = await sweepStalePendingOrders()
-
-      expect(n).toBe(3)
-      expect(mockUpdateMany).toHaveBeenCalledWith({
-        where: {
-          status: OrderStatus.PENDING,
-          createdAt: { lt: new Date('2026-05-31T12:00:00.000Z') },
-        },
-        data: { status: OrderStatus.CANCELLED },
-      })
-    } finally {
-      vi.useRealTimers()
-    }
   })
 })
 

@@ -74,16 +74,6 @@ export async function getResumablePendingOrdersByUser(userId: string, resumeWind
   })
 }
 
-/** Marks stale unpaid drafts cancelled so they do not clutter lookups forever. */
-export async function sweepStalePendingOrders(maxAgeMs = 24 * 60 * 60 * 1000) {
-  const cutoff = new Date(Date.now() - maxAgeMs)
-  const result = await prisma.order.updateMany({
-    where: { status: 'PENDING', createdAt: { lt: cutoff } },
-    data: { status: 'CANCELLED' },
-  })
-  return result.count
-}
-
 /** User dismissed “resume checkout” — cancel only if still pending and owned by `userId`. */
 export async function dismissPendingOrder(orderId: string, userId: string): Promise<boolean> {
   const result = await prisma.order.updateMany({
@@ -166,7 +156,7 @@ export async function updateOrderStatus(orderId: string, status: 'PENDING' | 'PA
 
 /**
  * Hosted Checkout succeeded (Stripe says paid). Atomically PENDING → PAID only once.
- * Used by webhooks and by GET /api/checkout/order-by-session so local dev works without stripe listen.
+ * Used by verified Stripe webhooks, thank-you polling (`order-by-session`), and the pending-order sweeper.
  */
 export async function tryMarkOrderPaidAfterCheckout(orderId: string): Promise<boolean> {
   const result = await prisma.order.updateMany({

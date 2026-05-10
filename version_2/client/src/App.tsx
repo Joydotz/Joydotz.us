@@ -14,6 +14,7 @@ import Account from './pages/Account'
 import Cart from './pages/Cart'
 import Checkout from './pages/Checkout'
 import OrderConfirmation from './pages/OrderConfirmation'
+import NotFound from './pages/NotFound'
 
 export default function App() {
   return (
@@ -48,6 +49,7 @@ export default function App() {
               />
               {/* Public: Stripe redirects here before cookies/auth may be ready; loads order via session_id query */}
               <Route path="/order-confirmation" element={<OrderConfirmation />} />
+              <Route path="*" element={<NotFound />} />
             </Route>
           </Routes>
         </CartProvider>

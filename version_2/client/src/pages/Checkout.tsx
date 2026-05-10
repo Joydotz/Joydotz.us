@@ -42,7 +42,12 @@ export default function Checkout() {
       sessionStorage.setItem('joydotz_pending_order', orderId)
       window.location.href = url
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Something went wrong. Please try again.')
+      let msg = err instanceof Error ? err.message : 'Something went wrong. Please try again.'
+      const readiness = err as Error & { stripeReadiness?: { hints?: string[] } }
+      if (readiness.stripeReadiness?.hints?.length) {
+        msg += `\n\n${readiness.stripeReadiness.hints.join('\n')}`
+      }
+      setError(msg)
       setSubmitting(false)
     }
   }
@@ -172,7 +177,7 @@ export default function Checkout() {
               </div>
 
               {error && (
-                <p className="text-error text-sm font-body mb-4">{error}</p>
+                <p className="text-error text-sm font-body mb-4 whitespace-pre-wrap">{error}</p>
               )}
 
               <button

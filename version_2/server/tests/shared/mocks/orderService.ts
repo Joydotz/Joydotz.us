@@ -7,7 +7,6 @@ export function buildOrderServiceMock() {
     getOrdersByUser: vi.fn(),
     getPaidOrdersByUser: vi.fn(),
     getResumablePendingOrdersByUser: vi.fn(),
-    sweepStalePendingOrders: vi.fn(),
     dismissPendingOrder: vi.fn(),
     updateShippingAddressForPaidOrder: vi.fn(),
     getOrderById: vi.fn(),

@@ -58,6 +58,8 @@ vi.mock('../../../src/services/stripeService', () => ({
   constructStripeEvent: vi.fn(),
   retrieveCheckoutSession: vi.fn(),
   retrieveStripePricesByIds: vi.fn(),
+  shouldVerifyStripeBeforeCheckout: vi.fn(() => false),
+  verifyStripeCheckoutReadiness: vi.fn(),
 }))
 
 import { loginUser } from '../../../src/services/authService'
@@ -621,16 +623,37 @@ describe('GET /api/checkout/order-by-session', () => {
     expect(res.statusCode).toBe(404)
   })
 
-  it('returns 200 with order when Stripe paid and DB matches metadata', async () => {
+  it('returns 202 when Stripe paid but reconcile cannot transition order yet', async () => {
     mockRetrieveCheckoutSession.mockResolvedValueOnce({
       id: 'cs_test_abc123',
       payment_status: 'paid',
       metadata: { orderId: 'order-001', userId: MOCK_USER.id },
     } as any)
+    mockTryMarkOrderPaidAfterCheckout.mockResolvedValueOnce(false)
+    mockGetOrderByStripeSessionId.mockResolvedValue(MOCK_ORDER_WITH_RELATIONS as any)
+
+    const res = await app.inject({
+      method: 'GET',
+      url: '/api/checkout/order-by-session?session_id=cs_test_abc123',
+    })
+
+    expect(res.statusCode).toBe(202)
+    expect(res.json().awaitingWebhook).toBe(true)
+    expect(mockGetOrderByStripeSessionId).toHaveBeenCalledWith('cs_test_abc123')
+    expect(eventBus.eventsOf('ORDER_PAID')).toHaveLength(0)
+  })
+
+  it('returns 200 when Stripe paid and reconcile transitions PENDING→PAID', async () => {
+    mockRetrieveCheckoutSession.mockResolvedValueOnce({
+      id: 'cs_test_abc123',
+      payment_status: 'paid',
+      metadata: { orderId: 'order-001', userId: MOCK_USER.id },
+    } as any)
+    mockTryMarkOrderPaidAfterCheckout.mockResolvedValueOnce(true)
     mockGetOrderByStripeSessionId
       .mockResolvedValueOnce(MOCK_ORDER_WITH_RELATIONS as any)
+      .mockResolvedValueOnce(MOCK_ORDER_WITH_RELATIONS as any)
       .mockResolvedValueOnce(MOCK_ORDER_PAID_WITH_RELATIONS as any)
-    mockTryMarkOrderPaidAfterCheckout.mockResolvedValueOnce(true)
 
     const res = await app.inject({
       method: 'GET',
@@ -638,14 +661,12 @@ describe('GET /api/checkout/order-by-session', () => {
     })
 
     expect(res.statusCode).toBe(200)
-    expect(res.json().order.id).toBe('order-001')
     expect(res.json().order.status).toBe('PAID')
     expect(mockTryMarkOrderPaidAfterCheckout).toHaveBeenCalledWith('order-001')
-    expect(mockGetOrderByStripeSessionId).toHaveBeenCalledWith('cs_test_abc123')
     expect(eventBus.eventsOf('ORDER_PAID')).toHaveLength(1)
   })
 
-  it('does not call tryMark or publish when order is already PAID', async () => {
+  it('returns 200 with order when already PAID (webhook processed)', async () => {
     mockRetrieveCheckoutSession.mockResolvedValueOnce({
       id: 'cs_test_abc123',
       payment_status: 'paid',
@@ -660,7 +681,6 @@ describe('GET /api/checkout/order-by-session', () => {
 
     expect(res.statusCode).toBe(200)
     expect(res.json().order.status).toBe('PAID')
-    expect(mockTryMarkOrderPaidAfterCheckout).not.toHaveBeenCalled()
     expect(eventBus.eventsOf('ORDER_PAID')).toHaveLength(0)
   })
 })

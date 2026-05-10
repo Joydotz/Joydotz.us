@@ -93,7 +93,12 @@ async function request<T>(url: string, options?: RequestInit): Promise<T> {
     },
   })
   const data = await res.json().catch(() => ({}))
-  if (!res.ok) throw Object.assign(new Error(data.error ?? 'Request failed'), { status: res.status })
+  if (!res.ok) {
+    throw Object.assign(new Error(data.error ?? 'Request failed'), {
+      status: res.status,
+      stripeReadiness: (data as { stripeReadiness?: unknown }).stripeReadiness,
+    })
+  }
   return data as T
 }
 
@@ -228,11 +233,23 @@ export async function fetchOrder(id: string): Promise<Order> {
   return data.order
 }
 
-/** Thank-you page after hosted Stripe Checkout — no auth; `session_id` is in the return URL. */
-export async function fetchOrderByCheckoutSession(sessionId: string): Promise<Order> {
+/** Poll after Stripe redirect — 202 means PAID not visible yet; server retries reconcile + webhook on each poll. */
+export type CheckoutSessionOrderPoll =
+  | { status: 'ready'; order: Order }
+  | { status: 'awaitingWebhook'; message?: string }
+
+export async function fetchOrderByCheckoutSession(sessionId: string): Promise<CheckoutSessionOrderPoll> {
   const q = new URLSearchParams({ session_id: sessionId })
-  const data = await request<{ order: Order }>(`/api/checkout/order-by-session?${q}`)
-  return data.order
+  const res = await fetch(`/api/checkout/order-by-session?${q}`, { credentials: 'include' })
+  const data = await res.json().catch(() => ({}))
+  if (res.status === 202) {
+    return {
+      status: 'awaitingWebhook',
+      message: typeof data.message === 'string' ? data.message : undefined,
+    }
+  }
+  if (!res.ok) throw Object.assign(new Error((data as { error?: string }).error ?? 'Request failed'), { status: res.status })
+  return { status: 'ready', order: (data as { order: Order }).order }
 }
 
 export async function createCheckoutSession(
