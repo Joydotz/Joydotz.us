@@ -112,6 +112,9 @@ export async function accountRoutes(app: FastifyInstance, opts: AccountRouteOpti
       return reply.send({ success: true })
     } catch (err: any) {
       if (err.code === 'NOT_FOUND') return reply.status(404).send({ error: 'Address not found' })
+      if (err.code === 'ADDRESS_IN_USE') {
+        return reply.status(409).send({ error: err.message, code: 'ADDRESS_IN_USE' })
+      }
       throw err
     }
   })

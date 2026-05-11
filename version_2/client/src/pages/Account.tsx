@@ -18,6 +18,7 @@ import {
   type Order,
 } from '../lib/api'
 import AddressForm from '../components/AddressForm'
+import AddressBookPanel from '../components/AddressBookPanel'
 
 function orderShippingToInput(addr: Order['address']): AddressInput {
   return {
@@ -106,8 +107,10 @@ export default function Account() {
     try {
       await deleteAddress(id)
       setAddresses((prev) => prev.filter((a) => a.id !== id))
-    } catch {
-      // silent — button re-enables, user can retry
+      if (editingId === id) setEditingId(null)
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : 'Could not delete this address. Please try again.'
+      alert(msg)
     } finally {
       setDeletingId(null)
     }
@@ -373,91 +376,19 @@ export default function Account() {
 
         {/* Right column — spans 5 cols */}
         <div className="lg:col-span-5 space-y-6">
-
-          {/* Addresses */}
-          <div className="bg-surface-container-lowest rounded-xl p-8 shadow-[0_8px_30px_rgb(0,0,0,0.04)]">
-            <div className="flex items-center justify-between mb-6">
-              <h2 className="text-xs font-bold uppercase tracking-widest text-primary font-label">addresses</h2>
-              {!showAddForm && (
-                <button
-                  onClick={() => setShowAddForm(true)}
-                  className="flex items-center gap-1 text-xs font-bold text-primary hover:opacity-70 transition-all"
-                >
-                  <span className="material-symbols-outlined text-[16px]">add</span>
-                  add new
-                </button>
-              )}
-            </div>
-
-            <div className="space-y-4">
-              {addresses.map((addr) =>
-                editingId === addr.id ? (
-                  <div key={addr.id} className="border border-outline-variant/50 rounded-xl p-4">
-                    <AddressForm
-                      initial={addr}
-                      onSave={(input) => handleUpdateAddress(addr.id, input)}
-                      onCancel={() => setEditingId(null)}
-                    />
-                  </div>
-                ) : (
-                  <div
-                    key={addr.id}
-                    className="border border-outline-variant/50 rounded-xl p-4 space-y-2"
-                  >
-                    <div className="flex items-start justify-between gap-2">
-                      <div className="text-sm font-body text-on-surface leading-relaxed">
-                        <p>{addr.line1}</p>
-                        {addr.line2 && <p>{addr.line2}</p>}
-                        <p>{addr.city}, {addr.state} {addr.postal_code}</p>
-                        <p>{addr.country}</p>
-                      </div>
-                      {addr.isDefault && (
-                        <span className="text-[10px] font-bold uppercase tracking-widest px-2 py-1 bg-primary/10 text-primary rounded-full shrink-0">
-                          default
-                        </span>
-                      )}
-                    </div>
-                    <div className="flex gap-2 pt-1">
-                      {!addr.isDefault && (
-                        <button
-                          onClick={() => handleSetDefault(addr.id)}
-                          className="text-xs font-bold px-3 py-1 rounded-full bg-primary-container text-on-primary-container hover:opacity-80 transition-all"
-                        >
-                          set default
-                        </button>
-                      )}
-                      <button
-                        onClick={() => setEditingId(addr.id)}
-                        className="text-xs font-bold px-3 py-1 rounded-full bg-primary-container text-on-primary-container hover:opacity-80 transition-all"
-                      >
-                        edit
-                      </button>
-                      <button
-                        onClick={() => handleDeleteAddress(addr.id)}
-                        disabled={deletingId === addr.id}
-                        className="text-xs font-bold px-3 py-1 rounded-full bg-primary-container text-on-primary-container hover:opacity-80 transition-all disabled:opacity-40"
-                      >
-                        {deletingId === addr.id ? 'deleting…' : 'delete'}
-                      </button>
-                    </div>
-                  </div>
-                ),
-              )}
-
-              {addresses.length === 0 && !showAddForm && (
-                <p className="text-sm text-on-surface-variant font-body">no addresses saved yet.</p>
-              )}
-
-              {showAddForm && (
-                <div className="border border-outline-variant/50 rounded-xl p-4">
-                  <AddressForm
-                    onSave={handleCreateAddress}
-                    onCancel={() => setShowAddForm(false)}
-                  />
-                </div>
-              )}
-            </div>
-          </div>
+          <AddressBookPanel
+            variant="account"
+            addresses={addresses}
+            showAddForm={showAddForm}
+            onShowAddForm={setShowAddForm}
+            editingId={editingId}
+            onEditingId={setEditingId}
+            deletingId={deletingId}
+            onCreate={handleCreateAddress}
+            onUpdate={handleUpdateAddress}
+            onDelete={handleDeleteAddress}
+            onSetDefault={handleSetDefault}
+          />
 
           {/* Manage */}
           <div className="bg-surface-container-lowest rounded-xl p-8 shadow-[0_8px_30px_rgb(0,0,0,0.04)]">

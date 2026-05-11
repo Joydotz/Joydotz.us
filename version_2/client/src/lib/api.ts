@@ -94,8 +94,13 @@ async function request<T>(url: string, options?: RequestInit): Promise<T> {
   })
   const data = await res.json().catch(() => ({}))
   if (!res.ok) {
-    throw Object.assign(new Error(data.error ?? 'Request failed'), {
+    const code =
+      typeof (data as { code?: unknown }).code === 'string'
+        ? (data as { code: string }).code
+        : undefined
+    throw Object.assign(new Error((data as { error?: string }).error ?? 'Request failed'), {
       status: res.status,
+      code,
       stripeReadiness: (data as { stripeReadiness?: unknown }).stripeReadiness,
     })
   }

@@ -1,8 +1,15 @@
 import { useState, useEffect } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { useNavigate } from 'react-router-dom'
 import { useCart } from '../context/CartContext'
-import AddressForm from '../components/AddressForm'
-import { fetchAddresses, createAddress, createCheckoutSession, type Address } from '../lib/api'
+import AddressBookPanel from '../components/AddressBookPanel'
+import {
+  fetchAddresses,
+  createAddress,
+  updateAddress,
+  createCheckoutSession,
+  type Address,
+  type AddressInput,
+} from '../lib/api'
 
 const fmt = (cents: number) => `$${(cents / 100).toFixed(2)}`
 
@@ -12,13 +19,17 @@ export default function Checkout() {
 
   const [addresses, setAddresses] = useState<Address[]>([])
   const [selectedId, setSelectedId] = useState<string | null>(null)
+  const [showAddForm, setShowAddForm] = useState(false)
+  const [editingId, setEditingId] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState('')
 
   useEffect(() => {
-    // Redirect to cart if empty
-    if (items.length === 0) { navigate('/cart', { replace: true }); return }
+    if (items.length === 0) {
+      navigate('/cart', { replace: true })
+      return
+    }
 
     fetchAddresses()
       .then((addrs) => {
@@ -29,6 +40,27 @@ export default function Checkout() {
       .catch(() => {})
       .finally(() => setLoading(false))
   }, [])
+
+  useEffect(() => {
+    setSelectedId((prev) => {
+      if (prev && addresses.some((a) => a.id === prev)) return prev
+      const def = addresses.find((a) => a.isDefault) ?? addresses[0]
+      return def?.id ?? null
+    })
+  }, [addresses])
+
+  async function handleCheckoutCreate(input: AddressInput) {
+    const address = await createAddress(input)
+    setAddresses((prev) => [...prev, address])
+    setSelectedId(address.id)
+    setShowAddForm(false)
+  }
+
+  async function handleCheckoutUpdate(id: string, input: AddressInput) {
+    const updated = await updateAddress(id, input)
+    setAddresses((prev) => prev.map((a) => (a.id === id ? updated : a)))
+    setEditingId(null)
+  }
 
   async function handleCheckout() {
     if (!selectedId) return
@@ -65,7 +97,6 @@ export default function Checkout() {
       <div className="absolute top-0 right-[5%] w-96 h-96 bg-primary-container/20 rounded-full blur-[120px] -z-10" />
       <div className="absolute top-64 left-[2%] w-64 h-64 bg-secondary-container/15 rounded-full blur-[100px] -z-10" />
 
-      {/* Header */}
       <section className="max-w-7xl mx-auto px-8 pt-16 pb-8">
         <div className="inline-flex items-center gap-2 px-4 py-2 bg-surface-container-low rounded-full mb-6">
           <span className="w-2 h-2 bg-primary rounded-full" />
@@ -76,76 +107,23 @@ export default function Checkout() {
         </h1>
       </section>
 
-      {/* Body */}
       <section className="max-w-7xl mx-auto px-8 pb-32">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-
-          {/* Ship-to address */}
           <div className="lg:col-span-7">
-            <div className="bg-surface-container-lowest rounded-xl p-8 shadow-[0_8px_30px_rgb(0,0,0,0.04)]">
-              <div className="flex items-center justify-between mb-6">
-                <h2 className="text-xs font-bold uppercase tracking-widest text-primary font-label">ship to</h2>
-                <Link
-                  to="/account"
-                  className="flex items-center gap-1 text-xs font-bold text-on-surface-variant hover:text-primary transition-all"
-                >
-                  <span className="material-symbols-outlined text-[16px]">edit</span>
-                  manage addresses
-                </Link>
-              </div>
-
-              {addresses.length === 0 ? (
-                <div className="space-y-4 pt-2">
-                  <p className="text-sm text-on-surface-variant font-body">
-                    Add where we should ship this order — it will be saved to your account.
-                  </p>
-                  <AddressForm
-                    submitLabel="save & continue"
-                    onSave={async (input) => {
-                      const created = await createAddress(input)
-                      setAddresses([created])
-                      setSelectedId(created.id)
-                    }}
-                  />
-                </div>
-              ) : (
-                <div className="space-y-3">
-                  {addresses.map((addr) => (
-                    <label
-                      key={addr.id}
-                      className={`flex items-start gap-4 p-4 rounded-xl border cursor-pointer transition-all ${
-                        selectedId === addr.id
-                          ? 'border-primary bg-primary/5'
-                          : 'border-outline-variant/50 hover:border-primary/40'
-                      }`}
-                    >
-                      <input
-                        type="radio"
-                        name="address"
-                        value={addr.id}
-                        checked={selectedId === addr.id}
-                        onChange={() => setSelectedId(addr.id)}
-                        className="mt-0.5 accent-[#df9b86]"
-                      />
-                      <div className="text-sm font-body text-on-surface leading-relaxed flex-1">
-                        <p>{addr.line1}</p>
-                        {addr.line2 && <p>{addr.line2}</p>}
-                        <p>{addr.city}, {addr.state} {addr.postal_code}</p>
-                        <p>{addr.country}</p>
-                      </div>
-                      {addr.isDefault && (
-                        <span className="text-[10px] font-bold uppercase tracking-widest px-2 py-1 bg-primary/10 text-primary rounded-full shrink-0">
-                          default
-                        </span>
-                      )}
-                    </label>
-                  ))}
-                </div>
-              )}
-            </div>
+            <AddressBookPanel
+              variant="checkout"
+              addresses={addresses}
+              showAddForm={showAddForm}
+              onShowAddForm={setShowAddForm}
+              editingId={editingId}
+              onEditingId={setEditingId}
+              onCreate={handleCheckoutCreate}
+              onUpdate={handleCheckoutUpdate}
+              selectedForOrderId={selectedId}
+              onSelectForOrder={setSelectedId}
+            />
           </div>
 
-          {/* Order summary + CTA */}
           <div className="lg:col-span-5">
             <div className="bg-surface-container-lowest rounded-xl p-8 shadow-[0_8px_30px_rgb(0,0,0,0.04)] sticky top-24">
               <h2 className="text-xs font-bold uppercase tracking-widest text-primary font-label mb-6">your order</h2>
@@ -181,6 +159,7 @@ export default function Checkout() {
               )}
 
               <button
+                type="button"
                 onClick={handleCheckout}
                 disabled={submitting || !selectedId}
                 className="w-full py-4 bg-primary text-on-primary rounded-full font-bold hover:scale-[1.02] active:scale-[0.98] transition-all disabled:opacity-50 disabled:scale-100 shadow-[0_8px_20px_rgba(126,85,70,0.15)]"
@@ -194,7 +173,6 @@ export default function Checkout() {
               </p>
             </div>
           </div>
-
         </div>
       </section>
     </div>

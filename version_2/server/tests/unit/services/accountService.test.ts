@@ -29,6 +29,9 @@ vi.mock('../../../src/db/client', () => ({
       updateMany: vi.fn(),
       delete: vi.fn(),
     },
+    order: {
+      count: vi.fn(),
+    },
   },
 }))
 
@@ -52,6 +55,7 @@ const mockAddressCreate = vi.mocked(prisma.address.create)
 const mockAddressUpdate = vi.mocked(prisma.address.update)
 const mockAddressUpdateMany = vi.mocked(prisma.address.updateMany)
 const mockAddressDelete = vi.mocked(prisma.address.delete)
+const mockOrderCount = vi.mocked(prisma.order.count)
 
 // ── Fixtures — exact DB row shapes ───────────────────────────────────────────
 
@@ -351,6 +355,10 @@ describe('updateAddress', () => {
 // ─────────────────────────────────────────────────────────────────────────────
 
 describe('deleteAddress', () => {
+  beforeEach(() => {
+    mockOrderCount.mockResolvedValue(0 as never)
+  })
+
   it('deletes the address row', async () => {
     mockAddressFindFirst.mockResolvedValueOnce(DB_ADDRESS_SECONDARY as never)
     mockAddressDelete.mockResolvedValueOnce(DB_ADDRESS_SECONDARY as never)
@@ -361,6 +369,18 @@ describe('deleteAddress', () => {
     expect(mockAddressDelete).toHaveBeenCalledWith({
       where: { id: DB_ADDRESS_SECONDARY.id },
     })
+    expect(mockOrderCount).toHaveBeenCalledWith({ where: { addressId: DB_ADDRESS_SECONDARY.id } })
+  })
+
+  it('throws ADDRESS_IN_USE when the address is linked to orders', async () => {
+    mockAddressFindFirst.mockResolvedValueOnce(DB_ADDRESS_SECONDARY as never)
+    mockOrderCount.mockResolvedValueOnce(2 as never)
+
+    await expect(deleteAddress(USER_ID, DB_ADDRESS_SECONDARY.id)).rejects.toMatchObject({
+      code: 'ADDRESS_IN_USE',
+    })
+
+    expect(mockAddressDelete).not.toHaveBeenCalled()
   })
 
   it('verifies the address belongs to the user before deleting', async () => {
@@ -389,6 +409,7 @@ describe('deleteAddress', () => {
     await deleteAddress(USER_ID, 'other-id').catch(() => {})
 
     expect(mockAddressDelete).not.toHaveBeenCalled()
+    expect(mockOrderCount).not.toHaveBeenCalled()
   })
 
   it('promotes the next address to default when the deleted address was the default', async () => {

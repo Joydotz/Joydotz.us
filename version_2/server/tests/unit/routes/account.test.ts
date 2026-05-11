@@ -743,6 +743,27 @@ describe('DELETE /api/account/addresses/:id', () => {
       expect(res.statusCode).toBe(404)
     })
 
+    it('returns 409 when the address is linked to orders', async () => {
+      mockDeleteAddress.mockRejectedValueOnce(
+        Object.assign(
+          new Error(
+            'This address cannot be deleted because it is linked to one or more orders. You can edit it instead, or add a new address.',
+          ),
+          { code: 'ADDRESS_IN_USE' },
+        ),
+      )
+
+      const res = await app.inject({
+        method: 'DELETE',
+        url: `/api/account/addresses/${MOCK_ADDRESS.id}`,
+        headers: { cookie: sessionCookie },
+      })
+
+      expect(res.statusCode).toBe(409)
+      expect(res.json()).toMatchObject({ code: 'ADDRESS_IN_USE' })
+      expect(res.json().error).toContain('linked to one or more orders')
+    })
+
     it('returns 500 when the service throws unexpectedly', async () => {
       mockDeleteAddress.mockRejectedValueOnce(new Error('DB is down'))
 

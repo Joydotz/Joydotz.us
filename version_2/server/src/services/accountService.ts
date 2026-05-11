@@ -75,6 +75,16 @@ export async function deleteAddress(userId: string, addressId: string) {
     throw Object.assign(new Error('Address not found'), { code: 'NOT_FOUND' })
   }
 
+  const orderCount = await prisma.order.count({ where: { addressId } })
+  if (orderCount > 0) {
+    throw Object.assign(
+      new Error(
+        'This address cannot be deleted because it is linked to one or more orders. You can edit it instead, or add a new address.',
+      ),
+      { code: 'ADDRESS_IN_USE' },
+    )
+  }
+
   await prisma.address.delete({ where: { id: addressId } })
 
   // If the deleted address was the default, promote the oldest remaining one
