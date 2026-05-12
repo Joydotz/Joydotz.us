@@ -16,6 +16,7 @@ import {
   updateOrderStatus,
   shipOrder,
   markDelivered,
+  updateShippingAddressForPaidOrder,
 } from '../../src/services/orderService'
 
 // ── Fixtures ──────────────────────────────────────────────────────────────────
@@ -451,6 +452,62 @@ describe('markDelivered', () => {
     expect(updated!.deliveredAt).toBeInstanceOf(Date)
     expect(updated!.shippedAt).toBeInstanceOf(Date) // preserved from shipOrder
     expect(updated!.trackingNumber).toBe('1Z999AA10123456784') // preserved
+  })
+})
+
+// ─────────────────────────────────────────────────────────────────────────────
+// updateShippingAddressForPaidOrder — PAID only (not after fulfillment)
+// ─────────────────────────────────────────────────────────────────────────────
+
+const NEW_SHIP_TO = {
+  line1: '200 Warehouse Row',
+  line2: '',
+  city: 'Gastonia',
+  state: 'NC',
+  postal_code: '28054',
+  country: 'US',
+}
+
+describe('updateShippingAddressForPaidOrder', () => {
+  it('rejects when the order is already SHIPPED', async () => {
+    const { user, address } = await seedUserAndAddress()
+    const order = await createOrder({
+      userId: user.id,
+      addressId: address.id,
+      stripeSessionId: 'cs_test_shipaddr_block_001',
+      total: 500,
+      items: [ORDER_ITEMS[0]],
+    })
+    await updateOrderStatus(order.id, 'PAID')
+    await shipOrder(order.id, '1Z999AA10123456784')
+
+    const row = await testPrisma.order.findUnique({ where: { id: order.id } })
+    expect(row!.status).toBe('SHIPPED')
+
+    await expect(updateShippingAddressForPaidOrder(order.id, user.id, NEW_SHIP_TO)).rejects.toMatchObject({
+      code: 'NOT_FOUND',
+    })
+  })
+
+  it('rejects when the order is already DELIVERED', async () => {
+    const { user, address } = await seedUserAndAddress()
+    const order = await createOrder({
+      userId: user.id,
+      addressId: address.id,
+      stripeSessionId: 'cs_test_shipaddr_block_002',
+      total: 500,
+      items: [ORDER_ITEMS[0]],
+    })
+    await updateOrderStatus(order.id, 'PAID')
+    await shipOrder(order.id, '1Z999AA10123456784')
+    await markDelivered(order.id)
+
+    const row = await testPrisma.order.findUnique({ where: { id: order.id } })
+    expect(row!.status).toBe('DELIVERED')
+
+    await expect(updateShippingAddressForPaidOrder(order.id, user.id, NEW_SHIP_TO)).rejects.toMatchObject({
+      code: 'NOT_FOUND',
+    })
   })
 })
 

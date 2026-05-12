@@ -235,14 +235,19 @@ describe('getOrdersByUser', () => {
 })
 
 describe('getPaidOrdersByUser', () => {
-  it('excludes PENDING and CANCELLED orders from history', async () => {
+  it('queries only PAID, SHIPPED, DELIVERED, and REFUNDED orders (whitelist)', async () => {
     mockFindMany.mockResolvedValue([] as any)
 
     await getPaidOrdersByUser(USER_ID)
 
     expect(mockFindMany).toHaveBeenCalledWith(
       expect.objectContaining({
-        where: { userId: USER_ID, status: { notIn: [OrderStatus.PENDING, OrderStatus.CANCELLED] } },
+        where: {
+          userId: USER_ID,
+          status: {
+            in: [OrderStatus.PAID, OrderStatus.SHIPPED, OrderStatus.DELIVERED, OrderStatus.REFUNDED],
+          },
+        },
       }),
     )
   })
