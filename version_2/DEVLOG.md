@@ -112,7 +112,7 @@ Implementation:
 
 # Tests
 
-## Covered
+## Unit Tests
 
 - **Accounts:**
   - Someone can register, log in, see who they are, and log out.
@@ -121,64 +121,78 @@ Implementation:
   - A wrong password does not tell you whether the email exists.
   - After too many failed log-ins, further tries are temporarily blocked.
 - **Addresses:**
-  - A signed-in person can list, add, edit, remove, and pick a default shipping address.
+  - A user can't access other people's addresses.
+  - Authenticated user can list, add, edit, remove, and pick a default shipping address.
   - Bad address data is rejected.
-  - They cannot remove an address that is still used by an order.
-  - They can turn the newsletter on or off.
+  - Authenticated user cannot remove an address that is still used by an order.
 - **Orders in the account:**
-  - They can see paid orders and unfinished checkouts.
-  - They can continue an unfinished checkout only while the payment page is still open and within the allowed time.
-  - They can abandon (“dismiss”) an unfinished checkout.
-  - They can change where a **paid** order ships (using one of their addresses).
-  - They can open one order’s details only for their own orders—others’ or missing orders are not shown.
-- **Shop and mailing list:**
-  - The public catalog lists products without exposing secret Stripe price identifiers.
-  - The priced shop view shows sensible money fields and still hides those secrets.
-  - Visitors can submit an email for the mailing list with validation, and submitting the same email again does not cause an error.
+  - Authenticated user can see paid orders and unfinished checkouts.
+  - Authenticated user can continue an unfinished checkout only while the payment page is still open and within the allowed time.
+  - Authenticated user can abandon (“dismiss”) an unfinished checkout.
+  - Authenticated user can change the address of orders at PAID stage (orders paid but not shipped).
+  - Authenticated user can only look up orders that belong to them.
+- **Email subscription:**
+  - Visitors can submit an email for the mailing list with validation.
+  - No errors raise when email already exists (mitigate side channel).
+  - Authenticated user can opt in and out email subscription.
+- **Product list:**
+  - The public catalog from `/api/catalog` lists products without exposing secret Stripe price ids.
+  - The priced product list from `/api/products` displays numeric prices from Stripe without exposing secret Stripe price ids.
 - **Safe browser use:**
-  - Actions that change data (except ordinary page loads) require a matching anti-forgery token.
-  - Ordinary reads work without that token.
+  - State changing requests (except GET requests) require a matching anti-forgery (csrf) token.
   - Cross-site trick posts are blocked.
-  - Flooding the API with too many requests gets a “slow down” response.
+  - Rate limiting: flooding the API with too many requests gets a “slow down” response.
 - **Starting checkout:**
-  - Checkout only works for a signed-in shopper.
+  - Checkout only works for an authenticated user.
   - Bad carts or wrong addresses are rejected.
   - The total is computed from trusted prices, not whatever the browser typed.
   - A successful start opens Stripe’s pay page and ties it to the right order.
   - Starting again with the **same basket** reuses the same unfinished order instead of making a second one.
-- **Coming back from Stripe (thank-you page):**
+- **Order confirmation page:**
   - Wrong or malformed payment-session links fail.
   - Unpaid or half-done payments fail.
   - If Stripe says “paid” but the order data doesn’t line up, it fails.
   - If Stripe says “paid” but our side is still catching up, the page tells them to wait.
-  - When everything matches, they see their completed order.
-- **Stripe messages to our server:**
-  - Messages without a valid signature are rejected.
-  - A real “checkout finished” message marks the order as paid.
-  - Sending that same message again does not break anything.
-  - A real “refunded” message marks the order refunded.
-  - Duplicate refund messages do not break anything.
-  - Messages for unknown orders are harmless.
-  - Unknown message kinds are ignored harmlessly.
-- **Order history and shipping workflow:**
-  - New purchases start as “waiting for payment”.
-  - Line items keep the product name and price from the moment of sale.
-  - Lists show the right person’s orders in newest-first order.
-  - Paid history hides the right non-paid states.
-  - An order can be marked shipped (with tracking) and then delivered with timestamps.
+  - When everything matches, the user sees their completed order.
+- **Messages from Stripe API (mocked):**
+  - Messages with invalid or missing signatures are rejected. (Integration test will reject expired signature.)
+  - A valid signed “checkout finished” message marks the order as paid.
+  - Idempotency: Sending that same message again has no duplicate effect.
+  - A valid signed “refunded” message marks the order refunded.
+  - Idempotency: Duplicate refund messages has no duplicate effect.
+  - Messages for unknown orders are dropped harmlessly.
+  - Unknown message kinds are dropped harmlessly.
+- **Order history:**
+  - Paid history hides pending and cancelled orders because they are useless to user.
   - An unfinished checkout can be cancelled from the account.
   - A paid order’s ship-to address can be updated when the new address belongs to the buyer.
+- **Environment bootstrap:**
+  - In dev test mode, placeholder Stripe secrets are allowed when the app runs.
+  - In dev non-test mode, if the webhook secret is missing, the app refuses to start.
+  - In production, placeholder Stripe secrets are rejected and the app refuses to start.
+  - In production, the app requires secrets to start.
+
+## Integration Tests
+
+### Tests Against Actual Databases
+
+- **Order history and shipping workflow:**
+  - New purchases start as “pending” status.
+  - Line items keep the product name and price from the moment of sale.
+  - Lists only show orders that belong to authenticated user. The list is in newest-first order.
+  - An order can be marked shipped (with tracking) and then delivered with timestamps.
   - Two orders cannot share the same Stripe checkout session id.
   - An order cannot point at a missing user or address.
   - An address that still has orders cannot be deleted.
-  - Two people updating an order’s status at the same time still leave the data in a sensible state.
-- **Stripe checkout (real provider):**
-  - Creating a pay session succeeds or fails on bad input.
-  - Retrying checkout for the **same** sale reuses the **same** Stripe session.
-  - A **new** sale gets a **new** session.
-  - Only correctly signed callbacks are accepted (tampered, replayed, or wrong-secret ones are rejected).
+  - Two people setting an order’s status to PAID at the same time won't result error and status will be PAID.
+
+### Tests Against Actual Stripe API
+  - Messages with invalid, missing, or expired signatures are rejected.
+  - Creating a pay session fails on bad input. Otherwise it succeeds.
+  - Idempotency: Repeating checkout for the **same** order reuses the **same** Stripe session.
+  - A **new** order gets a **new** session.
+  - Idempotency: Refunds work and duplicate Stripe retries stay safe.
   - The full path works: sign in, start checkout, order waits for payment, Stripe reports paid, order becomes paid.
-  - Refunds work and duplicate Stripe retries stay safe.
 
 ## TODO
 

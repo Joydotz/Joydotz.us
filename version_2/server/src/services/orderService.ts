@@ -51,10 +51,10 @@ export async function getOrdersByUser(userId: string) {
   })
 }
 
-/** Order history on the account page — excludes drafts and user-cancelled / swept abandons. */
+/** Order history on the account page — excludes pending and cancelled orders. */
 export async function getPaidOrdersByUser(userId: string) {
   return prisma.order.findMany({
-    where: { userId, status: { notIn: ['PENDING', 'CANCELLED'] } },
+    where: { userId, status: { in: ['PAID', 'SHIPPED', 'DELIVERED', 'REFUNDED'] } },
     include: { items: true, address: true },
     orderBy: { createdAt: 'desc' },
   })
