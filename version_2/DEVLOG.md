@@ -121,16 +121,20 @@ Implementation:
   - A wrong password does not tell you whether the email exists.
   - After too many failed log-ins, further tries are temporarily blocked.
 - **Addresses:**
-  - A user can't access other people's addresses.
   - Authenticated user can list, add, edit, remove, and pick a default shipping address.
+  - A user can't access other people's addresses.
   - Bad address data is rejected.
   - Authenticated user cannot remove an address that is still used by an order.
-- **Orders in the account:**
-  - Authenticated user can see paid orders and unfinished checkouts.
-  - Authenticated user can continue an unfinished checkout only while the payment page is still open and within the allowed time.
-  - Authenticated user can abandon (“dismiss”) an unfinished checkout.
-  - Authenticated user can change the address of orders at PAID stage (orders paid but not shipped).
+- **Orders & Order History**
   - Authenticated user can only look up orders that belong to them.
+  - Authenticated user can see paid orders and unfinished checkouts.
+  - Authenticated user can continue an unfinished checkout only before the session expires.
+  - Authenticated user can abandon (“dismiss”) an unfinished checkout.
+  - An order's address can be edited before it's shipped.
+- **Order history:**
+  - Paid history hides pending and cancelled orders because they are useless to user.
+  - An unfinished checkout can be cancelled from the account.
+  - A paid order’s ship-to address can be updated when the new address belongs to the buyer.
 - **Email subscription:**
   - Visitors can submit an email for the mailing list with validation.
   - No errors raise when email already exists (mitigate side channel).
@@ -162,10 +166,6 @@ Implementation:
   - Idempotency: Duplicate refund messages has no duplicate effect.
   - Messages for unknown orders are dropped harmlessly.
   - Unknown message kinds are dropped harmlessly.
-- **Order history:**
-  - Paid history hides pending and cancelled orders because they are useless to user.
-  - An unfinished checkout can be cancelled from the account.
-  - A paid order’s ship-to address can be updated when the new address belongs to the buyer.
 - **Environment bootstrap:**
   - In dev test mode, placeholder Stripe secrets are allowed when the app runs.
   - In dev non-test mode, if the webhook secret is missing, the app refuses to start.
@@ -175,8 +175,6 @@ Implementation:
 ## Integration Tests
 
 ### Tests Against Actual Databases
-
-- **Order history and shipping workflow:**
   - New purchases start as “pending” status.
   - Line items keep the product name and price from the moment of sale.
   - Lists only show orders that belong to authenticated user. The list is in newest-first order.

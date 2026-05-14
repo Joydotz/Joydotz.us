@@ -61,6 +61,11 @@ vi.mock('../../../src/services/accountService', () => ({
   getOrders: vi.fn(),
 }))
 
+vi.mock('../../../src/services/emailService', () => ({
+  saveEmail: vi.fn().mockResolvedValue({ created: true }),
+  sendTransactionalEmail: vi.fn().mockResolvedValue(undefined),
+}))
+
 import { constructStripeEvent } from '../../../src/services/stripeService'
 import {
   getOrderByIdForStripeEvent,

@@ -1,6 +1,7 @@
 import type Stripe from 'stripe'
 import { prisma } from '../db/client.js'
 import type { EventBus } from '../events/EventBus.js'
+import { publishOrderPaid } from '../events/orderEventDispatch.js'
 import { getOrderByStripeSessionId, tryMarkOrderPaidAfterCheckout } from './orderService.js'
 import { retrieveCheckoutSession } from './stripeService.js'
 
@@ -37,7 +38,7 @@ export async function reconcilePaidCheckoutFromStripeSession(
   if (!paid || paid.status !== 'PAID') return null
 
   if (transitioned) {
-    await eventBus.publish('ORDER_PAID', {
+    await publishOrderPaid(eventBus, {
       orderId: paid.id,
       userId: paid.userId,
       email: paid.user.email,

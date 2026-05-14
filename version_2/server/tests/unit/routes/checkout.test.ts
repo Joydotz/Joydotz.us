@@ -62,6 +62,11 @@ vi.mock('../../../src/services/stripeService', () => ({
   verifyStripeCheckoutReadiness: vi.fn(),
 }))
 
+vi.mock('../../../src/services/emailService', () => ({
+  saveEmail: vi.fn().mockResolvedValue({ created: true }),
+  sendTransactionalEmail: vi.fn().mockResolvedValue(undefined),
+}))
+
 import { loginUser } from '../../../src/services/authService'
 import { getAddresses } from '../../../src/services/accountService'
 import {

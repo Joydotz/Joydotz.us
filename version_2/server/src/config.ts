@@ -15,6 +15,10 @@ const envSchema = z
       .refine((v) => v.startsWith('whsec_'), 'STRIPE_WEBHOOK_SECRET must start with whsec_')
       .optional(),
     FRONTEND_ORIGIN: z.string().url('FRONTEND_ORIGIN must be a valid URL'),
+    /** Resend (or other HTTP email API). Omit or leave unset to skip sending in dev. */
+    EMAIL_API_KEY: z.string().trim().min(1).optional(),
+    /** Verified sending domain (no scheme, no path) — used to build From addresses in code. */
+    EMAIL_DOMAIN: z.string().trim().min(1).optional(),
   })
   .superRefine((env, ctx) => {
     if (env.NODE_ENV !== 'test' && !env.STRIPE_WEBHOOK_SECRET) {

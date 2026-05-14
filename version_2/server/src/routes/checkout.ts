@@ -22,6 +22,7 @@ import {
 } from '../services/stripeService.js'
 import { PRODUCTS } from '../data/products.js'
 import { EventBus } from '../events/EventBus.js'
+import { publishOrderPaid, publishOrderRefunded } from '../events/orderEventDispatch.js'
 
 interface CheckoutRouteOptions {
   skipCsrf?: boolean
@@ -257,7 +258,7 @@ export async function checkoutRoutes(app: FastifyInstance, opts: CheckoutRouteOp
       if (transitioned) {
         const paid = await getOrderByStripeSessionId(session.id)
         if (paid) {
-          await opts.eventBus.publish('ORDER_PAID', {
+          await publishOrderPaid(opts.eventBus, {
             orderId: paid.id,
             userId: paid.userId,
             email: paid.user.email,
@@ -278,7 +279,7 @@ export async function checkoutRoutes(app: FastifyInstance, opts: CheckoutRouteOp
 
       await updateOrderStatus(order.id, 'REFUNDED')
 
-      await opts.eventBus.publish('ORDER_REFUNDED', {
+      await publishOrderRefunded(opts.eventBus, {
         orderId: order.id,
         userId: order.userId,
         email: order.user.email,
