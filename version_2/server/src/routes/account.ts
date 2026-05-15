@@ -3,13 +3,13 @@ import { z } from 'zod'
 import { authenticate } from '../middleware/authenticate.js'
 import { csrfProtectionForMutations } from '../middleware/csrfForMutations.js'
 import {
-  setNewsletterOptIn,
   getAddresses,
   createAddress,
   updateAddress,
   deleteAddress,
   setDefaultAddress,
-} from '../services/accountService.js'
+} from '../services/addressService.js'
+import { setNewsletterOptIn } from '../services/publicUserService.js'
 import {
   dismissPendingOrder,
   getOrderById,

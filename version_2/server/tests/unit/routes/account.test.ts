@@ -5,27 +5,25 @@
  * happy path and the unauthenticated (401) case.
  *
  * Strategy:
- *   - accountService is mocked so tests never touch the database
- *   - authService.loginUser is mocked to issue a real JWT cookie
- *   - That cookie is used for all authenticated requests
+ *   - addressService and publicUserService are mocked — no database
+ *   - authenticate is mocked (Better Auth session stand-in)
  *   - Authorization is verified: unauthenticated requests always get 401
  */
 
 import { describe, it, expect, vi, beforeAll, afterAll, beforeEach } from 'vitest'
 import { FastifyInstance } from 'fastify'
-import { buildApp } from '../../../src/app'
-import { createMockUser } from '../../shared/fixtures'
+import { buildApp } from '../../../src/app.js'
+import { createMockUser } from '../../shared/fixtures.js'
+import { rejectAuthOnce, resetAuthenticateMock } from '../mocks/authenticate.js'
 
 // ── Mocks ─────────────────────────────────────────────────────────────────────
 
-vi.mock('../../../src/services/authService', () => ({
-  signupUser: vi.fn(),
-  loginUser: vi.fn(),
-  getUserById: vi.fn(),
-}))
+vi.mock('../../../src/middleware/authenticate.js', async () => {
+  const mod = await import('../mocks/authenticate.js')
+  return { authenticate: mod.authenticate }
+})
 
-vi.mock('../../../src/services/accountService', () => ({
-  setNewsletterOptIn: vi.fn(),
+vi.mock('../../../src/services/addressService.js', () => ({
   getAddresses: vi.fn(),
   createAddress: vi.fn(),
   updateAddress: vi.fn(),
@@ -33,23 +31,25 @@ vi.mock('../../../src/services/accountService', () => ({
   setDefaultAddress: vi.fn(),
 }))
 
+vi.mock('../../../src/services/publicUserService.js', () => ({
+  setNewsletterOptIn: vi.fn(),
+}))
+
 vi.mock('../../../src/services/orderService', async () => {
-  const { buildOrderServiceMock: buildMock } = await import('../../shared/mocks/orderService')
+  const { buildOrderServiceMock: buildMock } = await import('../../shared/mocks/orderService.js')
   return buildMock()
 })
 
-import { loginUser } from '../../../src/services/authService'
 import {
-  setNewsletterOptIn,
   getAddresses,
   createAddress,
   updateAddress,
   deleteAddress,
   setDefaultAddress,
-} from '../../../src/services/accountService'
-import { getPaidOrdersByUser } from '../../../src/services/orderService'
+} from '../../../src/services/addressService.js'
+import { getPaidOrdersByUser } from '../../../src/services/orderService.js'
+import { setNewsletterOptIn } from '../../../src/services/publicUserService.js'
 
-const mockLogin = vi.mocked(loginUser)
 const mockSetNewsletter = vi.mocked(setNewsletterOptIn)
 const mockGetAddresses = vi.mocked(getAddresses)
 const mockCreateAddress = vi.mocked(createAddress)
@@ -89,21 +89,12 @@ const VALID_ADDRESS_PAYLOAD = {
 // ── Setup ─────────────────────────────────────────────────────────────────────
 
 let app: FastifyInstance
-let sessionCookie: string
 
 beforeAll(async () => {
+  process.env.BETTER_AUTH_SECRET = 'test-secret-at-least-32-characters-long'
+  process.env.BETTER_AUTH_URL = 'http://localhost:3001'
   app = buildApp({ logger: false, skipRateLimit: true, skipCsrf: true })
   await app.ready()
-
-  // Obtain a real JWT cookie once — reused for all authenticated tests
-  mockLogin.mockResolvedValueOnce(MOCK_USER)
-  const loginRes = await app.inject({
-    method: 'POST',
-    url: '/api/auth/login',
-    payload: { email: 'test@example.com', password: 'password123' },
-  })
-  const raw = loginRes.headers['set-cookie']
-  sessionCookie = Array.isArray(raw) ? raw[0] : (raw as string)
 })
 
 afterAll(async () => {
@@ -112,6 +103,7 @@ afterAll(async () => {
 
 beforeEach(() => {
   vi.clearAllMocks()
+  resetAuthenticateMock()
 })
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -126,7 +118,6 @@ describe('POST /api/account/news', () => {
       const res = await app.inject({
         method: 'POST',
         url: '/api/account/news',
-        headers: { cookie: sessionCookie },
         payload: { newsletterOptIn: true },
       })
 
@@ -140,7 +131,6 @@ describe('POST /api/account/news', () => {
       await app.inject({
         method: 'POST',
         url: '/api/account/news',
-        headers: { cookie: sessionCookie },
         payload: { newsletterOptIn: true },
       })
 
@@ -153,7 +143,6 @@ describe('POST /api/account/news', () => {
       const res = await app.inject({
         method: 'POST',
         url: '/api/account/news',
-        headers: { cookie: sessionCookie },
         payload: { newsletterOptIn: false },
       })
 
@@ -164,7 +153,6 @@ describe('POST /api/account/news', () => {
       const res = await app.inject({
         method: 'POST',
         url: '/api/account/news',
-        headers: { cookie: sessionCookie },
         payload: { newsletterOptIn: 'yes' },
       })
 
@@ -175,7 +163,6 @@ describe('POST /api/account/news', () => {
       const res = await app.inject({
         method: 'POST',
         url: '/api/account/news',
-        headers: { cookie: sessionCookie },
         payload: {},
       })
 
@@ -188,7 +175,6 @@ describe('POST /api/account/news', () => {
       const res = await app.inject({
         method: 'POST',
         url: '/api/account/news',
-        headers: { cookie: sessionCookie },
         payload: { newsletterOptIn: true },
       })
 
@@ -198,6 +184,7 @@ describe('POST /api/account/news', () => {
 
   describe('unauthenticated', () => {
     it('returns 401 with no cookie', async () => {
+      rejectAuthOnce()
       const res = await app.inject({
         method: 'POST',
         url: '/api/account/news',
@@ -220,7 +207,6 @@ describe('GET /api/account/addresses', () => {
       const res = await app.inject({
         method: 'GET',
         url: '/api/account/addresses',
-        headers: { cookie: sessionCookie },
       })
 
       expect(res.statusCode).toBe(200)
@@ -234,7 +220,6 @@ describe('GET /api/account/addresses', () => {
       const res = await app.inject({
         method: 'GET',
         url: '/api/account/addresses',
-        headers: { cookie: sessionCookie },
       })
 
       expect(res.statusCode).toBe(200)
@@ -247,7 +232,6 @@ describe('GET /api/account/addresses', () => {
       await app.inject({
         method: 'GET',
         url: '/api/account/addresses',
-        headers: { cookie: sessionCookie },
       })
 
       expect(mockGetAddresses).toHaveBeenCalledWith(MOCK_USER.id)
@@ -259,7 +243,6 @@ describe('GET /api/account/addresses', () => {
       const res = await app.inject({
         method: 'GET',
         url: '/api/account/addresses',
-        headers: { cookie: sessionCookie },
       })
 
       expect(res.statusCode).toBe(500)
@@ -268,6 +251,7 @@ describe('GET /api/account/addresses', () => {
 
   describe('unauthenticated', () => {
     it('returns 401 with no cookie', async () => {
+      rejectAuthOnce()
       const res = await app.inject({ method: 'GET', url: '/api/account/addresses' })
       expect(res.statusCode).toBe(401)
     })
@@ -286,7 +270,6 @@ describe('POST /api/account/addresses', () => {
       const res = await app.inject({
         method: 'POST',
         url: '/api/account/addresses',
-        headers: { cookie: sessionCookie },
         payload: VALID_ADDRESS_PAYLOAD,
       })
 
@@ -300,7 +283,6 @@ describe('POST /api/account/addresses', () => {
       await app.inject({
         method: 'POST',
         url: '/api/account/addresses',
-        headers: { cookie: sessionCookie },
         payload: VALID_ADDRESS_PAYLOAD,
       })
 
@@ -316,7 +298,6 @@ describe('POST /api/account/addresses', () => {
       const res = await app.inject({
         method: 'POST',
         url: '/api/account/addresses',
-        headers: { cookie: sessionCookie },
         payload: { ...VALID_ADDRESS_PAYLOAD, line2: 'Apt 4B' },
       })
 
@@ -330,7 +311,6 @@ describe('POST /api/account/addresses', () => {
       const res = await app.inject({
         method: 'POST',
         url: '/api/account/addresses',
-        headers: { cookie: sessionCookie },
         payload: without,
       })
 
@@ -343,7 +323,6 @@ describe('POST /api/account/addresses', () => {
       const res = await app.inject({
         method: 'POST',
         url: '/api/account/addresses',
-        headers: { cookie: sessionCookie },
         payload: without,
       })
 
@@ -354,7 +333,6 @@ describe('POST /api/account/addresses', () => {
       const res = await app.inject({
         method: 'POST',
         url: '/api/account/addresses',
-        headers: { cookie: sessionCookie },
         payload: { ...VALID_ADDRESS_PAYLOAD, country: 'USA' },
       })
 
@@ -367,7 +345,6 @@ describe('POST /api/account/addresses', () => {
       const res = await app.inject({
         method: 'POST',
         url: '/api/account/addresses',
-        headers: { cookie: sessionCookie },
         payload: VALID_ADDRESS_PAYLOAD,
       })
 
@@ -380,7 +357,6 @@ describe('POST /api/account/addresses', () => {
       const res = await app.inject({
         method: 'POST',
         url: '/api/account/addresses',
-        headers: { cookie: sessionCookie },
         payload: { ...VALID_ADDRESS_PAYLOAD, line1: '   ' },
       })
       expect(res.statusCode).toBe(400)
@@ -390,7 +366,6 @@ describe('POST /api/account/addresses', () => {
       const res = await app.inject({
         method: 'POST',
         url: '/api/account/addresses',
-        headers: { cookie: sessionCookie },
         payload: { ...VALID_ADDRESS_PAYLOAD, line1: 'A'.repeat(256) },
       })
       expect(res.statusCode).toBe(400)
@@ -400,7 +375,6 @@ describe('POST /api/account/addresses', () => {
       const res = await app.inject({
         method: 'POST',
         url: '/api/account/addresses',
-        headers: { cookie: sessionCookie },
         payload: { ...VALID_ADDRESS_PAYLOAD, line2: 'B'.repeat(256) },
       })
       expect(res.statusCode).toBe(400)
@@ -410,7 +384,6 @@ describe('POST /api/account/addresses', () => {
       const res = await app.inject({
         method: 'POST',
         url: '/api/account/addresses',
-        headers: { cookie: sessionCookie },
         payload: { ...VALID_ADDRESS_PAYLOAD, city: '   ' },
       })
       expect(res.statusCode).toBe(400)
@@ -420,7 +393,6 @@ describe('POST /api/account/addresses', () => {
       const res = await app.inject({
         method: 'POST',
         url: '/api/account/addresses',
-        headers: { cookie: sessionCookie },
         payload: { ...VALID_ADDRESS_PAYLOAD, postal_code: '<script>alert(1)</script>' },
       })
       expect(res.statusCode).toBe(400)
@@ -431,7 +403,6 @@ describe('POST /api/account/addresses', () => {
       const res = await app.inject({
         method: 'POST',
         url: '/api/account/addresses',
-        headers: { cookie: sessionCookie },
         payload: { ...VALID_ADDRESS_PAYLOAD, country: '12' },
       })
       expect(res.statusCode).toBe(400)
@@ -441,7 +412,6 @@ describe('POST /api/account/addresses', () => {
       const res = await app.inject({
         method: 'POST',
         url: '/api/account/addresses',
-        headers: { cookie: sessionCookie },
         payload: { ...VALID_ADDRESS_PAYLOAD, line1: '123 Main\x00St' },
       })
       expect(res.statusCode).toBe(400)
@@ -451,7 +421,6 @@ describe('POST /api/account/addresses', () => {
       const res = await app.inject({
         method: 'POST',
         url: '/api/account/addresses',
-        headers: { cookie: sessionCookie },
         payload: { ...VALID_ADDRESS_PAYLOAD, line1: '123 Main\r\nSt' },
       })
       expect(res.statusCode).toBe(400)
@@ -461,7 +430,6 @@ describe('POST /api/account/addresses', () => {
       const res = await app.inject({
         method: 'POST',
         url: '/api/account/addresses',
-        headers: { cookie: sessionCookie },
         payload: { ...VALID_ADDRESS_PAYLOAD, line1: '<script>alert(1)</script>' },
       })
       expect(res.statusCode).toBe(400)
@@ -471,7 +439,6 @@ describe('POST /api/account/addresses', () => {
       const res = await app.inject({
         method: 'POST',
         url: '/api/account/addresses',
-        headers: { cookie: sessionCookie },
         payload: { ...VALID_ADDRESS_PAYLOAD, line1: '{"$gt":""}' },
       })
       expect(res.statusCode).toBe(400)
@@ -481,7 +448,6 @@ describe('POST /api/account/addresses', () => {
       const res = await app.inject({
         method: 'POST',
         url: '/api/account/addresses',
-        headers: { cookie: sessionCookie },
         payload: { ...VALID_ADDRESS_PAYLOAD, line1: 12345 },
       })
       expect(res.statusCode).toBe(400)
@@ -495,7 +461,6 @@ describe('POST /api/account/addresses', () => {
       const res = await app.inject({
         method: 'POST',
         url: '/api/account/addresses',
-        headers: { cookie: sessionCookie },
         payload: { ...VALID_ADDRESS_PAYLOAD, userId: 'attacker-id', isDefault: true },
       })
 
@@ -510,6 +475,7 @@ describe('POST /api/account/addresses', () => {
 
   describe('unauthenticated', () => {
     it('returns 401 with no cookie', async () => {
+      rejectAuthOnce()
       const res = await app.inject({
         method: 'POST',
         url: '/api/account/addresses',
@@ -533,7 +499,6 @@ describe('POST /api/account/addresses/:id', () => {
       const res = await app.inject({
         method: 'POST',
         url: `/api/account/addresses/${MOCK_ADDRESS.id}`,
-        headers: { cookie: sessionCookie },
         payload: { ...VALID_ADDRESS_PAYLOAD, city: 'San Francisco' },
       })
 
@@ -547,7 +512,6 @@ describe('POST /api/account/addresses/:id', () => {
       await app.inject({
         method: 'POST',
         url: `/api/account/addresses/${MOCK_ADDRESS.id}`,
-        headers: { cookie: sessionCookie },
         payload: { ...VALID_ADDRESS_PAYLOAD, city: 'San Francisco' },
       })
 
@@ -566,7 +530,6 @@ describe('POST /api/account/addresses/:id', () => {
       const res = await app.inject({
         method: 'POST',
         url: '/api/account/addresses/other-users-address-id',
-        headers: { cookie: sessionCookie },
         payload: { ...VALID_ADDRESS_PAYLOAD, city: 'San Francisco' },
       })
 
@@ -577,7 +540,6 @@ describe('POST /api/account/addresses/:id', () => {
       const res = await app.inject({
         method: 'POST',
         url: `/api/account/addresses/${MOCK_ADDRESS.id}`,
-        headers: { cookie: sessionCookie },
         payload: { ...VALID_ADDRESS_PAYLOAD, country: 'INVALID' },
       })
 
@@ -590,7 +552,6 @@ describe('POST /api/account/addresses/:id', () => {
       const res = await app.inject({
         method: 'POST',
         url: `/api/account/addresses/${MOCK_ADDRESS.id}`,
-        headers: { cookie: sessionCookie },
         payload: { city: '   ' },
       })
       expect(res.statusCode).toBe(400)
@@ -600,7 +561,6 @@ describe('POST /api/account/addresses/:id', () => {
       const res = await app.inject({
         method: 'POST',
         url: `/api/account/addresses/${MOCK_ADDRESS.id}`,
-        headers: { cookie: sessionCookie },
         payload: { postal_code: '!!!<bad>' },
       })
       expect(res.statusCode).toBe(400)
@@ -611,7 +571,6 @@ describe('POST /api/account/addresses/:id', () => {
       const res = await app.inject({
         method: 'POST',
         url: `/api/account/addresses/${MOCK_ADDRESS.id}`,
-        headers: { cookie: sessionCookie },
         payload: { country: '42' },
       })
       expect(res.statusCode).toBe(400)
@@ -621,7 +580,6 @@ describe('POST /api/account/addresses/:id', () => {
       const res = await app.inject({
         method: 'POST',
         url: `/api/account/addresses/${MOCK_ADDRESS.id}`,
-        headers: { cookie: sessionCookie },
         payload: { city: 'Los\x00Angeles' },
       })
       expect(res.statusCode).toBe(400)
@@ -631,7 +589,6 @@ describe('POST /api/account/addresses/:id', () => {
       const res = await app.inject({
         method: 'POST',
         url: `/api/account/addresses/${MOCK_ADDRESS.id}`,
-        headers: { cookie: sessionCookie },
         payload: { city: 'Los\r\nAngeles' },
       })
       expect(res.statusCode).toBe(400)
@@ -641,7 +598,6 @@ describe('POST /api/account/addresses/:id', () => {
       const res = await app.inject({
         method: 'POST',
         url: `/api/account/addresses/${MOCK_ADDRESS.id}`,
-        headers: { cookie: sessionCookie },
         payload: { city: '<img src=x onerror=alert(1)>' },
       })
       expect(res.statusCode).toBe(400)
@@ -651,7 +607,6 @@ describe('POST /api/account/addresses/:id', () => {
       const res = await app.inject({
         method: 'POST',
         url: `/api/account/addresses/${MOCK_ADDRESS.id}`,
-        headers: { cookie: sessionCookie },
         payload: { city: '{"$gt":""}' },
       })
       expect(res.statusCode).toBe(400)
@@ -661,7 +616,6 @@ describe('POST /api/account/addresses/:id', () => {
       const res = await app.inject({
         method: 'POST',
         url: `/api/account/addresses/${MOCK_ADDRESS.id}`,
-        headers: { cookie: sessionCookie },
         payload: { city: ['Los', 'Angeles'] },
       })
       expect(res.statusCode).toBe(400)
@@ -673,7 +627,6 @@ describe('POST /api/account/addresses/:id', () => {
       const res = await app.inject({
         method: 'POST',
         url: `/api/account/addresses/${MOCK_ADDRESS.id}`,
-        headers: { cookie: sessionCookie },
         payload: { city: 'San Francisco', userId: 'attacker-id' },
       })
 
@@ -688,6 +641,7 @@ describe('POST /api/account/addresses/:id', () => {
 
   describe('unauthenticated', () => {
     it('returns 401 with no cookie', async () => {
+      rejectAuthOnce()
       const res = await app.inject({
         method: 'POST',
         url: `/api/account/addresses/${MOCK_ADDRESS.id}`,
@@ -710,7 +664,6 @@ describe('DELETE /api/account/addresses/:id', () => {
       const res = await app.inject({
         method: 'DELETE',
         url: `/api/account/addresses/${MOCK_ADDRESS.id}`,
-        headers: { cookie: sessionCookie },
       })
 
       expect(res.statusCode).toBe(200)
@@ -723,7 +676,6 @@ describe('DELETE /api/account/addresses/:id', () => {
       await app.inject({
         method: 'DELETE',
         url: `/api/account/addresses/${MOCK_ADDRESS.id}`,
-        headers: { cookie: sessionCookie },
       })
 
       expect(mockDeleteAddress).toHaveBeenCalledWith(MOCK_USER.id, MOCK_ADDRESS.id)
@@ -737,7 +689,6 @@ describe('DELETE /api/account/addresses/:id', () => {
       const res = await app.inject({
         method: 'DELETE',
         url: '/api/account/addresses/other-users-address-id',
-        headers: { cookie: sessionCookie },
       })
 
       expect(res.statusCode).toBe(404)
@@ -756,7 +707,6 @@ describe('DELETE /api/account/addresses/:id', () => {
       const res = await app.inject({
         method: 'DELETE',
         url: `/api/account/addresses/${MOCK_ADDRESS.id}`,
-        headers: { cookie: sessionCookie },
       })
 
       expect(res.statusCode).toBe(409)
@@ -770,7 +720,6 @@ describe('DELETE /api/account/addresses/:id', () => {
       const res = await app.inject({
         method: 'DELETE',
         url: `/api/account/addresses/${MOCK_ADDRESS.id}`,
-        headers: { cookie: sessionCookie },
       })
 
       expect(res.statusCode).toBe(500)
@@ -779,6 +728,7 @@ describe('DELETE /api/account/addresses/:id', () => {
 
   describe('unauthenticated', () => {
     it('returns 401 with no cookie', async () => {
+      rejectAuthOnce()
       const res = await app.inject({
         method: 'DELETE',
         url: `/api/account/addresses/${MOCK_ADDRESS.id}`,
@@ -800,7 +750,6 @@ describe('POST /api/account/addresses/:id/default', () => {
       const res = await app.inject({
         method: 'POST',
         url: `/api/account/addresses/${MOCK_ADDRESS.id}/default`,
-        headers: { cookie: sessionCookie },
       })
 
       expect(res.statusCode).toBe(200)
@@ -813,7 +762,6 @@ describe('POST /api/account/addresses/:id/default', () => {
       await app.inject({
         method: 'POST',
         url: `/api/account/addresses/${MOCK_ADDRESS.id}/default`,
-        headers: { cookie: sessionCookie },
       })
 
       expect(mockSetDefault).toHaveBeenCalledWith(MOCK_USER.id, MOCK_ADDRESS.id)
@@ -827,7 +775,6 @@ describe('POST /api/account/addresses/:id/default', () => {
       const res = await app.inject({
         method: 'POST',
         url: '/api/account/addresses/other-users-address-id/default',
-        headers: { cookie: sessionCookie },
       })
 
       expect(res.statusCode).toBe(404)
@@ -836,6 +783,7 @@ describe('POST /api/account/addresses/:id/default', () => {
 
   describe('unauthenticated', () => {
     it('returns 401 with no cookie', async () => {
+      rejectAuthOnce()
       const res = await app.inject({
         method: 'POST',
         url: `/api/account/addresses/${MOCK_ADDRESS.id}/default`,
@@ -857,7 +805,6 @@ describe('GET /api/account/orders', () => {
       const res = await app.inject({
         method: 'GET',
         url: '/api/account/orders',
-        headers: { cookie: sessionCookie },
       })
 
       expect(res.statusCode).toBe(200)
@@ -870,7 +817,6 @@ describe('GET /api/account/orders', () => {
       await app.inject({
         method: 'GET',
         url: '/api/account/orders',
-        headers: { cookie: sessionCookie },
       })
 
       expect(mockGetPaidOrders).toHaveBeenCalledWith(MOCK_USER.id)
@@ -882,7 +828,6 @@ describe('GET /api/account/orders', () => {
       const res = await app.inject({
         method: 'GET',
         url: '/api/account/orders',
-        headers: { cookie: sessionCookie },
       })
 
       expect(res.statusCode).toBe(500)
@@ -891,6 +836,7 @@ describe('GET /api/account/orders', () => {
 
   describe('unauthenticated', () => {
     it('returns 401 with no cookie', async () => {
+      rejectAuthOnce()
       const res = await app.inject({ method: 'GET', url: '/api/account/orders' })
       expect(res.statusCode).toBe(401)
     })

@@ -1,10 +1,11 @@
 /**
- * accountService unit tests
+ * addressService unit tests
  *
  * Prisma is mocked so tests never touch the database.
  * Mock return values represent the exact shape of rows as PostgreSQL/Prisma
  * would return them — including all foreign keys, timestamps, and nullable
  * fields — so we test against real data structures.
+ *
  */
 
 import { describe, it, expect, vi, beforeEach } from 'vitest'
@@ -13,13 +14,6 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 
 vi.mock('../../../src/db/client', () => ({
   prisma: {
-    user: {
-      update: vi.fn(),
-    },
-    emailSubscriber: {
-      upsert: vi.fn(),
-      deleteMany: vi.fn(),
-    },
     address: {
       findMany: vi.fn(),
       findFirst: vi.fn(),
@@ -37,17 +31,13 @@ vi.mock('../../../src/db/client', () => ({
 
 import { prisma } from '../../../src/db/client'
 import {
-  setNewsletterOptIn,
   getAddresses,
   createAddress,
   updateAddress,
   deleteAddress,
   setDefaultAddress,
-} from '../../../src/services/accountService'
+} from '../../../src/services/addressService.js'
 
-const mockUserUpdate = vi.mocked(prisma.user.update)
-const mockSubscriberUpsert = vi.mocked(prisma.emailSubscriber.upsert)
-const mockSubscriberDeleteMany = vi.mocked(prisma.emailSubscriber.deleteMany)
 const mockAddressFindMany = vi.mocked(prisma.address.findMany)
 const mockAddressFindFirst = vi.mocked(prisma.address.findFirst)
 const mockAddressCount = vi.mocked(prisma.address.count)
@@ -60,32 +50,6 @@ const mockOrderCount = vi.mocked(prisma.order.count)
 // ── Fixtures — exact DB row shapes ───────────────────────────────────────────
 
 const USER_ID = '550e8400-e29b-41d4-a716-446655440000'
-
-/**
- * Exact row returned by Prisma from the User table after update.
- */
-const DB_USER_OPTED_IN = {
-  id: USER_ID,
-  email: 'test@example.com',
-  passwordHash: '$2b$12$LCKjKRj1GqZpgJSH1x7MsOV5Wr/cSTm.0VIj1Q4bN5bI6qCBe5Cu',
-  newsletterOptIn: true,
-  createdAt: new Date('2026-01-01T00:00:00.000Z'),
-}
-
-const DB_USER_OPTED_OUT = {
-  ...DB_USER_OPTED_IN,
-  newsletterOptIn: false,
-}
-
-/**
- * Exact row returned by Prisma from the EmailSubscriber table.
- */
-const DB_EMAIL_SUBSCRIBER = {
-  id: 'sub-550e8400-e29b-41d4-a716-446655440000',
-  email: 'test@example.com',
-  source: 'account',
-  createdAt: new Date('2026-01-01T00:00:00.000Z'),
-}
 
 /**
  * Exact row returned by Prisma from the Address table.
@@ -129,94 +93,6 @@ const ADDRESS_INPUT = {
 
 beforeEach(() => {
   vi.resetAllMocks()
-})
-
-// ─────────────────────────────────────────────────────────────────────────────
-// setNewsletterOptIn — sync User.newsletterOptIn and EmailSubscriber table
-// ─────────────────────────────────────────────────────────────────────────────
-
-describe('setNewsletterOptIn', () => {
-  describe('opting in', () => {
-    it('updates the user row with newsletterOptIn: true', async () => {
-      mockUserUpdate.mockResolvedValueOnce(DB_USER_OPTED_IN as never)
-      mockSubscriberUpsert.mockResolvedValueOnce(DB_EMAIL_SUBSCRIBER as never)
-
-      await setNewsletterOptIn(USER_ID, true)
-
-      expect(mockUserUpdate).toHaveBeenCalledWith({
-        where: { id: USER_ID },
-        data: { newsletterOptIn: true },
-      })
-    })
-
-    it('upserts an EmailSubscriber row when opting in', async () => {
-      mockUserUpdate.mockResolvedValueOnce(DB_USER_OPTED_IN as never)
-      mockSubscriberUpsert.mockResolvedValueOnce(DB_EMAIL_SUBSCRIBER as never)
-
-      await setNewsletterOptIn(USER_ID, true)
-
-      expect(mockSubscriberUpsert).toHaveBeenCalledWith(
-        expect.objectContaining({
-          where: { email: DB_USER_OPTED_IN.email },
-          create: expect.objectContaining({
-            email: DB_USER_OPTED_IN.email,
-            source: 'account',
-          }),
-        }),
-      )
-    })
-
-    it('does not delete any subscriber rows when opting in', async () => {
-      mockUserUpdate.mockResolvedValueOnce(DB_USER_OPTED_IN as never)
-      mockSubscriberUpsert.mockResolvedValueOnce(DB_EMAIL_SUBSCRIBER as never)
-
-      await setNewsletterOptIn(USER_ID, true)
-
-      expect(mockSubscriberDeleteMany).not.toHaveBeenCalled()
-    })
-  })
-
-  describe('opting out', () => {
-    it('updates the user row with newsletterOptIn: false', async () => {
-      mockUserUpdate.mockResolvedValueOnce(DB_USER_OPTED_OUT as never)
-      mockSubscriberDeleteMany.mockResolvedValueOnce({ count: 1 } as never)
-
-      await setNewsletterOptIn(USER_ID, false)
-
-      expect(mockUserUpdate).toHaveBeenCalledWith({
-        where: { id: USER_ID },
-        data: { newsletterOptIn: false },
-      })
-    })
-
-    it('deletes the EmailSubscriber row when opting out', async () => {
-      mockUserUpdate.mockResolvedValueOnce(DB_USER_OPTED_OUT as never)
-      mockSubscriberDeleteMany.mockResolvedValueOnce({ count: 1 } as never)
-
-      await setNewsletterOptIn(USER_ID, false)
-
-      expect(mockSubscriberDeleteMany).toHaveBeenCalledWith({
-        where: { email: DB_USER_OPTED_OUT.email },
-      })
-    })
-
-    it('does not upsert a subscriber row when opting out', async () => {
-      mockUserUpdate.mockResolvedValueOnce(DB_USER_OPTED_OUT as never)
-      mockSubscriberDeleteMany.mockResolvedValueOnce({ count: 0 } as never)
-
-      await setNewsletterOptIn(USER_ID, false)
-
-      expect(mockSubscriberUpsert).not.toHaveBeenCalled()
-    })
-
-    it('does not throw when no subscriber row exists to delete (count: 0)', async () => {
-      mockUserUpdate.mockResolvedValueOnce(DB_USER_OPTED_OUT as never)
-      // deleteMany with count: 0 means nothing was deleted — that is fine
-      mockSubscriberDeleteMany.mockResolvedValueOnce({ count: 0 } as never)
-
-      await expect(setNewsletterOptIn(USER_ID, false)).resolves.not.toThrow()
-    })
-  })
 })
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -274,24 +150,22 @@ describe('createAddress', () => {
   })
 
   it('sets isDefault: true when this is the first address', async () => {
-    // count returns 0 — no existing addresses
     mockAddressCount.mockResolvedValueOnce(0 as never)
     mockAddressCreate.mockResolvedValueOnce(DB_ADDRESS_DEFAULT as never)
 
     await createAddress(USER_ID, ADDRESS_INPUT)
 
-    const createCall = mockAddressCreate.mock.calls[0][0] as any
+    const createCall = mockAddressCreate.mock.calls[0][0] as { data: { isDefault: boolean } }
     expect(createCall.data.isDefault).toBe(true)
   })
 
   it('sets isDefault: false when the user already has addresses', async () => {
-    // count returns 1 — user already has one address
     mockAddressCount.mockResolvedValueOnce(1 as never)
     mockAddressCreate.mockResolvedValueOnce({ ...DB_ADDRESS_DEFAULT, isDefault: false } as never)
 
     await createAddress(USER_ID, ADDRESS_INPUT)
 
-    const createCall = mockAddressCreate.mock.calls[0][0] as any
+    const createCall = mockAddressCreate.mock.calls[0][0] as { data: { isDefault: boolean } }
     expect(createCall.data.isDefault).toBe(false)
   })
 
@@ -301,7 +175,7 @@ describe('createAddress', () => {
 
     await createAddress(USER_ID, ADDRESS_INPUT)
 
-    const createCall = mockAddressCreate.mock.calls[0][0] as any
+    const createCall = mockAddressCreate.mock.calls[0][0] as { data: { userId: string } }
     expect(createCall.data.userId).toBe(USER_ID)
   })
 })
@@ -326,14 +200,12 @@ describe('updateAddress', () => {
 
     await updateAddress(USER_ID, DB_ADDRESS_DEFAULT.id, { city: 'San Francisco' })
 
-    // findFirst must be called with both id AND userId to prevent cross-user access
     expect(mockAddressFindFirst).toHaveBeenCalledWith({
       where: { id: DB_ADDRESS_DEFAULT.id, userId: USER_ID },
     })
   })
 
   it('throws NOT_FOUND when address does not belong to the user', async () => {
-    // findFirst returns null — address exists but belongs to a different user
     mockAddressFindFirst.mockResolvedValueOnce(null)
 
     await expect(
@@ -362,7 +234,6 @@ describe('deleteAddress', () => {
   it('deletes the address row', async () => {
     mockAddressFindFirst.mockResolvedValueOnce(DB_ADDRESS_SECONDARY as never)
     mockAddressDelete.mockResolvedValueOnce(DB_ADDRESS_SECONDARY as never)
-    // DB_ADDRESS_SECONDARY.isDefault = false — no promotion findFirst is called
 
     await deleteAddress(USER_ID, DB_ADDRESS_SECONDARY.id)
 
@@ -413,10 +284,8 @@ describe('deleteAddress', () => {
   })
 
   it('promotes the next address to default when the deleted address was the default', async () => {
-    // First findFirst — ownership check returns the default address
     mockAddressFindFirst.mockResolvedValueOnce(DB_ADDRESS_DEFAULT as never)
     mockAddressDelete.mockResolvedValueOnce(DB_ADDRESS_DEFAULT as never)
-    // Second findFirst — next remaining address to promote
     mockAddressFindFirst.mockResolvedValueOnce(DB_ADDRESS_SECONDARY as never)
     mockAddressUpdate.mockResolvedValueOnce({ ...DB_ADDRESS_SECONDARY, isDefault: true } as never)
 
@@ -429,7 +298,6 @@ describe('deleteAddress', () => {
   })
 
   it('does not promote any address when the deleted address was not the default', async () => {
-    // Secondary address is not default
     mockAddressFindFirst.mockResolvedValueOnce(DB_ADDRESS_SECONDARY as never)
     mockAddressDelete.mockResolvedValueOnce(DB_ADDRESS_SECONDARY as never)
 
@@ -441,7 +309,6 @@ describe('deleteAddress', () => {
   it('does not promote when there are no remaining addresses after deletion', async () => {
     mockAddressFindFirst.mockResolvedValueOnce(DB_ADDRESS_DEFAULT as never)
     mockAddressDelete.mockResolvedValueOnce(DB_ADDRESS_DEFAULT as never)
-    // No next address — findFirst returns null
     mockAddressFindFirst.mockResolvedValueOnce(null)
 
     await deleteAddress(USER_ID, DB_ADDRESS_DEFAULT.id)
@@ -462,13 +329,11 @@ describe('setDefaultAddress', () => {
 
     await setDefaultAddress(USER_ID, DB_ADDRESS_SECONDARY.id)
 
-    // Step 1: unset all
     expect(mockAddressUpdateMany).toHaveBeenCalledWith({
       where: { userId: USER_ID },
       data: { isDefault: false },
     })
 
-    // Step 2: set the chosen one
     expect(mockAddressUpdate).toHaveBeenCalledWith({
       where: { id: DB_ADDRESS_SECONDARY.id },
       data: { isDefault: true },
@@ -504,4 +369,3 @@ describe('setDefaultAddress', () => {
     expect(mockAddressUpdate).not.toHaveBeenCalled()
   })
 })
-

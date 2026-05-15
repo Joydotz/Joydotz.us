@@ -45,20 +45,16 @@ vi.mock('../../../src/services/orderService', async () => {
   return buildMock()
 })
 
-vi.mock('../../../src/services/authService', () => ({
-  signupUser: vi.fn(),
-  loginUser: vi.fn(),
+vi.mock('../../../src/services/publicUserService', () => ({
   getUserById: vi.fn(),
 }))
 
-vi.mock('../../../src/services/accountService', () => ({
-  setNewsletterOptIn: vi.fn(),
+vi.mock('../../../src/services/addressService.js', () => ({
   getAddresses: vi.fn(),
   createAddress: vi.fn(),
   updateAddress: vi.fn(),
   deleteAddress: vi.fn(),
   setDefaultAddress: vi.fn(),
-  getOrders: vi.fn(),
 }))
 
 vi.mock('../../../src/services/emailService', () => ({

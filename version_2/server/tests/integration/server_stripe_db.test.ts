@@ -7,7 +7,7 @@
  *   PRODUCTS contains at least one valid Stripe price_... id
  *
  * Exercises the real stack path:
- *   POST /api/checkout/create-session (JWT + DB + Stripe sessions.create)
+ *   POST /api/checkout/create-session (session + DB + Stripe sessions.create)
  *   POST /api/stripe-events (raw body + signature verification → PAID + ORDER_PAID)
  */
 
@@ -18,6 +18,7 @@ import { buildApp } from '../../src/app'
 import { MockEventBus } from '../../src/events/MockEventBus'
 import { PRODUCTS } from '../../src/data/products'
 import { cleanDb, testPrisma } from './helpers'
+import { seedAuthUser } from './authSeed'
 
 const stripeSecretKey = process.env.STRIPE_SECRET_KEY ?? ''
 const stripeEventsSecret = process.env.STRIPE_WEBHOOK_SECRET ?? ''
@@ -54,17 +55,11 @@ describe.runIf(shouldRun)('checkout Stripe flow integration', () => {
   })
 
   it('persists cs_ session id on the order then stripe event marks PAID', async () => {
-    const user = await testPrisma.user.create({
-      data: {
-        email: 'checkout-flow@example.com',
-        passwordHash: '$2b$12$hashedpassword',
-        newsletterOptIn: false,
-      },
-    })
+    const { userId, cookie } = await seedAuthUser({ email: 'checkout-flow@example.com' })
 
     const address = await testPrisma.address.create({
       data: {
-        userId: user.id,
+        userId,
         line1: '969 Cox Rd',
         city: 'Gastonia',
         state: 'NC',
@@ -74,12 +69,10 @@ describe.runIf(shouldRun)('checkout Stripe flow integration', () => {
       },
     })
 
-    const token = app.jwt.sign({ sub: user.id })
-
     const sessionRes = await app.inject({
       method: 'POST',
       url: '/api/checkout/create-session',
-      headers: { cookie: `token=${token}` },
+      headers: { cookie },
       payload: {
         addressId: address.id,
         items: [{ productId: firstStripePriceProductId, quantity: 1 }],
@@ -102,7 +95,7 @@ describe.runIf(shouldRun)('checkout Stripe flow integration', () => {
       data: {
         object: {
           id: stripeSessionId,
-          metadata: { orderId, userId: user.id },
+          metadata: { orderId, userId },
         },
       },
     }
@@ -128,21 +121,15 @@ describe.runIf(shouldRun)('checkout Stripe flow integration', () => {
     const paidEvents = eventBus.eventsOf('ORDER_PAID')
     expect(paidEvents).toHaveLength(1)
     expect(paidEvents[0].orderId).toBe(orderId)
-    expect(paidEvents[0].userId).toBe(user.id)
+    expect(paidEvents[0].userId).toBe(userId)
   })
 
   it('handles charge.refunded end-to-end and ignores duplicate delivery', async () => {
-    const user = await testPrisma.user.create({
-      data: {
-        email: 'checkout-refund-flow@example.com',
-        passwordHash: '$2b$12$hashedpassword',
-        newsletterOptIn: false,
-      },
-    })
+    const { userId, cookie } = await seedAuthUser({ email: 'checkout-refund-flow@example.com' })
 
     const address = await testPrisma.address.create({
       data: {
-        userId: user.id,
+        userId,
         line1: '969 Cox Rd',
         city: 'Gastonia',
         state: 'NC',
@@ -152,12 +139,10 @@ describe.runIf(shouldRun)('checkout Stripe flow integration', () => {
       },
     })
 
-    const token = app.jwt.sign({ sub: user.id })
-
     const sessionRes = await app.inject({
       method: 'POST',
       url: '/api/checkout/create-session',
-      headers: { cookie: `token=${token}` },
+      headers: { cookie },
       payload: {
         addressId: address.id,
         items: [{ productId: firstStripePriceProductId, quantity: 1 }],
@@ -178,7 +163,7 @@ describe.runIf(shouldRun)('checkout Stripe flow integration', () => {
       data: {
         object: {
           id: stripeSessionId,
-          metadata: { orderId, userId: user.id },
+          metadata: { orderId, userId },
         },
       },
     }
@@ -237,6 +222,6 @@ describe.runIf(shouldRun)('checkout Stripe flow integration', () => {
     const refundEvents = eventBus.eventsOf('ORDER_REFUNDED')
     expect(refundEvents).toHaveLength(1)
     expect(refundEvents[0].orderId).toBe(orderId)
-    expect(refundEvents[0].userId).toBe(user.id)
+    expect(refundEvents[0].userId).toBe(userId)
   })
 })

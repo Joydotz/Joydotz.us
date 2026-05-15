@@ -78,7 +78,8 @@ function withSchema(connectionString: string, schema: string): string {
 
 export function configureIntegrationEnv(schema?: string, database?: string) {
   process.env.NODE_ENV = 'test'
-  process.env.JWT_SECRET = 'test-secret-at-least-32-characters-long'
+  process.env.BETTER_AUTH_SECRET = 'test-secret-at-least-32-characters-long'
+  process.env.BETTER_AUTH_URL ||= 'http://localhost:3001'
   process.env.STRIPE_SECRET_KEY ||= 'sk_test_placeholder'
   process.env.STRIPE_WEBHOOK_SECRET ||= 'whsec_test_placeholder'
   process.env.FRONTEND_ORIGIN ||= 'http://localhost:5173'
@@ -150,10 +151,12 @@ export const testPrisma = new Proxy({} as PrismaClient, {
 }) as PrismaClient
 
 export async function cleanDb(): Promise<void> {
-  // Delete in child-first order to avoid FK violations
   await testPrisma.orderItem.deleteMany()
   await testPrisma.order.deleteMany()
   await testPrisma.address.deleteMany()
   await testPrisma.emailSubscriber.deleteMany()
+  await testPrisma.session.deleteMany()
+  await testPrisma.account.deleteMany()
+  await testPrisma.verification.deleteMany()
   await testPrisma.user.deleteMany()
 }

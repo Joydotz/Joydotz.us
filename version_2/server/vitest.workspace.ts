@@ -17,7 +17,6 @@ export default defineWorkspace([
       include: ['tests/integration/server_db.test.ts'],
       setupFiles: ['tests/integration/setup_server_db.ts'],
       pool: 'forks',
-      maxWorkers: 1,
     },
   },
   {
@@ -28,7 +27,6 @@ export default defineWorkspace([
       include: ['tests/integration/server_stripe_db.test.ts'],
       setupFiles: ['tests/integration/setup_server_stripe_db.ts'],
       pool: 'forks',
-      maxWorkers: 1,
     },
   },
   {
@@ -39,7 +37,6 @@ export default defineWorkspace([
       include: ['tests/integration/server_stripe.test.ts'],
       setupFiles: ['tests/integration/setup.ts'],
       pool: 'forks',
-      maxWorkers: 1,
     },
   },
 ])

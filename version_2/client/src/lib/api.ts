@@ -128,30 +128,56 @@ export async function subscribeEmail(email: string): Promise<void> {
   })
 }
 
-// ── Auth ──────────────────────────────────────────────────────────────────────
+// ── Auth (Better Auth) ───────────────────────────────────────────────────────
+
+import { authClient } from './auth-client'
 
 export async function signup(
   email: string,
   password: string,
   newsletterOptIn: boolean,
 ): Promise<User> {
-  const data = await request<{ user: User }>('/api/auth/signup', {
-    method: 'POST',
-    body: JSON.stringify({ email, password, newsletterOptIn }),
+  const { data, error } = await authClient.signUp.email({
+    email,
+    password,
+    name: email.split('@')[0] ?? email,
+    newsletterOptIn,
   })
-  return data.user
+  if (error) {
+    throw Object.assign(new Error(error.message ?? 'Sign up failed'), { status: 400 })
+  }
+  if (!data?.user) throw new Error('Sign up failed')
+  return mapAuthUser(data.user)
 }
 
 export async function login(email: string, password: string): Promise<User> {
-  const data = await request<{ user: User }>('/api/auth/login', {
-    method: 'POST',
-    body: JSON.stringify({ email, password }),
+  const { data, error } = await authClient.signIn.email({
+    email,
+    password,
   })
-  return data.user
+  if (error) {
+    throw Object.assign(new Error(error.message ?? 'Invalid email or password'), { status: 401 })
+  }
+  if (!data?.user) throw new Error('Invalid email or password')
+  return mapAuthUser(data.user)
 }
 
 export async function logout(): Promise<void> {
-  await request('/api/auth/logout', { method: 'POST' })
+  await authClient.signOut()
+}
+
+function mapAuthUser(u: {
+  id: string
+  email: string
+  createdAt: Date
+  newsletterOptIn?: boolean
+}): User {
+  return {
+    id: u.id,
+    email: u.email,
+    newsletterOptIn: Boolean(u.newsletterOptIn),
+    createdAt: u.createdAt instanceof Date ? u.createdAt.toISOString() : String(u.createdAt),
+  }
 }
 
 export async function getMe(): Promise<User | null> {

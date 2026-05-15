@@ -3,12 +3,11 @@ import helmet from '@fastify/helmet'
 import cors from '@fastify/cors'
 import rateLimit from '@fastify/rate-limit'
 import cookie from '@fastify/cookie'
-import jwt from '@fastify/jwt'
 import csrf from '@fastify/csrf-protection'
 import { errorHandler } from './middleware/errorHandler.js'
 import { productRoutes } from './routes/products.js'
 import { emailRoutes } from './routes/emails.js'
-import { authRoutes } from './routes/auth.js'
+import { betterAuthRoutes } from './routes/betterAuth.js'
 import { accountRoutes } from './routes/account.js'
 import { checkoutRoutes } from './routes/checkout.js'
 import { EventBus } from './events/EventBus.js'
@@ -38,14 +37,6 @@ export function buildApp(opts: AppOptions = {}) {
   })
 
   app.register(cookie)
-
-  app.register(jwt, {
-    secret: process.env.JWT_SECRET ?? 'fallback-secret-for-tests-only',
-    cookie: {
-      cookieName: 'token',
-      signed: false,
-    },
-  })
 
   app.register(csrf, {
     sessionPlugin: '@fastify/cookie',
@@ -82,7 +73,7 @@ export function buildApp(opts: AppOptions = {}) {
 
   app.register(productRoutes)
   app.register(emailRoutes, { skipRateLimit: opts.skipRateLimit ?? false, skipCsrf: opts.skipCsrf ?? false })
-  app.register(authRoutes, { skipCsrf: opts.skipCsrf ?? false })
+  app.register(betterAuthRoutes)
   app.register(accountRoutes, { skipCsrf: opts.skipCsrf ?? false })
   app.register(checkoutRoutes, { skipCsrf: opts.skipCsrf ?? false, eventBus })
 

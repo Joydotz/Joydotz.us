@@ -1,9 +1,6 @@
 // This is your Prisma schema file,
 // learn more about it in the docs: https://pris.ly/d/prisma-schema
 
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -21,17 +18,69 @@ model EmailSubscriber {
   @@index([createdAt])
 }
 
+/// Better Auth user; commerce tables reference this id.
 model User {
-  id              String    @id @default(uuid())
-  email           String    @unique
-  passwordHash    String
-  newsletterOptIn Boolean   @default(false)
-  createdAt       DateTime  @default(now())
+  id              String   @id
+  name            String
+  email           String   @unique
+  emailVerified   Boolean  @default(false)
+  image           String?
+  newsletterOptIn Boolean  @default(false)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
 
+  sessions  Session[]
+  accounts  Account[]
   addresses Address[]
   orders    Order[]
 
-  @@index([email])
+  @@map("User")
+}
+
+model Session {
+  id        String   @id
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  token     String   @unique
+  expiresAt DateTime
+  ipAddress String?
+  userAgent String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId])
+  @@map("Session")
+}
+
+model Account {
+  id                    String    @id
+  userId                String
+  user                  User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  accountId             String
+  providerId            String
+  accessToken           String?
+  refreshToken          String?
+  accessTokenExpiresAt  DateTime?
+  refreshTokenExpiresAt DateTime?
+  scope                 String?
+  idToken               String?
+  password              String?
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+
+  @@index([userId])
+  @@map("Account")
+}
+
+model Verification {
+  id         String   @id
+  identifier String
+  value      String
+  expiresAt  DateTime
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@map("Verification")
 }
 
 model Address {
@@ -53,13 +102,13 @@ model Address {
 }
 
 enum OrderStatus {
-  PENDING    // payment initiated
-  PAID       // payment confirmed — awaiting shipment
-  SHIPPED    // handed to carrier
-  DELIVERED  // confirmed delivered
-  FAILED     // payment failed
-  CANCELLED  // cancelled before shipment
-  REFUNDED   // refunded after payment
+  PENDING
+  PAID
+  SHIPPED
+  DELIVERED
+  FAILED
+  CANCELLED
+  REFUNDED
 }
 
 model Order {
@@ -70,7 +119,7 @@ model Order {
   address         Address     @relation(fields: [addressId], references: [id], onDelete: Restrict)
   status          OrderStatus @default(PENDING)
   stripeSessionId String      @unique
-  total           Int         // cents
+  total           Int
   createdAt       DateTime    @default(now())
 
   trackingNumber String?
@@ -86,12 +135,11 @@ model OrderItem {
   id              String  @id @default(uuid())
   orderId         String
   order           Order   @relation(fields: [orderId], references: [id])
-  productId       String  // matches id in products.ts
-  name            String  // snapshot at purchase time
-  priceAtPurchase Int     // cents — snapshot at purchase time
+  productId       String
+  name            String
+  priceAtPurchase Int
   quantity        Int
   imageUrl        String?
 
   @@index([orderId])
 }
-

@@ -27,13 +27,21 @@ vi.mock('../../../src/services/stripeService', async (importOriginal) => {
   }
 })
 
-vi.mock('../../../src/services/authService', () => ({
-  signupUser: vi.fn(),
-  loginUser: vi.fn(),
-  getUserById: vi.fn(),
+vi.mock('../../../src/lib/auth.js', () => ({
+  auth: {
+    api: { getSession: vi.fn() },
+    handler: vi.fn(),
+  },
 }))
 
-import { loginUser, getUserById } from '../../../src/services/authService'
+vi.mock('../../../src/services/publicUserService.js', () => ({
+  getUserById: vi.fn(),
+  syncNewsletterForUser: vi.fn(),
+  setNewsletterOptIn: vi.fn(),
+}))
+
+import { auth } from '../../../src/lib/auth.js'
+import { getUserById } from '../../../src/services/publicUserService.js'
 import { retrieveStripePricesByIds } from '../../../src/services/stripeService'
 import { wireRetrieveStripePricesByIdsMock } from '../../shared/stripePriceMocks'
 
@@ -189,29 +197,23 @@ describe('CSRF enforcement — POST /api/emails', () => {
   })
 })
 
-describe('CSRF enforcement — POST /api/auth/signup', () => {
-  it('returns 403 when CSRF credentials are missing', async () => {
-    const res = await app.inject({
-      method: 'POST',
-      url: '/api/auth/signup',
-      payload: { email: 'test@example.com', password: 'password123', newsletterOptIn: false },
-    })
-
-    expect(res.statusCode).toBe(403)
-  })
-
-  it('proceeds past CSRF check with valid credentials (may fail for other reasons)', async () => {
-    const { token, cookie } = await getCsrfCredentials()
+describe('Better Auth routes — exempt from Fastify CSRF', () => {
+  it('POST /api/auth/sign-up/email is forwarded without requiring x-csrf-token', async () => {
+    vi.mocked(auth.handler).mockResolvedValueOnce(
+      new Response(JSON.stringify({ user: { id: '1', email: 'test@example.com' } }), {
+        status: 200,
+        headers: { 'content-type': 'application/json' },
+      }),
+    )
 
     const res = await app.inject({
       method: 'POST',
-      url: '/api/auth/signup',
-      headers: { cookie, 'x-csrf-token': token },
-      payload: { email: 'test@example.com', password: 'password123', newsletterOptIn: false },
+      url: '/api/auth/sign-up/email',
+      payload: { email: 'test@example.com', password: 'password123', name: 'test' },
     })
 
-    // 403 would mean CSRF blocked it — any other status means CSRF passed
     expect(res.statusCode).not.toBe(403)
+    expect(auth.handler).toHaveBeenCalled()
   })
 })
 
@@ -284,31 +286,16 @@ describe('CSRF exemption — GET requests', () => {
     expect(res.statusCode).toBe(200)
   })
 
-  it('GET /api/auth/me passes without x-csrf-token when JWT cookie is present', async () => {
-    vi.mocked(loginUser).mockResolvedValueOnce(MOCK_USER_FOR_ME)
+  it('GET /api/auth/me passes without x-csrf-token when session is valid', async () => {
+    vi.mocked(auth.api.getSession).mockResolvedValueOnce({
+      user: { id: MOCK_USER_FOR_ME.id, email: MOCK_USER_FOR_ME.email },
+      session: { id: 'sess-csrf' },
+    } as never)
     vi.mocked(getUserById).mockResolvedValueOnce(MOCK_USER_FOR_ME)
-
-    const { token, cookie: csrfSetCookie } = await getCsrfCredentials()
-    const csrfPair = csrfSetCookie.split(';')[0]
-
-    const loginRes = await app.inject({
-      method: 'POST',
-      url: '/api/auth/login',
-      headers: { cookie: csrfPair, 'x-csrf-token': token },
-      payload: { email: MOCK_USER_FOR_ME.email, password: 'password123' },
-    })
-    expect(loginRes.statusCode).toBe(200)
-
-    const raw = loginRes.headers['set-cookie']
-    const setCookies = Array.isArray(raw) ? raw : [raw]
-    const jwtLine = setCookies.find((s) => String(s).startsWith('token='))
-    const jwtPair = jwtLine?.split(';')[0]?.trim() ?? ''
-    expect(jwtPair.startsWith('token=')).toBe(true)
 
     const meRes = await app.inject({
       method: 'GET',
       url: '/api/auth/me',
-      headers: { cookie: `${csrfPair}; ${jwtPair}` },
     })
 
     expect(meRes.statusCode).toBe(200)

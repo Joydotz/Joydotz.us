@@ -3,7 +3,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest'
 function setBaseEnv() {
   vi.stubEnv('PORT', '3001')
   vi.stubEnv('DATABASE_URL', 'postgresql://user:pass@localhost:5432/db')
-  vi.stubEnv('JWT_SECRET', 'test-secret-at-least-32-characters-long')
+  vi.stubEnv('BETTER_AUTH_SECRET', 'test-secret-at-least-32-characters-long')
   vi.stubEnv('FRONTEND_ORIGIN', 'http://localhost:5173')
 }
 

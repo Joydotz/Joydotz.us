@@ -5,7 +5,8 @@ const envSchema = z
     NODE_ENV: z.enum(['development', 'test', 'production']).default('development'),
     PORT: z.coerce.number().int().min(1).max(65535).default(3001),
     DATABASE_URL: z.string().min(1, 'DATABASE_URL is required'),
-    JWT_SECRET: z.string().min(32, 'JWT_SECRET must be at least 32 characters'),
+    BETTER_AUTH_SECRET: z.string().min(32, 'BETTER_AUTH_SECRET must be at least 32 characters'),
+    BETTER_AUTH_URL: z.string().url('BETTER_AUTH_URL must be a valid URL').optional(),
     STRIPE_SECRET_KEY: z
       .string()
       .min(1, 'STRIPE_SECRET_KEY is required')
@@ -15,9 +16,7 @@ const envSchema = z
       .refine((v) => v.startsWith('whsec_'), 'STRIPE_WEBHOOK_SECRET must start with whsec_')
       .optional(),
     FRONTEND_ORIGIN: z.string().url('FRONTEND_ORIGIN must be a valid URL'),
-    /** Resend (or other HTTP email API). Omit or leave unset to skip sending in dev. */
     EMAIL_API_KEY: z.string().trim().min(1).optional(),
-    /** Verified sending domain (no scheme, no path) — used to build From addresses in code. */
     EMAIL_DOMAIN: z.string().trim().min(1).optional(),
   })
   .superRefine((env, ctx) => {

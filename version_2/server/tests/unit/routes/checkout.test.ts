@@ -3,7 +3,7 @@
  *
  * Strategy:
  *   - orderService and stripeService are mocked — no DB or Stripe API calls
- *   - accountService is mocked for address ownership verification
+ *   - addressService is mocked for address ownership verification
  *   - A real JWT cookie is obtained via POST /api/auth/login (loginUser mocked)
  *   - MockEventBus is passed into buildApp so tests can assert event publishing
  *   - skipCsrf: true — CSRF behaviour is tested separately in csrf.test.ts
@@ -32,20 +32,17 @@ import { wireRetrieveStripePricesByIdsMock } from '../../shared/stripePriceMocks
 
 // ── Mocks ─────────────────────────────────────────────────────────────────────
 
-vi.mock('../../../src/services/authService', () => ({
-  signupUser: vi.fn(),
-  loginUser: vi.fn(),
-  getUserById: vi.fn(),
-}))
+vi.mock('../../../src/middleware/authenticate.js', async () => {
+  const mod = await import('../mocks/authenticate.js')
+  return { authenticate: mod.authenticate, rejectAuthOnce: mod.rejectAuthOnce }
+})
 
-vi.mock('../../../src/services/accountService', () => ({
-  setNewsletterOptIn: vi.fn(),
+vi.mock('../../../src/services/addressService.js', () => ({
   getAddresses: vi.fn(),
   createAddress: vi.fn(),
   updateAddress: vi.fn(),
   deleteAddress: vi.fn(),
   setDefaultAddress: vi.fn(),
-  getOrders: vi.fn(),
 }))
 
 vi.mock('../../../src/services/orderService', async () => {
@@ -67,8 +64,8 @@ vi.mock('../../../src/services/emailService', () => ({
   sendTransactionalEmail: vi.fn().mockResolvedValue(undefined),
 }))
 
-import { loginUser } from '../../../src/services/authService'
-import { getAddresses } from '../../../src/services/accountService'
+import { rejectAuthOnce, resetAuthenticateMock } from '../mocks/authenticate.js'
+import { getAddresses } from '../../../src/services/addressService.js'
 import {
   createOrder,
   getOrderByStripeSessionId,
@@ -82,7 +79,6 @@ import {
   retrieveStripePricesByIds,
 } from '../../../src/services/stripeService'
 
-const mockLogin = vi.mocked(loginUser)
 const mockGetAddresses = vi.mocked(getAddresses)
 const mockCreateOrder = vi.mocked(createOrder)
 const mockGetRecentPendingOrdersByUser = vi.mocked(getRecentPendingOrdersByUser)
@@ -138,21 +134,13 @@ const VALID_PAYLOAD = {
 
 let app: FastifyInstance
 let eventBus: MockEventBus
-let sessionCookie: string
 
 beforeAll(async () => {
+  process.env.BETTER_AUTH_SECRET = 'test-secret-at-least-32-characters-long'
+  process.env.BETTER_AUTH_URL = 'http://localhost:3001'
   eventBus = new MockEventBus()
   app = buildApp({ logger: false, skipRateLimit: true, skipCsrf: true, eventBus })
   await app.ready()
-
-  mockLogin.mockResolvedValueOnce(MOCK_USER)
-  const loginRes = await app.inject({
-    method: 'POST',
-    url: '/api/auth/login',
-    payload: { email: 'test@example.com', password: 'password123' },
-  })
-  const raw = loginRes.headers['set-cookie']
-  sessionCookie = Array.isArray(raw) ? raw[0] : (raw as string)
 })
 
 afterAll(async () => {
@@ -161,6 +149,7 @@ afterAll(async () => {
 
 beforeEach(() => {
   vi.clearAllMocks()
+  resetAuthenticateMock()
   mockGetRecentPendingOrdersByUser.mockResolvedValue([])
   eventBus.clear()
   wireRetrieveStripePricesByIdsMock(mockRetrieveStripePricesByIds)
@@ -175,6 +164,7 @@ beforeEach(() => {
 
 describe('authentication', () => {
   it('returns 401 when no auth cookie is present', async () => {
+    rejectAuthOnce()
     const res = await app.inject({
       method: 'POST',
       url: '/api/checkout/create-session',
@@ -197,7 +187,6 @@ describe('input validation', () => {
     const res = await app.inject({
       method: 'POST',
       url: '/api/checkout/create-session',
-      headers: { cookie: sessionCookie },
       payload: { items: [{ productId: 'softwing-butterfly', quantity: 1 }] },
     })
 
@@ -208,7 +197,6 @@ describe('input validation', () => {
     const res = await app.inject({
       method: 'POST',
       url: '/api/checkout/create-session',
-      headers: { cookie: sessionCookie },
       payload: { addressId: '', items: [{ productId: 'softwing-butterfly', quantity: 1 }] },
     })
 
@@ -219,7 +207,6 @@ describe('input validation', () => {
     const res = await app.inject({
       method: 'POST',
       url: '/api/checkout/create-session',
-      headers: { cookie: sessionCookie },
       payload: { addressId: MOCK_ADDRESS.id },
     })
 
@@ -230,7 +217,6 @@ describe('input validation', () => {
     const res = await app.inject({
       method: 'POST',
       url: '/api/checkout/create-session',
-      headers: { cookie: sessionCookie },
       payload: { addressId: MOCK_ADDRESS.id, items: [] },
     })
 
@@ -243,7 +229,6 @@ describe('input validation', () => {
     const res = await app.inject({
       method: 'POST',
       url: '/api/checkout/create-session',
-      headers: { cookie: sessionCookie },
       payload: { addressId: MOCK_ADDRESS.id, items: [{ productId: 'unknown-product', quantity: 1 }] },
     })
 
@@ -254,7 +239,6 @@ describe('input validation', () => {
     const res = await app.inject({
       method: 'POST',
       url: '/api/checkout/create-session',
-      headers: { cookie: sessionCookie },
       payload: { addressId: MOCK_ADDRESS.id, items: [{ productId: 'softwing-butterfly', quantity: 0 }] },
     })
 
@@ -265,7 +249,6 @@ describe('input validation', () => {
     const res = await app.inject({
       method: 'POST',
       url: '/api/checkout/create-session',
-      headers: { cookie: sessionCookie },
       payload: { addressId: MOCK_ADDRESS.id, items: [{ productId: 'softwing-butterfly', quantity: -1 }] },
     })
 
@@ -276,7 +259,6 @@ describe('input validation', () => {
     const res = await app.inject({
       method: 'POST',
       url: '/api/checkout/create-session',
-      headers: { cookie: sessionCookie },
       payload: { addressId: MOCK_ADDRESS.id, items: [{ productId: 'softwing-butterfly', quantity: 'one' }] },
     })
 
@@ -299,7 +281,6 @@ describe('address ownership', () => {
     const res = await app.inject({
       method: 'POST',
       url: '/api/checkout/create-session',
-      headers: { cookie: sessionCookie },
       payload: VALID_PAYLOAD,
     })
 
@@ -313,7 +294,6 @@ describe('address ownership', () => {
     const res = await app.inject({
       method: 'POST',
       url: '/api/checkout/create-session',
-      headers: { cookie: sessionCookie },
       payload: VALID_PAYLOAD,
     })
 
@@ -340,7 +320,6 @@ describe('price integrity', () => {
     await app.inject({
       method: 'POST',
       url: '/api/checkout/create-session',
-      headers: { cookie: sessionCookie },
       // Client tries to inject a price of 1 cent — must be ignored
       payload: {
         addressId: MOCK_ADDRESS.id,
@@ -363,7 +342,6 @@ describe('price integrity', () => {
     await app.inject({
       method: 'POST',
       url: '/api/checkout/create-session',
-      headers: { cookie: sessionCookie },
       // softwing-butterfly: 500 × 2 = 1000
       payload: {
         addressId: MOCK_ADDRESS.id,
@@ -397,7 +375,6 @@ describe('happy path', () => {
     const res = await app.inject({
       method: 'POST',
       url: '/api/checkout/create-session',
-      headers: { cookie: sessionCookie },
       payload: VALID_PAYLOAD,
     })
 
@@ -418,7 +395,6 @@ describe('happy path', () => {
     await app.inject({
       method: 'POST',
       url: '/api/checkout/create-session',
-      headers: { cookie: sessionCookie },
       payload: VALID_PAYLOAD,
     })
 
@@ -439,7 +415,6 @@ describe('happy path', () => {
     await app.inject({
       method: 'POST',
       url: '/api/checkout/create-session',
-      headers: { cookie: sessionCookie },
       payload: VALID_PAYLOAD,
     })
 
@@ -459,7 +434,6 @@ describe('happy path', () => {
     await app.inject({
       method: 'POST',
       url: '/api/checkout/create-session',
-      headers: { cookie: sessionCookie },
       payload: VALID_PAYLOAD,
     })
 
@@ -492,7 +466,6 @@ describe('duplicate checkout guard', () => {
     const res = await app.inject({
       method: 'POST',
       url: '/api/checkout/create-session',
-      headers: { cookie: sessionCookie },
       payload: VALID_PAYLOAD,
     })
 
@@ -527,7 +500,6 @@ describe('duplicate checkout guard', () => {
     const res = await app.inject({
       method: 'POST',
       url: '/api/checkout/create-session',
-      headers: { cookie: sessionCookie },
       payload: {
         addressId: MOCK_ADDRESS.id,
         items: [{ productId: 'softwing-butterfly', quantity: 2 }],
@@ -699,7 +671,6 @@ describe('Stripe errors', () => {
     const res = await app.inject({
       method: 'POST',
       url: '/api/checkout/create-session',
-      headers: { cookie: sessionCookie },
       payload: VALID_PAYLOAD,
     })
 

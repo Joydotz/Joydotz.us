@@ -1,6 +1,6 @@
 import { Prisma } from '@prisma/client'
 import { Resend } from 'resend'
-import { prisma } from '../db/client'
+import { prisma } from '../db/client.js'
 
 export interface SaveEmailResult {
   created: boolean

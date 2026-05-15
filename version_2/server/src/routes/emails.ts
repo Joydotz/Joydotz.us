@@ -1,6 +1,6 @@
 import { FastifyInstance } from 'fastify'
 import { z } from 'zod'
-import { saveEmail } from '../services/emailService'
+import { saveEmail } from '../services/emailService.js'
 import { safe } from '../lib/validation.js'
 import { csrfProtectionForMutations } from '../middleware/csrfForMutations.js'
 

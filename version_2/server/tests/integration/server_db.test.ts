@@ -18,17 +18,14 @@ import {
   markDelivered,
   updateShippingAddressForPaidOrder,
 } from '../../src/services/orderService'
+import { seedAuthUser } from './authSeed'
 
 // ── Fixtures ──────────────────────────────────────────────────────────────────
 
 async function seedUserAndAddress() {
-  const user = await testPrisma.user.create({
-    data: {
-      email: 'integration@example.com',
-      passwordHash: '$2b$12$hashedpassword',
-      newsletterOptIn: false,
-    },
-  })
+  const { userId } = await seedAuthUser({ email: 'integration@example.com' })
+
+  const user = await testPrisma.user.findUniqueOrThrow({ where: { id: userId } })
 
   const address = await testPrisma.address.create({
     data: {
@@ -223,8 +220,10 @@ describe('getOrdersByUser', () => {
 
     const otherUser = await testPrisma.user.create({
       data: {
+        id: crypto.randomUUID(),
+        name: 'other',
         email: 'other@example.com',
-        passwordHash: '$2b$12$hashedpassword',
+        emailVerified: false,
         newsletterOptIn: false,
       },
     })

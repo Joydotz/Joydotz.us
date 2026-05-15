@@ -1,7 +1,7 @@
 import { FastifyInstance } from 'fastify'
 import { z } from 'zod'
 import { authenticate } from '../middleware/authenticate.js'
-import { getAddresses } from '../services/accountService.js'
+import { getAddresses } from '../services/addressService.js'
 import {
   createOrder,
   getOrderByIdForStripeEvent,

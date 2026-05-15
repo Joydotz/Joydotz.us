@@ -1,5 +1,5 @@
 import { prisma } from '../db/client.js'
-import type { AddressInput } from './accountService.js'
+import type { AddressInput } from './addressService.js'
 
 export interface OrderItemInput {
   productId: string

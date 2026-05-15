@@ -20,14 +20,14 @@ import { createMockAddress, createMockUser } from '../../shared/fixtures'
 
 // ── Mocks ─────────────────────────────────────────────────────────────────────
 
-vi.mock('../../../src/services/authService', () => ({
-  signupUser: vi.fn(),
-  loginUser: vi.fn(),
-  getUserById: vi.fn(),
-}))
+vi.mock('../../../src/middleware/authenticate.js', async () => {
+  const mod = await import('../mocks/authenticate.js')
+  return { authenticate: mod.authenticate }
+})
 
-vi.mock('../../../src/services/accountService', () => ({
-  setNewsletterOptIn: vi.fn(),
+import { rejectAuthOnce, resetAuthenticateMock } from '../mocks/authenticate.js'
+
+vi.mock('../../../src/services/addressService.js', () => ({
   getAddresses: vi.fn(),
   createAddress: vi.fn(),
   updateAddress: vi.fn(),
@@ -48,7 +48,6 @@ vi.mock('../../../src/services/stripeService', async (importOriginal) => {
   }
 })
 
-import { loginUser } from '../../../src/services/authService'
 import {
   dismissPendingOrder,
   getPaidOrdersByUser,
@@ -58,7 +57,6 @@ import {
 } from '../../../src/services/orderService'
 import { retrieveCheckoutSession } from '../../../src/services/stripeService'
 
-const mockLogin = vi.mocked(loginUser)
 const mockGetPaidOrdersByUser = vi.mocked(getPaidOrdersByUser)
 const mockGetResumablePendingOrdersByUser = vi.mocked(getResumablePendingOrdersByUser)
 const mockGetOrderById = vi.mocked(getOrderById)
@@ -116,20 +114,12 @@ const MOCK_PENDING_ORDER = {
 // ── Setup ─────────────────────────────────────────────────────────────────────
 
 let app: FastifyInstance
-let sessionCookie: string
 
 beforeAll(async () => {
+  process.env.BETTER_AUTH_SECRET = 'test-secret-at-least-32-characters-long'
+  process.env.BETTER_AUTH_URL = 'http://localhost:3001'
   app = buildApp({ logger: false, skipRateLimit: true, skipCsrf: true })
   await app.ready()
-
-  mockLogin.mockResolvedValueOnce(MOCK_USER)
-  const loginRes = await app.inject({
-    method: 'POST',
-    url: '/api/auth/login',
-    payload: { email: 'test@example.com', password: 'password123' },
-  })
-  const raw = loginRes.headers['set-cookie']
-  sessionCookie = Array.isArray(raw) ? raw[0] : (raw as string)
 })
 
 afterAll(async () => {
@@ -138,6 +128,7 @@ afterAll(async () => {
 
 beforeEach(() => {
   vi.clearAllMocks()
+  resetAuthenticateMock()
 })
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -146,6 +137,7 @@ beforeEach(() => {
 
 describe('GET /api/account/orders', () => {
   it('returns 401 when not authenticated', async () => {
+    rejectAuthOnce()
     const res = await app.inject({
       method: 'GET',
       url: '/api/account/orders',
@@ -160,7 +152,6 @@ describe('GET /api/account/orders', () => {
     const res = await app.inject({
       method: 'GET',
       url: '/api/account/orders',
-      headers: { cookie: sessionCookie },
     })
 
     expect(res.statusCode).toBe(200)
@@ -173,7 +164,6 @@ describe('GET /api/account/orders', () => {
     const res = await app.inject({
       method: 'GET',
       url: '/api/account/orders',
-      headers: { cookie: sessionCookie },
     })
 
     expect(res.statusCode).toBe(200)
@@ -191,7 +181,6 @@ describe('GET /api/account/orders', () => {
     await app.inject({
       method: 'GET',
       url: '/api/account/orders',
-      headers: { cookie: sessionCookie },
     })
 
     expect(mockGetPaidOrdersByUser).toHaveBeenCalledWith(MOCK_USER.id)
@@ -204,6 +193,7 @@ describe('GET /api/account/orders', () => {
 
 describe('GET /api/account/orders/incomplete', () => {
   it('returns 401 when not authenticated', async () => {
+    rejectAuthOnce()
     const res = await app.inject({ method: 'GET', url: '/api/account/orders/incomplete' })
     expect(res.statusCode).toBe(401)
   })
@@ -214,7 +204,6 @@ describe('GET /api/account/orders/incomplete', () => {
     const res = await app.inject({
       method: 'GET',
       url: '/api/account/orders/incomplete',
-      headers: { cookie: sessionCookie },
     })
 
     expect(res.statusCode).toBe(200)
@@ -230,6 +219,7 @@ describe('GET /api/account/orders/incomplete', () => {
 
 describe('POST /api/account/orders/:id/resume-checkout', () => {
   it('returns 401 when not authenticated', async () => {
+    rejectAuthOnce()
     const res = await app.inject({
       method: 'POST',
       url: '/api/account/orders/order-pending/resume-checkout',
@@ -247,7 +237,6 @@ describe('POST /api/account/orders/:id/resume-checkout', () => {
     const res = await app.inject({
       method: 'POST',
       url: '/api/account/orders/order-pending/resume-checkout',
-      headers: { cookie: sessionCookie },
     })
 
     expect(res.statusCode).toBe(200)
@@ -262,7 +251,6 @@ describe('POST /api/account/orders/:id/resume-checkout', () => {
     const res = await app.inject({
       method: 'POST',
       url: '/api/account/orders/order-pending/resume-checkout',
-      headers: { cookie: sessionCookie },
     })
 
     expect(res.statusCode).toBe(410)
@@ -277,7 +265,6 @@ describe('POST /api/account/orders/:id/resume-checkout', () => {
     const res = await app.inject({
       method: 'POST',
       url: '/api/account/orders/order-pending/resume-checkout',
-      headers: { cookie: sessionCookie },
     })
 
     expect(res.statusCode).toBe(410)
@@ -294,7 +281,6 @@ describe('POST /api/account/orders/:id/resume-checkout', () => {
     const res = await app.inject({
       method: 'POST',
       url: '/api/account/orders/order-pending/resume-checkout',
-      headers: { cookie: sessionCookie },
     })
 
     expect(res.statusCode).toBe(410)
@@ -307,6 +293,7 @@ describe('POST /api/account/orders/:id/resume-checkout', () => {
 
 describe('POST /api/account/orders/:id/dismiss-incomplete', () => {
   it('returns 401 when not authenticated', async () => {
+    rejectAuthOnce()
     const res = await app.inject({
       method: 'POST',
       url: '/api/account/orders/order-pending/dismiss-incomplete',
@@ -320,7 +307,6 @@ describe('POST /api/account/orders/:id/dismiss-incomplete', () => {
     const res = await app.inject({
       method: 'POST',
       url: '/api/account/orders/order-pending/dismiss-incomplete',
-      headers: { cookie: sessionCookie },
     })
 
     expect(res.statusCode).toBe(200)
@@ -333,7 +319,6 @@ describe('POST /api/account/orders/:id/dismiss-incomplete', () => {
     const res = await app.inject({
       method: 'POST',
       url: '/api/account/orders/order-pending/dismiss-incomplete',
-      headers: { cookie: sessionCookie },
     })
 
     expect(res.statusCode).toBe(404)
@@ -346,6 +331,7 @@ describe('POST /api/account/orders/:id/dismiss-incomplete', () => {
 
 describe('POST /api/account/orders/:id/shipping-address', () => {
   it('returns 401 when not authenticated', async () => {
+    rejectAuthOnce()
     const res = await app.inject({
       method: 'POST',
       url: '/api/account/orders/order-001/shipping-address',
@@ -358,7 +344,6 @@ describe('POST /api/account/orders/:id/shipping-address', () => {
     const res = await app.inject({
       method: 'POST',
       url: '/api/account/orders/order-001/shipping-address',
-      headers: { cookie: sessionCookie },
       payload: { line1: '' },
     })
     expect(res.statusCode).toBe(400)
@@ -371,7 +356,6 @@ describe('POST /api/account/orders/:id/shipping-address', () => {
     const res = await app.inject({
       method: 'POST',
       url: '/api/account/orders/order-001/shipping-address',
-      headers: { cookie: sessionCookie },
       payload: { ...VALID_SHIPPING_PAYLOAD, line1: '100 Ship Way' },
     })
 
@@ -392,7 +376,6 @@ describe('POST /api/account/orders/:id/shipping-address', () => {
     const res = await app.inject({
       method: 'POST',
       url: '/api/account/orders/order-001/shipping-address',
-      headers: { cookie: sessionCookie },
       payload: VALID_SHIPPING_PAYLOAD,
     })
 
@@ -411,6 +394,7 @@ describe('POST /api/account/orders/:id/shipping-address', () => {
 
 describe('GET /api/account/orders/:id', () => {
   it('returns 401 when not authenticated', async () => {
+    rejectAuthOnce()
     const res = await app.inject({
       method: 'GET',
       url: '/api/account/orders/order-001',
@@ -425,7 +409,6 @@ describe('GET /api/account/orders/:id', () => {
     const res = await app.inject({
       method: 'GET',
       url: '/api/account/orders/order-001',
-      headers: { cookie: sessionCookie },
     })
 
     expect(res.statusCode).toBe(200)
@@ -442,7 +425,6 @@ describe('GET /api/account/orders/:id', () => {
     const res = await app.inject({
       method: 'GET',
       url: '/api/account/orders/nonexistent-order',
-      headers: { cookie: sessionCookie },
     })
 
     expect(res.statusCode).toBe(404)
@@ -455,7 +437,6 @@ describe('GET /api/account/orders/:id', () => {
     const res = await app.inject({
       method: 'GET',
       url: '/api/account/orders/order-001',
-      headers: { cookie: sessionCookie },
     })
 
     expect(res.statusCode).toBe(404)
@@ -467,7 +448,6 @@ describe('GET /api/account/orders/:id', () => {
     await app.inject({
       method: 'GET',
       url: '/api/account/orders/order-001',
-      headers: { cookie: sessionCookie },
     })
 
     expect(mockGetOrderById).toHaveBeenCalledWith('order-001', MOCK_USER.id)

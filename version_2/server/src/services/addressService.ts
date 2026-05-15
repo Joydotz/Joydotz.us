@@ -9,30 +9,6 @@ export interface AddressInput {
   country: string
 }
 
-// ── Newsletter ────────────────────────────────────────────────────────────────
-
-export async function setNewsletterOptIn(
-  userId: string,
-  optIn: boolean,
-): Promise<void> {
-  const user = await prisma.user.update({
-    where: { id: userId },
-    data: { newsletterOptIn: optIn },
-  })
-
-  if (optIn) {
-    await prisma.emailSubscriber.upsert({
-      where: { email: user.email },
-      update: {},
-      create: { email: user.email, source: 'account' },
-    })
-  } else {
-    await prisma.emailSubscriber.deleteMany({ where: { email: user.email } })
-  }
-}
-
-// ── Addresses ─────────────────────────────────────────────────────────────────
-
 export async function getAddresses(userId: string) {
   return prisma.address.findMany({
     where: { userId },
