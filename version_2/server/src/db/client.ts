@@ -1,8 +1,9 @@
 import { PrismaClient } from '@prisma/client'
 import { PrismaPg } from '@prisma/adapter-pg'
+import { config } from '../config.js'
 
 function createPrismaClient() {
-  const adapter = new PrismaPg({ connectionString: process.env.DATABASE_URL })
+  const adapter = new PrismaPg({ connectionString: config.database.url })
   return new PrismaClient({ adapter })
 }
 
@@ -12,14 +13,14 @@ let prismaClient: PrismaClient | undefined
 function getPrismaClient() {
   if (prismaClient) return prismaClient
 
-  if (process.env.NODE_ENV === 'development' && globalForPrisma.prisma) {
+  if (config.nodeEnv === 'development' && globalForPrisma.prisma) {
     prismaClient = globalForPrisma.prisma
     return prismaClient
   }
 
   prismaClient = createPrismaClient()
 
-  if (process.env.NODE_ENV === 'development') {
+  if (config.nodeEnv === 'development') {
     globalForPrisma.prisma = prismaClient
   }
 

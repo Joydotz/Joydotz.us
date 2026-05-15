@@ -3,6 +3,7 @@ import { prisma } from '../db/client.js'
 export interface PublicUser {
   id: string
   email: string
+  emailVerified: boolean
   newsletterOptIn: boolean
   createdAt: Date
 }
@@ -10,12 +11,14 @@ export interface PublicUser {
 function toPublicUser(user: {
   id: string
   email: string
+  emailVerified: boolean
   newsletterOptIn: boolean
   createdAt: Date
 }): PublicUser {
   return {
     id: user.id,
     email: user.email,
+    emailVerified: user.emailVerified,
     newsletterOptIn: user.newsletterOptIn,
     createdAt: user.createdAt,
   }

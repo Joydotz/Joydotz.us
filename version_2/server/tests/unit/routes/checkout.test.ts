@@ -61,7 +61,7 @@ vi.mock('../../../src/services/stripeService', () => ({
 
 vi.mock('../../../src/services/emailService', () => ({
   saveEmail: vi.fn().mockResolvedValue({ created: true }),
-  sendTransactionalEmail: vi.fn().mockResolvedValue(undefined),
+  sendEmail: vi.fn().mockResolvedValue(undefined),
 }))
 
 import { rejectAuthOnce, resetAuthenticateMock } from '../mocks/authenticate.js'

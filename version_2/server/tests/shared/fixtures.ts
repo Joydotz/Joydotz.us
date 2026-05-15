@@ -3,12 +3,14 @@ export const TEST_USER_ID = 'user-abc-123'
 export function createMockUser(overrides: Partial<{
   id: string
   email: string
+  emailVerified: boolean
   newsletterOptIn: boolean
   createdAt: Date
 }> = {}) {
   return {
     id: TEST_USER_ID,
     email: 'test@example.com',
+    emailVerified: true,
     newsletterOptIn: false,
     createdAt: new Date('2026-01-01'),
     ...overrides,

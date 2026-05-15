@@ -11,6 +11,10 @@ export async function authenticate(request: FastifyRequest, reply: FastifyReply)
     return reply.status(401).send({ error: 'Unauthorized' })
   }
 
+  if (!session.user.emailVerified) {
+    return reply.status(403).send({ error: 'email_not_verified' })
+  }
+
   request.user = {
     sub: session.user.id,
     email: session.user.email,

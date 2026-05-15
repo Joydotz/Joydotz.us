@@ -5,8 +5,7 @@ export default defineConfig({
     globals: true,
     environment: 'node',
     env: {
-      BETTER_AUTH_SECRET: 'test-secret-at-least-32-characters-long',
-      BETTER_AUTH_URL: 'http://localhost:3001',
+      NODE_ENV: 'test'
     },
     maxWorkers: 8,
     exclude: ['node_modules/**'],

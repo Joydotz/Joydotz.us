@@ -1,11 +1,12 @@
 import { FastifyError, FastifyReply, FastifyRequest } from 'fastify'
+import { config } from '../config.js'
 
 export function errorHandler(
   error: FastifyError,
   _request: FastifyRequest,
   reply: FastifyReply,
 ): void {
-  const isProd = process.env.NODE_ENV === 'production'
+  const isProd = config.nodeEnv === 'production'
 
   // Log full error server-side always
   reply.log.error(error)

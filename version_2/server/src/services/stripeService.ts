@@ -1,7 +1,8 @@
 import Stripe from 'stripe'
 import { PRODUCTS } from '../data/products.js'
+import { config } from '../config.js'
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY ?? '')
+const stripe = new Stripe(config.stripe.secretKey)
 
 const PRICE_CACHE_TTL_MS = 5 * 60 * 1000
 
@@ -127,13 +128,6 @@ export async function retrieveCheckoutSession(sessionId: string) {
   return stripe.checkout.sessions.retrieve(sessionId)
 }
 
-/** Dev / explicit debug: run before starting Checkout so misconfigured Stripe fails fast. */
-export function shouldVerifyStripeBeforeCheckout(): boolean {
-  if (process.env.STRIPE_CHECKOUT_READINESS === '0') return false
-  if (process.env.STRIPE_CHECKOUT_READINESS === '1') return true
-  return process.env.NODE_ENV === 'development'
-}
-
 export interface StripeCheckoutReadinessResult {
   ok: boolean
   pricesReachable: boolean
@@ -159,7 +153,7 @@ export async function verifyStripeCheckoutReadiness(): Promise<StripeCheckoutRea
     hints.push('Could not load catalog prices from Stripe — check STRIPE_SECRET_KEY and price IDs.')
   }
 
-  const webhookSecretConfigured = Boolean(process.env.STRIPE_WEBHOOK_SECRET?.trim())
+  const webhookSecretConfigured = Boolean(config.stripe.webhookSecret)
   if (!webhookSecretConfigured) {
     hints.push(
       'STRIPE_WEBHOOK_SECRET is missing — webhooks cannot be verified. Run `stripe listen --forward-to …/api/stripe-events` and set the signing secret.',

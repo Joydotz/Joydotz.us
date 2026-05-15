@@ -48,6 +48,7 @@ describe('getUserById', () => {
     expect(result).toEqual({
       id: DB_USER.id,
       email: DB_USER.email,
+      emailVerified: false,
       newsletterOptIn: false,
       createdAt: DB_USER.createdAt,
     })

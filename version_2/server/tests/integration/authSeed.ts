@@ -43,6 +43,11 @@ export async function seedAuthUser(opts: {
     // User may already exist if a prior attempt partially succeeded.
   }
 
+  await testPrisma.user.updateMany({
+    where: { email },
+    data: { emailVerified: true },
+  })
+
   const { headers } = await auth.api.signInEmail({
     returnHeaders: true,
     body: {

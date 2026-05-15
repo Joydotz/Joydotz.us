@@ -4,6 +4,7 @@ import cors from '@fastify/cors'
 import rateLimit from '@fastify/rate-limit'
 import cookie from '@fastify/cookie'
 import csrf from '@fastify/csrf-protection'
+import { config } from './config.js'
 import { errorHandler } from './middleware/errorHandler.js'
 import { productRoutes } from './routes/products.js'
 import { emailRoutes } from './routes/emails.js'
@@ -30,7 +31,7 @@ export function buildApp(opts: AppOptions = {}) {
   app.register(helmet)
 
   app.register(cors, {
-    origin: process.env.FRONTEND_ORIGIN ?? false,
+    origin: config.frontendOrigin,
     methods: ['GET', 'POST', 'PATCH', 'DELETE'],
     allowedHeaders: ['Content-Type', 'x-csrf-token'],
     credentials: true, // required for cookies
@@ -45,7 +46,7 @@ export function buildApp(opts: AppOptions = {}) {
       // Lax so JWT + CSRF cookies survive top-level redirects back from Stripe Checkout (cross-site).
       // Strict breaks post-payment return with Vite proxying `/api` on the dev SPA origin.
       sameSite: 'lax',
-      secure: process.env.NODE_ENV === 'production',
+      secure: config.nodeEnv === 'production',
       path: '/',
     },
   })

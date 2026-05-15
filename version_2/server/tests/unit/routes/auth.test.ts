@@ -55,9 +55,20 @@ describe('GET /api/auth/me', () => {
     expect(res.statusCode).toBe(401)
   })
 
+  it('returns 403 when email is not verified', async () => {
+    mockGetSession.mockResolvedValueOnce({
+      user: { id: TEST_USER_ID, email: MOCK_USER.email, emailVerified: false },
+      session: { id: 'sess-1' },
+    } as never)
+
+    const res = await app.inject({ method: 'GET', url: '/api/auth/me' })
+    expect(res.statusCode).toBe(403)
+    expect(res.json()).toEqual({ error: 'email_not_verified' })
+  })
+
   it('returns the public user when session is valid', async () => {
     mockGetSession.mockResolvedValueOnce({
-      user: { id: TEST_USER_ID, email: MOCK_USER.email },
+      user: { id: TEST_USER_ID, email: MOCK_USER.email, emailVerified: true },
       session: { id: 'sess-1' },
     } as never)
     mockGetUserById.mockResolvedValueOnce(MOCK_USER)

@@ -59,7 +59,7 @@ vi.mock('../../../src/services/addressService.js', () => ({
 
 vi.mock('../../../src/services/emailService', () => ({
   saveEmail: vi.fn().mockResolvedValue({ created: true }),
-  sendTransactionalEmail: vi.fn().mockResolvedValue(undefined),
+  sendEmail: vi.fn().mockResolvedValue(undefined),
 }))
 
 import { constructStripeEvent } from '../../../src/services/stripeService'

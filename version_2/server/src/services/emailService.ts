@@ -1,57 +1,27 @@
 import { Prisma } from '@prisma/client'
 import { Resend } from 'resend'
 import { prisma } from '../db/client.js'
+import { config } from '../config.js'
 
 export interface SaveEmailResult {
   created: boolean
 }
 
-function isUniqueConstraintError(error: unknown): boolean {
-  return (
-    error instanceof Prisma.PrismaClientKnownRequestError &&
-    error.code === 'P2002'
-  )
-}
-
-export interface SendTransactionalEmailInput {
-  to: string
+export interface SendEmailOptions {
+  from: string,
+  to: string[],
   subject: string
   html: string
-  text: string
 }
 
-/** `Joydotz <orders@EMAIL_DOMAIN>` — reads `EMAIL_DOMAIN` from env (avoid importing `config` here so unit tests can stub env before `config` runs). */
-export function ordersFromAddress(): string | undefined {
-  const domain = process.env.EMAIL_DOMAIN?.trim()
-  if (!domain) return undefined
-  return `Joydotz <orders@${domain}>`
-}
+const resend = new Resend(config.email.apiKey)
 
 /**
  * Same shape as `test.ts`: `new Resend(apiKey).emails.send({ from, to: [...], subject, html })`.
  * Skips when `NODE_ENV` is `test`, or when `EMAIL_API_KEY` / `EMAIL_DOMAIN` are unset.
  */
-export async function sendTransactionalEmail(input: SendTransactionalEmailInput): Promise<void> {
-  if (process.env.NODE_ENV === 'test') return
-  const apiKey = process.env.EMAIL_API_KEY?.trim()
-  const from = ordersFromAddress()
-  if (!apiKey || !from) return
-
-  const resend = new Resend(apiKey)
-  const { error } = await resend.emails.send({
-    from,
-    to: [input.to.trim()],
-    subject: input.subject,
-    html: input.html,
-    text: input.text,
-  })
-  if (error) {
-    const message =
-      typeof error === 'object' && error !== null && 'message' in error
-        ? String((error as { message: unknown }).message)
-        : String(error)
-    throw new Error(message || 'Sending email failed')
-  }
+export async function sendEmail({ from, to, subject, html }: SendEmailOptions): Promise<void> {
+  await resend.emails.send({ from, to, subject, html })
 }
 
 export async function saveEmail(
@@ -67,7 +37,7 @@ export async function saveEmail(
     })
     return { created: true }
   } catch (error) {
-    if (isUniqueConstraintError(error)) {
+    if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') {
       // Duplicate email — not an error, just a no-op
       return { created: false }
     }

@@ -17,12 +17,12 @@ import {
   constructStripeEvent,
   retrieveCheckoutSession,
   retrieveStripePricesByIds,
-  shouldVerifyStripeBeforeCheckout,
   verifyStripeCheckoutReadiness,
 } from '../services/stripeService.js'
 import { PRODUCTS } from '../data/products.js'
 import { EventBus } from '../events/EventBus.js'
 import { publishOrderPaid, publishOrderRefunded } from '../events/orderEventDispatch.js'
+import { config } from '../config.js'
 
 interface CheckoutRouteOptions {
   skipCsrf?: boolean
@@ -106,7 +106,7 @@ export async function checkoutRoutes(app: FastifyInstance, opts: CheckoutRouteOp
     async (request, reply) => {
       const { sub: userId } = request.user as { sub: string }
 
-      if (shouldVerifyStripeBeforeCheckout()) {
+      if (config.nodeEnv !== 'test') {
         const readiness = await verifyStripeCheckoutReadiness()
         if (!readiness.ok) {
           return reply.status(503).send({
@@ -215,7 +215,7 @@ export async function checkoutRoutes(app: FastifyInstance, opts: CheckoutRouteOp
       // 7. Create Stripe Checkout Session with orderId embedded in metadata.
       //    stripeService uses an orderId-based idempotency key, so duplicate
       //    retries of the same order reuse the same Stripe session.
-      const origin = process.env.FRONTEND_ORIGIN ?? 'http://localhost:5173'
+      const origin = config.frontendOrigin
       const { url, sessionId } = await createCheckoutSession({
         lineItems: resolvedItems.map((i) => ({ stripePriceId: i.stripePriceId, quantity: i.quantity })),
         successUrl: `${origin}/order-confirmation?session_id={CHECKOUT_SESSION_ID}`,
@@ -242,7 +242,7 @@ export async function checkoutRoutes(app: FastifyInstance, opts: CheckoutRouteOp
       event = constructStripeEvent(
         request.body as Buffer,
         signature,
-        process.env.STRIPE_WEBHOOK_SECRET ?? '',
+        config.stripe.webhookSecret,
       )
     } catch {
       return reply.status(400).send({ error: 'Invalid signature' })

@@ -48,6 +48,7 @@ import { wireRetrieveStripePricesByIdsMock } from '../../shared/stripePriceMocks
 const MOCK_USER_FOR_ME = {
   id: 'user-csrf-me',
   email: 'csrf-me-test@example.com',
+  emailVerified: true,
   newsletterOptIn: false,
   createdAt: new Date('2026-01-01'),
 }
@@ -288,7 +289,7 @@ describe('CSRF exemption — GET requests', () => {
 
   it('GET /api/auth/me passes without x-csrf-token when session is valid', async () => {
     vi.mocked(auth.api.getSession).mockResolvedValueOnce({
-      user: { id: MOCK_USER_FOR_ME.id, email: MOCK_USER_FOR_ME.email },
+      user: { id: MOCK_USER_FOR_ME.id, email: MOCK_USER_FOR_ME.email, emailVerified: true },
       session: { id: 'sess-csrf' },
     } as never)
     vi.mocked(getUserById).mockResolvedValueOnce(MOCK_USER_FOR_ME)
