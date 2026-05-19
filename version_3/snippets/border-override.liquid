@@ -1,7 +1,14 @@
 {%- comment -%}
-  Renders border override CSS
+  Renders border override CSS.
+  @param {object} block - Block or section settings with border_* keys.
 {%- endcomment -%}
 
---border-width: {{ settings.border_width }}px; --border-style: {{ settings.border }}; --border-color:
-rgb(var(--color-border-rgb) / {{ settings.border_opacity | divided_by: 100.0 }}); --border-radius:
-{{ settings.border_radius }}px; {% if settings.border_radius > 0 %} overflow: hidden; {% endif %}
+{%- liquid
+  assign border_radius = block.border_radius | default: 0 | plus: 0
+  if border_radius == 0
+    assign border_radius = settings.block_corner_radius | default: 12
+  endif
+-%}
+--border-width: {{ block.border_width }}px; --border-style: {{ block.border }}; --border-color:
+rgb(var(--color-border-rgb) / {{ block.border_opacity | divided_by: 100.0 }}); --border-radius:
+{{ border_radius }}px; {% if border_radius > 0 %} overflow: hidden; {% endif %}

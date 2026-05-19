@@ -18,7 +18,7 @@
   data-testid="media-with-content"
   style="
     {%- render 'spacing-style', settings: section.settings %}
-    {% render 'border-override', settings: section.settings %}
+    {% render 'border-override', block: section.settings %}
     --media-height: {{ section.settings.media_height }};
     {%- case section.settings.media_height %}
       {% when '50svh' %}

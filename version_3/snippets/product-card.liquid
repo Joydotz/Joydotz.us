@@ -93,7 +93,7 @@
       {% if block_settings.inherit_color_scheme == false %} color-{{ block_settings.color_scheme }}{% endif %}
     "
     style="
-      {% render 'border-override', settings: block_settings %}
+      {% render 'border-override', block: block_settings %}
       {% render 'layout-panel-style', settings: block_settings %}
       {% render 'spacing-style', settings: block_settings %}
       {% render 'gap-style', value: product_card_gap_value, name: 'product-card-gap' %}

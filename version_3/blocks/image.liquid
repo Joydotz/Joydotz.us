@@ -30,7 +30,7 @@
 
 {% capture image_border_style %}
   --ratio: {{ ratio }};
-  {% render 'border-override', settings: block_settings %}
+  {% render 'border-override', block: block_settings %}
 {% endcapture %}
 
 {% liquid

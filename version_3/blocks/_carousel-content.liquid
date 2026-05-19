@@ -37,7 +37,7 @@
   --carousel-mobile-columns: {{ section.settings.mobile_columns }};
   {% render 'gap-style', value: section.settings.columns_gap, name: 'carousel-gap' %}
   {% render 'spacing-style', settings: block.settings %}
-  {% render 'border-override', settings: block.settings %}
+  {% render 'border-override', block: block.settings %}
 {% endcapture %}
 
 {% assign slideshow_class = 'carousel-content spacing-style ' | append: color_scheme_class %}

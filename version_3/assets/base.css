@@ -163,6 +163,23 @@ select {
   text-transform: lowercase;
 }
 
+/* Global rounded corners for media and cards */
+.card-gallery :is(img, video, .product-media-container, .card-gallery__placeholder),
+.collection-card__image,
+.resource-card__image,
+.resource-card__image-placeholder,
+.media-block__media,
+.image-block__image {
+  border-radius: var(--product-corner-radius, var(--global-block-corner-radius, 12px));
+  overflow: hidden;
+}
+
+.dialog-modal,
+.cart-drawer,
+.header-drawer dialog {
+  border-radius: var(--style-border-radius-popover);
+}
+
 @media (any-pointer: fine) and (prefers-reduced-motion: no-preference) {
   .card-hover-effect-lift .product-card:hover,
   .card-hover-effect-lift .collection-card:hover,

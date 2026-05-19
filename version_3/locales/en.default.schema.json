@@ -233,6 +233,7 @@
     "video_autoplay": "Videos will be muted by default",
     "video_external": "Use a YouTube or Vimeo URL",
     "pills_usage": "Used for applied filters, discount codes, and search suggestions",
+    "block_corner_radius": "Default radius for sections, groups, images, and product cards when their border radius is set to 0",
     "media_type_info": "Features are populated from your menu links"
   },
   "names": {
@@ -1164,6 +1165,7 @@
     "z_index": "Z-index",
     "product_corner_radius": "Product corner radius",
     "card_corner_radius": "Card corner radius",
+    "block_corner_radius": "Block corner radius",
     "media_type_1": "Media type",
     "media_type_2": "Media 2 type",
     "full_frame_on_mobile": "Full width on mobile",

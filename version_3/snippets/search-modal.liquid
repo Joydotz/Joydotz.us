@@ -37,7 +37,7 @@
     </h2>
     <predictive-search-component
       class="predictive-search color-{{ settings.popover_color_scheme }}{% if class != blank %} {{ class | strip }}{% endif %}"
-      style="--product-corner-radius: {{ settings.product_corner_radius | default: 8 | append: 'px' }}; --card-corner-radius: {{ settings.card_corner_radius | default: 8 | append: 'px' }}; --title-case: lowercase;"
+      style="--product-corner-radius: {{ settings.product_corner_radius | default: settings.block_corner_radius | default: 12 | append: 'px' }}; --card-corner-radius: {{ settings.card_corner_radius | default: settings.block_corner_radius | default: 12 | append: 'px' }}; --title-case: lowercase;"
       data-section-id="predictive-search"
       data-testid="{{ 'search-component--modal' }}"
       role="search"
