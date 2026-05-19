@@ -19,7 +19,7 @@
           "name": "t:names.menu",
           "settings": {
             "menu": "footer",
-            "heading": "SHOP",
+            "heading": "shop",
             "menu_spacing": 12,
             "show_as_accordion": false,
             "accordion_icon": "caret",
@@ -40,7 +40,7 @@
           "name": "t:names.menu",
           "settings": {
             "menu": "",
-            "heading": "BRAND",
+            "heading": "brand",
             "menu_spacing": 12,
             "show_as_accordion": false,
             "accordion_icon": "caret",
@@ -61,7 +61,7 @@
           "name": "t:names.menu",
           "settings": {
             "menu": "",
-            "heading": "CONNECT",
+            "heading": "connect",
             "menu_spacing": 12,
             "show_as_accordion": false,
             "accordion_icon": "caret",

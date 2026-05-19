@@ -155,6 +155,14 @@ select {
   cursor: pointer;
 }
 
+.product-card__content :is(.text-block, .text-block :is(h1, h2, h3, h4, h5, h6, p, span, a)),
+.product-card__content :is(product-price, product-price :is(.price, .compare-at-price, span)),
+.product-card .product-card-gallery__title-placeholder,
+.product-card .product-card-gallery__title-placeholder .title-text,
+.product-card .product-badges__badge {
+  text-transform: lowercase;
+}
+
 @media (any-pointer: fine) and (prefers-reduced-motion: no-preference) {
   .card-hover-effect-lift .product-card:hover,
   .card-hover-effect-lift .collection-card:hover,
@@ -2737,7 +2745,7 @@ form.payment-terms {
   thead {
     background-color: rgb(var(--color-foreground-rgb) / var(--opacity-5));
     font-weight: bold;
-    text-transform: uppercase;
+    text-transform: none;
   }
 
   tr:has(td) {
