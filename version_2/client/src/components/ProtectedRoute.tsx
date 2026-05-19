@@ -8,5 +8,14 @@ export default function ProtectedRoute({ children }: { children: React.ReactNode
 
   if (!user) return <Navigate to="/login" replace />
 
+  if (!user.emailVerified) {
+    return (
+      <Navigate
+        to={`/verify-email?email=${encodeURIComponent(user.email)}`}
+        replace
+      />
+    )
+  }
+
   return <>{children}</>
 }

@@ -16,12 +16,18 @@ export interface SendEmailOptions {
 
 const resend = new Resend(config.email.apiKey)
 
-/**
- * Same shape as `test.ts`: `new Resend(apiKey).emails.send({ from, to: [...], subject, html })`.
- * Skips when `NODE_ENV` is `test`, or when `EMAIL_API_KEY` / `EMAIL_DOMAIN` are unset.
- */
+/** Resend returns `{ data, error }` and does not throw on API failures. */
 export async function sendEmail({ from, to, subject, html }: SendEmailOptions): Promise<void> {
-  await resend.emails.send({ from, to, subject, html })
+  console.log('[sendEmail] sending', { from, to, subject })
+
+  const { data, error } = await resend.emails.send({ from, to, subject, html })
+
+  if (error) {
+    console.error('[sendEmail] Resend API error', { from, to, subject, error })
+    throw new Error(error.message ?? 'Resend failed to send email')
+  }
+
+  console.log('[sendEmail] sent', { from, to, subject, id: data?.id })
 }
 
 export async function saveEmail(

@@ -10,6 +10,9 @@ import Messages from './pages/Messages'
 import FAQ from './pages/FAQ'
 import Login from './pages/Login'
 import Signup from './pages/Signup'
+import VerifyEmail from './pages/VerifyEmail'
+import ForgotPassword from './pages/ForgotPassword'
+import ResetPassword from './pages/ResetPassword'
 import Account from './pages/Account'
 import Cart from './pages/Cart'
 import Checkout from './pages/Checkout'
@@ -30,6 +33,9 @@ export default function App() {
               <Route path="/faq" element={<FAQ />} />
               <Route path="/login" element={<Login />} />
               <Route path="/signup" element={<Signup />} />
+              <Route path="/verify-email" element={<VerifyEmail />} />
+              <Route path="/forgot-password" element={<ForgotPassword />} />
+              <Route path="/reset-password" element={<ResetPassword />} />
               <Route path="/cart" element={<Cart />} />
               <Route
                 path="/account"

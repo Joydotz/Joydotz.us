@@ -1,11 +1,13 @@
 import { useState } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { login } from '../lib/api'
 import { useAuth } from '../context/AuthContext'
 
 export default function Login() {
   const { setUser } = useAuth()
   const navigate = useNavigate()
+  const location = useLocation()
+  const successMessage = (location.state as { message?: string } | null)?.message
 
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -22,7 +24,12 @@ export default function Login() {
       setUser(user)
       navigate('/account')
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Something went wrong')
+      const e = err as Error & { code?: string }
+      if (e.code === 'EMAIL_NOT_VERIFIED') {
+        navigate(`/verify-email?email=${encodeURIComponent(email)}`)
+        return
+      }
+      setError(e.message || 'Something went wrong')
     } finally {
       setLoading(false)
     }
@@ -63,9 +70,14 @@ export default function Login() {
           </div>
 
           <div className="space-y-2">
-            <label className="text-xs font-bold uppercase tracking-widest text-on-surface-variant font-label">
-              Password
-            </label>
+            <div className="flex items-center justify-between gap-2">
+              <label className="text-xs font-bold uppercase tracking-widest text-on-surface-variant font-label">
+                Password
+              </label>
+              <Link to="/forgot-password" className="text-xs font-bold text-primary hover:underline shrink-0">
+                Forgot password?
+              </Link>
+            </div>
             <input
               type="password"
               value={password}
@@ -76,6 +88,10 @@ export default function Login() {
               placeholder="••••••••"
             />
           </div>
+
+          {successMessage && (
+            <p className="text-primary text-sm font-body">{successMessage}</p>
+          )}
 
           {error && (
             <p className="text-error text-sm font-body">{error}</p>

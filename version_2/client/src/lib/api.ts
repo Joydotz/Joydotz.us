@@ -20,6 +20,7 @@ export interface CatalogListingProduct {
 export interface User {
   id: string
   email: string
+  emailVerified: boolean
   newsletterOptIn: boolean
   createdAt: string
 }
@@ -132,34 +133,96 @@ export async function subscribeEmail(email: string): Promise<void> {
 
 import { authClient } from './auth-client'
 
+function verificationCallbackUrl(): string {
+  const origin = typeof window !== 'undefined' ? window.location.origin : ''
+  return `${origin}/verify-email?success=1`
+}
+
+function passwordResetRedirectUrl(): string {
+  const origin = typeof window !== 'undefined' ? window.location.origin : ''
+  return `${origin}/reset-password`
+}
+
+export type SignupResult =
+  | { status: 'verify_email'; email: string }
+  | { status: 'signed_in'; user: User }
+
 export async function signup(
   email: string,
   password: string,
   newsletterOptIn: boolean,
-): Promise<User> {
+): Promise<SignupResult> {
   const { data, error } = await authClient.signUp.email({
     email,
     password,
     name: email.split('@')[0] ?? email,
     newsletterOptIn,
+    callbackURL: verificationCallbackUrl(),
   })
   if (error) {
     throw Object.assign(new Error(error.message ?? 'Sign up failed'), { status: 400 })
   }
   if (!data?.user) throw new Error('Sign up failed')
-  return mapAuthUser(data.user)
+  if (!data.token) {
+    return { status: 'verify_email', email: data.user.email }
+  }
+  return { status: 'signed_in', user: mapAuthUser(data.user) }
 }
 
 export async function login(email: string, password: string): Promise<User> {
   const { data, error } = await authClient.signIn.email({
     email,
     password,
+    callbackURL: verificationCallbackUrl(),
   })
   if (error) {
+    const code = 'code' in error ? String(error.code) : ''
+    if (code === 'EMAIL_NOT_VERIFIED') {
+      throw Object.assign(new Error('Please verify your email before signing in.'), {
+        status: 403,
+        code: 'EMAIL_NOT_VERIFIED',
+      })
+    }
     throw Object.assign(new Error(error.message ?? 'Invalid email or password'), { status: 401 })
   }
   if (!data?.user) throw new Error('Invalid email or password')
   return mapAuthUser(data.user)
+}
+
+export async function resendVerificationEmail(email: string): Promise<void> {
+  const { error } = await authClient.sendVerificationEmail({
+    email,
+    callbackURL: verificationCallbackUrl(),
+  })
+  if (error) {
+    throw new Error(error.message ?? 'Could not send verification email')
+  }
+}
+
+export async function requestPasswordReset(email: string): Promise<void> {
+  const { error } = await authClient.requestPasswordReset({
+    email,
+    redirectTo: passwordResetRedirectUrl(),
+  })
+  if (error) {
+    throw new Error(error.message ?? 'Could not send reset email')
+  }
+}
+
+export async function resetPassword(newPassword: string, token: string): Promise<void> {
+  const { error } = await authClient.resetPassword({
+    newPassword,
+    token,
+  })
+  if (error) {
+    const code = 'code' in error ? String(error.code) : ''
+    if (code === 'INVALID_TOKEN') {
+      throw Object.assign(new Error('This reset link is invalid or has expired.'), {
+        code: 'INVALID_TOKEN',
+      })
+    }
+    throw new Error(error.message ?? 'Could not reset password')
+  }
 }
 
 export async function logout(): Promise<void> {
@@ -170,11 +233,13 @@ function mapAuthUser(u: {
   id: string
   email: string
   createdAt: Date
+  emailVerified?: boolean
   newsletterOptIn?: boolean
 }): User {
   return {
     id: u.id,
     email: u.email,
+    emailVerified: Boolean(u.emailVerified),
     newsletterOptIn: Boolean(u.newsletterOptIn),
     createdAt: u.createdAt instanceof Date ? u.createdAt.toISOString() : String(u.createdAt),
   }

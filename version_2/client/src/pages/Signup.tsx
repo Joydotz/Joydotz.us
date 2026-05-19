@@ -19,8 +19,12 @@ export default function Signup() {
     setLoading(true)
 
     try {
-      const user = await signup(email, password, newsletterOptIn)
-      setUser(user)
+      const result = await signup(email, password, newsletterOptIn)
+      if (result.status === 'verify_email') {
+        navigate(`/verify-email?email=${encodeURIComponent(result.email)}`)
+        return
+      }
+      setUser(result.user)
       navigate('/account')
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Something went wrong')
@@ -73,9 +77,10 @@ export default function Signup() {
               onChange={(e) => setPassword(e.target.value)}
               required
               minLength={8}
+              maxLength={128}
               disabled={loading}
               className="w-full bg-surface-container px-5 py-4 rounded-full text-on-surface placeholder:text-on-surface-variant/50 focus:ring-2 focus:ring-primary/20 outline-none transition-all disabled:opacity-50"
-              placeholder="at least 8 characters"
+              placeholder="8–128 characters"
             />
           </div>
 
