@@ -14,19 +14,19 @@
     "footer_QAE7jb": {
       "type": "footer",
       "blocks": {
-        "menu_ywDwTf": {
+        "menu_EU6dHG": {
           "type": "menu",
           "name": "t:names.menu",
           "settings": {
             "menu": "footer",
-            "heading": "shop",
+            "heading": "Miscellaneous",
             "menu_spacing": 12,
             "show_as_accordion": false,
             "accordion_icon": "caret",
             "accordion_dividers": false,
             "inherit_color_scheme": true,
             "color_scheme": "",
-            "heading_preset": "h5",
+            "heading_preset": "h6",
             "link_preset": "paragraph",
             "padding-block-start": 0,
             "padding-block-end": 0,
@@ -35,40 +35,19 @@
           },
           "blocks": {}
         },
-        "menu_UR3gWa": {
+        "menu_4E93gK": {
           "type": "menu",
           "name": "t:names.menu",
           "settings": {
-            "menu": "",
-            "heading": "brand",
+            "menu": "social-media-menu",
+            "heading": "Social Media",
             "menu_spacing": 12,
             "show_as_accordion": false,
             "accordion_icon": "caret",
             "accordion_dividers": false,
             "inherit_color_scheme": true,
             "color_scheme": "",
-            "heading_preset": "h5",
-            "link_preset": "paragraph",
-            "padding-block-start": 0,
-            "padding-block-end": 0,
-            "padding-inline-start": 0,
-            "padding-inline-end": 0
-          },
-          "blocks": {}
-        },
-        "menu_4KapTg": {
-          "type": "menu",
-          "name": "t:names.menu",
-          "settings": {
-            "menu": "",
-            "heading": "connect",
-            "menu_spacing": 12,
-            "show_as_accordion": false,
-            "accordion_icon": "caret",
-            "accordion_dividers": false,
-            "inherit_color_scheme": true,
-            "color_scheme": "",
-            "heading_preset": "h5",
+            "heading_preset": "h6",
             "link_preset": "paragraph",
             "padding-block-start": 0,
             "padding-block-end": 0,
@@ -84,9 +63,9 @@
             "width": "fill",
             "custom_width": 32,
             "inherit_color_scheme": true,
+            "color_scheme": "scheme-1",
             "heading": "Get on the list",
             "heading_preset": "h5",
-            "color_scheme": "scheme-1",
             "border_style": "underline",
             "border_width": 2,
             "border_radius": 0,
@@ -105,9 +84,8 @@
         }
       },
       "block_order": [
-        "menu_ywDwTf",
-        "menu_UR3gWa",
-        "menu_4KapTg",
+        "menu_EU6dHG",
+        "menu_4E93gK",
         "email_signup_tBDzRh"
       ],
       "name": "t:names.footer",
@@ -125,7 +103,7 @@
       "settings": {
         "inverse": false,
         "font": "heading",
-        "unit": "percent",
+        "unit": "pixel",
         "pixel_height": 48,
         "percent_width": 100,
         "custom_mobile_size": false,
@@ -146,7 +124,7 @@
           "type": "footer-copyright",
           "name": "t:names.copyright",
           "settings": {
-            "show_powered_by": true,
+            "show_powered_by": false,
             "font_size": "0.75rem",
             "case": "none"
           },

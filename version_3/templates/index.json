@@ -12,6 +12,26 @@
     "section_Fh7TFQ": {
       "type": "section",
       "blocks": {
+        "logo_knJtLx": {
+          "type": "logo",
+          "name": "t:names.logo",
+          "settings": {
+            "inverse": false,
+            "font": "heading",
+            "unit": "percent",
+            "percent_width": 50,
+            "pixel_height": 48,
+            "custom_mobile_size": false,
+            "unit_mobile": "percent",
+            "percent_width_mobile": 100,
+            "pixel_height_mobile": 120,
+            "padding-block-start": 0,
+            "padding-block-end": 0,
+            "padding-inline-start": 0,
+            "padding-inline-end": 0
+          },
+          "blocks": {}
+        },
         "text_rp4af4": {
           "type": "text",
           "name": "t:names.text",
@@ -37,31 +57,11 @@
             "padding-inline-end": 0
           },
           "blocks": {}
-        },
-        "logo_knJtLx": {
-          "type": "logo",
-          "name": "t:names.logo",
-          "settings": {
-            "inverse": false,
-            "font": "heading",
-            "unit": "percent",
-            "percent_width": 75,
-            "pixel_height": 48,
-            "custom_mobile_size": false,
-            "unit_mobile": "percent",
-            "percent_width_mobile": 100,
-            "pixel_height_mobile": 120,
-            "padding-block-start": 0,
-            "padding-block-end": 0,
-            "padding-inline-start": 0,
-            "padding-inline-end": 0
-          },
-          "blocks": {}
         }
       },
       "block_order": [
-        "text_rp4af4",
-        "logo_knJtLx"
+        "logo_knJtLx",
+        "text_rp4af4"
       ],
       "name": "Logo banner",
       "settings": {
@@ -77,16 +77,17 @@
         "section_height": "medium",
         "section_height_custom": 50,
         "color_scheme": "scheme-3",
-        "background_media": "none",
+        "background_media": "image",
         "video_position": "cover",
+        "background_image": "shopify://shop_images/model-in-neutral-colors-by-window.jpg",
         "background_image_position": "cover",
         "border": "none",
         "border_width": 1,
         "border_opacity": 100,
         "border_radius": 0,
-        "toggle_overlay": false,
-        "overlay_color": "#00000026",
-        "overlay_style": "solid",
+        "toggle_overlay": true,
+        "overlay_color": "#eabeb08c",
+        "overlay_style": "gradient",
         "gradient_direction": "to top",
         "padding-block-start": 48,
         "padding-block-end": 80
@@ -99,13 +100,13 @@
           "type": "tile",
           "settings": {
             "layout": "featured",
-            "color_scheme": "scheme-2",
+            "color_scheme": "scheme-3",
             "eyebrow": "",
-            "title": "daydream cloud.",
+            "title": "blush flower.",
             "description": "",
             "link": "shopify://collections/all",
             "product": "",
-            "image": "shopify://shop_images/person-fishing-on-the-beach-is-silhouetted-at-sunset.jpg",
+            "image_hover": "shopify://shop_images/pale-pink-flower-with-water-drops.jpg",
             "open_in_new_tab": false,
             "show_icons": true,
             "author_name": "",
@@ -116,12 +117,13 @@
           "type": "tile",
           "settings": {
             "layout": "side",
-            "color_scheme": "scheme-3",
+            "color_scheme": "scheme-2",
             "eyebrow": "",
             "title": "softwing butterfly.",
             "description": "",
             "link": "shopify://collections/all",
             "product": "",
+            "image_hover": "shopify://shop_images/matte-black-butterfly-spreading-its-wings.jpg",
             "open_in_new_tab": false,
             "show_icons": true,
             "author_name": "",
@@ -134,10 +136,11 @@
             "layout": "medium",
             "color_scheme": "scheme-4",
             "eyebrow": "",
-            "title": "blush flower.",
+            "title": "daydream cloud.",
             "description": "",
             "link": "shopify://collections/all",
             "product": "",
+            "image_hover": "shopify://shop_images/puffy-cloud.jpg",
             "open_in_new_tab": false,
             "show_icons": true,
             "author_name": "",
@@ -471,8 +474,8 @@
         "horizontal_alignment": "flex-start",
         "gap": 24,
         "color_scheme": "scheme-1",
-        "padding-block-start": 45,
-        "padding-block-end": 18
+        "padding-block-start": 40,
+        "padding-block-end": 80
       }
     },
     "marquee_9AMajF": {
@@ -485,14 +488,14 @@
             "width": "100%",
             "max_width": "normal",
             "alignment": "left",
-            "type_preset": "h1",
+            "type_preset": "custom",
             "font": "var(--font-body--family)",
-            "font_size": "1rem",
+            "font_size": "3rem",
             "line_height": "tight",
             "letter_spacing": "tight",
             "case": "none",
             "wrap": "nowrap",
-            "color": "",
+            "color": "var(--color-foreground)",
             "background": false,
             "background_color": "#00000026",
             "corner_radius": 0,
@@ -510,7 +513,7 @@
       "name": "t:names.marquee_section",
       "settings": {
         "movement_direction": "normal",
-        "color_scheme": "scheme-5",
+        "color_scheme": "scheme-3",
         "padding-block-start": 48,
         "padding-block-end": 48,
         "gap_between_elements": 100
