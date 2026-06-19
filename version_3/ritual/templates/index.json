@@ -509,100 +509,6 @@
         "padding-block-end": 0
       }
     },
-    "mood_bento_home": {
-      "type": "mood-bento",
-      "blocks": {
-        "tile_cloud": {
-          "type": "tile",
-          "settings": {
-            "layout": "featured",
-            "color_scheme": "scheme-3",
-            "eyebrow": "",
-            "title": "blush flower.",
-            "description": "",
-            "link": "shopify://products/blush-flower",
-            "product": "",
-            "image": "shopify://shop_images/WechatIMG391.jpg",
-            "image_hover": "shopify://shop_images/stylish-makeup-and-beauty.jpg",
-            "open_in_new_tab": false,
-            "show_icons": true,
-            "author_name": "",
-            "author_role": ""
-          }
-        },
-        "tile_butterfly": {
-          "type": "tile",
-          "settings": {
-            "layout": "side",
-            "color_scheme": "scheme-2",
-            "eyebrow": "",
-            "title": "softwing butterfly.",
-            "description": "",
-            "link": "shopify://products/softwing-butterfly",
-            "product": "",
-            "image": "shopify://shop_images/WechatIMG392.jpg",
-            "image_hover": "shopify://shop_images/autumn-colors-makeup-and-beauty.jpg",
-            "open_in_new_tab": false,
-            "show_icons": true,
-            "author_name": "",
-            "author_role": ""
-          }
-        },
-        "tile_flower": {
-          "type": "tile",
-          "settings": {
-            "layout": "medium",
-            "color_scheme": "scheme-4",
-            "eyebrow": "",
-            "title": "daydream cloud.",
-            "description": "",
-            "link": "shopify://products/daydream-cloud",
-            "product": "",
-            "image": "shopify://shop_images/WechatIMG390.jpg",
-            "image_hover": "shopify://shop_images/beauty-products-makeup-brush-and-powders.jpg",
-            "open_in_new_tab": false,
-            "show_icons": true,
-            "author_name": "",
-            "author_role": ""
-          }
-        },
-        "tile_quote": {
-          "type": "tile",
-          "settings": {
-            "layout": "quote",
-            "color_scheme": "scheme-1",
-            "eyebrow": "",
-            "title": "Some quotes.",
-            "description": "",
-            "link": "",
-            "product": "",
-            "open_in_new_tab": false,
-            "show_icons": false,
-            "author_name": "Some celebrity.",
-            "author_role": ""
-          }
-        }
-      },
-      "block_order": [
-        "tile_cloud",
-        "tile_butterfly",
-        "tile_flower",
-        "tile_quote"
-      ],
-      "name": "Mood bento",
-      "settings": {
-        "heading": "",
-        "subheading": "",
-        "link_label": "Products",
-        "link_url": "shopify://collections/all",
-        "gap": 32,
-        "grid_height": 1000,
-        "section_width": "page-width",
-        "color_scheme": "scheme-1",
-        "padding-block-start": 32,
-        "padding-block-end": 44
-      }
-    },
     "product_list_8kR3Hb": {
       "type": "product-list",
       "blocks": {
@@ -973,7 +879,6 @@
   "order": [
     "section_Fh7TFQ",
     "slideshow_jUrcC8",
-    "mood_bento_home",
     "product_list_8kR3Hb",
     "marquee_9AMajF",
     "1779213257b713e6a9"

@@ -93,7 +93,7 @@
       "settings": {
         "section_width": "page-width",
         "gap": 24,
-        "color_scheme": "scheme-2",
+        "color_scheme": "scheme-1",
         "padding-block-start": 46,
         "padding-block-end": 36
       }
@@ -113,7 +113,7 @@
         "pixel_height_mobile": 120,
         "section_width": "page-width",
         "alignment_horizontal": "center",
-        "color_scheme": "scheme-2",
+        "color_scheme": "scheme-1",
         "padding-block-start": 32,
         "padding-block-end": 32
       }
@@ -149,7 +149,7 @@
         "section_width": "page-width",
         "gap": 24,
         "divider_thickness": 1,
-        "color_scheme": "scheme-2",
+        "color_scheme": "scheme-1",
         "padding-block-start": 0,
         "padding-block-end": 36
       }

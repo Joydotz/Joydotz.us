@@ -465,6 +465,8 @@
     {% else %}
       --hero-min-height: var(--section-height-{{ section.settings.section_height }});
     {% endif %}
+    --hero-video-radius: {{ section.settings.video_frame_border_radius }}px;
+    --hero-video-inset: {{ section.settings.video_frame_margin }}px;
   "
   {% if request.visual_preview_mode %}
     data-shopify-visual-preview
@@ -754,8 +756,6 @@
     --hero-video-bg: #fff8e5;
     --hero-video-frame: #d2d1eb;
     --hero-video-title: #ff6bbe;
-    --hero-video-radius: 34px;
-    --hero-video-inset: clamp(1rem, 4.1667vw, 3.75rem);
     min-height: auto;
     background: var(--hero-video-bg);
   }
@@ -859,13 +859,12 @@
 
   @media screen and (max-width: 749px) {
     .hero-video__frame {
-      --hero-video-inset: clamp(0.75rem, 4vw, 1.5rem);
-      border-radius: clamp(1rem, 5vw, var(--hero-video-radius));
+      border-radius: min(var(--hero-video-radius), 5vw);
     }
 
     .hero-video__media-grid,
     .hero-video__link {
-      border-radius: clamp(1rem, 5vw, var(--hero-video-radius));
+      border-radius: min(var(--hero-video-radius), 5vw);
     }
   }
 {% endstylesheet %}
@@ -1265,6 +1264,31 @@
     },
     {
       "type": "header",
+      "content": "Video frame"
+    },
+    {
+      "type": "range",
+      "id": "video_frame_margin",
+      "label": "Margin",
+      "min": 0,
+      "max": 120,
+      "step": 4,
+      "unit": "px",
+      "default": 60,
+      "info": "Space between the video frame and the section edges."
+    },
+    {
+      "type": "range",
+      "id": "video_frame_border_radius",
+      "label": "Border radius",
+      "min": 0,
+      "max": 80,
+      "step": 2,
+      "unit": "px",
+      "default": 34
+    },
+    {
+      "type": "header",
       "content": "t:content.appearance"
     },
     {
@@ -1388,6 +1412,8 @@
         "gap": 0,
         "section_width": "page-width",
         "section_height": "auto",
+        "video_frame_margin": 60,
+        "video_frame_border_radius": 34,
         "color_scheme": "scheme-1",
         "toggle_overlay": false,
         "blurred_reflection": false,
