@@ -19,7 +19,12 @@
     render 'slideshow-styles'
   endif
 
-  unless section.settings.enable_instant_gradient_header
+  assign instant_gradient_header = section.settings.enable_instant_gradient_header
+  if instant_gradient_header == blank
+    assign instant_gradient_header = true
+  endif
+
+  unless instant_gradient_header
     if section.settings.enable_transparent_header_home and template.name == 'index'
       assign transparent = 'always'
       assign transparent_color_scheme = section.settings.home_color_scheme
@@ -298,6 +303,35 @@
   }
 </script>
 
+{% if instant_gradient_header %}
+  {% style %}
+    #header-group {
+      position: relative;
+      background: var(--joy-instant-gradient, linear-gradient(90deg, #fad5ed 0%, #b3c8fc 50.48%, #fad5ed 100%));
+      overflow: hidden;
+    }
+
+    #header-group .section-background,
+    #header-group .announcement-bar,
+    #header-group .header__row,
+    #header-group .header__underlay,
+    #header-group .header__underlay-closed,
+    #header-group .header__underlay-open {
+      background: transparent !important;
+      background-color: transparent !important;
+    }
+
+    #header-group .announcement-bar {
+      border-block-end: none !important;
+    }
+
+    [data-instant-gradient-header] {
+      --color-scheme-top-row: transparent;
+      --color-scheme-bottom-row: transparent;
+    }
+  {% endstyle %}
+{% endif %}
+
 <header-component
   id="header-component"
   class="{{ class }}"
@@ -316,7 +350,7 @@
   {% if transparent_color_scheme_value %}
     data-transparent-color-scheme="{{ transparent_color_scheme_value }}"
   {% endif %}
-  {% if section.settings.enable_instant_gradient_header %}
+  {% if instant_gradient_header %}
     data-instant-gradient-header
   {% endif %}
   style="
@@ -553,7 +587,7 @@
     --full-open-header-height: 0px;
   }
 
-  #header-group:has(#header-component[sticky]) {
+  #header-group:has(#header-component[sticky]):not(:has([data-instant-gradient-header])) {
     display: contents;
   }
 
@@ -1121,20 +1155,30 @@
 
   /* Instant-style gradient header (matches Instant SVG: pink → blue → pink) */
   #header-group:has([data-instant-gradient-header]) {
-    background: linear-gradient(90deg, #fad5ed 0%, #b3c8fc 50.48%, #fad5ed 100%);
-    border-radius: 0 0 34px 34px;
+    position: relative;
+    background: var(--joy-instant-gradient, linear-gradient(90deg, #fad5ed 0%, #b3c8fc 50.48%, #fad5ed 100%));
     overflow: hidden;
   }
 
   #header-group:has([data-instant-gradient-header]) .section-background,
   #header-group:has([data-instant-gradient-header]) .announcement-bar,
   #header-group:has([data-instant-gradient-header]) .header__row,
-  #header-group:has([data-instant-gradient-header]) .header__underlay {
-    background: transparent;
+  #header-group:has([data-instant-gradient-header]) .header__underlay,
+  #header-group:has([data-instant-gradient-header]) .header__underlay-closed,
+  #header-group:has([data-instant-gradient-header]) .header__underlay-open,
+  #header-group:has([data-instant-gradient-header]) [class*='color-'].section-background,
+  #header-group:has([data-instant-gradient-header]) [class*='color-'].announcement-bar {
+    background: transparent !important;
+    background-color: transparent !important;
   }
 
   #header-group:has([data-instant-gradient-header]) .announcement-bar {
-    border-block-end: none;
+    border-block-end: none !important;
+  }
+
+  [data-instant-gradient-header] {
+    --color-scheme-top-row: transparent;
+    --color-scheme-bottom-row: transparent;
   }
 {% endstylesheet %}
 
