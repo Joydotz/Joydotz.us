@@ -874,6 +874,73 @@
         "padding-block-start": 0,
         "padding-block-end": 0
       }
+    },
+    "hero_video_6rq6jA": {
+      "type": "hero-video",
+      "blocks": {
+        "text_iDATnQ": {
+          "type": "text",
+          "settings": {
+            "text": "<p>video showcase</p>",
+            "width": "fit-content",
+            "max_width": "normal",
+            "alignment": "center",
+            "type_preset": "h1",
+            "font": "var(--font-body--family)",
+            "font_size": "1rem",
+            "line_height": "normal",
+            "letter_spacing": "normal",
+            "case": "none",
+            "wrap": "pretty",
+            "color": "var(--color-foreground)",
+            "background": false,
+            "background_color": "#00000026",
+            "corner_radius": 0,
+            "padding-block-start": 0,
+            "padding-block-end": 0,
+            "padding-inline-start": 0,
+            "padding-inline-end": 0
+          },
+          "blocks": {}
+        }
+      },
+      "block_order": [
+        "text_iDATnQ"
+      ],
+      "name": "Hero video",
+      "settings": {
+        "media_type_1": "video",
+        "media_type_2": "image",
+        "stack_media_on_mobile": false,
+        "custom_mobile_media": false,
+        "media_type_1_mobile": "image",
+        "media_type_2_mobile": "image",
+        "link": "",
+        "open_in_new_tab": false,
+        "content_direction": "column",
+        "vertical_on_mobile": true,
+        "horizontal_alignment": "flex-start",
+        "vertical_alignment": "center",
+        "align_baseline": false,
+        "horizontal_alignment_flex_direction_column": "center",
+        "vertical_alignment_flex_direction_column": "flex-end",
+        "gap": 0,
+        "section_width": "page-width",
+        "section_height": "auto",
+        "section_height_custom": 50,
+        "video_frame_margin_inline": 60,
+        "video_frame_margin_block": 60,
+        "video_frame_border_radius": 34,
+        "color_scheme": "scheme-1",
+        "toggle_overlay": false,
+        "overlay_color": "#00000026",
+        "overlay_style": "solid",
+        "gradient_direction": "to top",
+        "blurred_reflection": false,
+        "reflection_opacity": 75,
+        "padding-block-start": 0,
+        "padding-block-end": 0
+      }
     }
   },
   "order": [
@@ -881,6 +948,7 @@
     "slideshow_jUrcC8",
     "product_list_8kR3Hb",
     "marquee_9AMajF",
-    "1779213257b713e6a9"
+    "1779213257b713e6a9",
+    "hero_video_6rq6jA"
   ]
 }

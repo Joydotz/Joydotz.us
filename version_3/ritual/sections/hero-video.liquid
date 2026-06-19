@@ -468,11 +468,12 @@
       --hero-min-height: var(--section-height-{{ section.settings.section_height }});
     {% endif %}
     --hero-video-radius: {{ section.settings.video_frame_border_radius }}px;
-    --hero-video-inset: {{ section.settings.video_frame_margin }}px;
+    --hero-video-inset-inline: {{ section.settings.video_frame_margin_inline }}px;
+    --hero-video-inset-block: {{ section.settings.video_frame_margin_block }}px;
     {% if section.settings.section_height == 'auto' %}
       --hero-video-frame-min-height: auto;
     {% else %}
-      --hero-video-frame-min-height: calc(var(--hero-min-height) - (var(--hero-video-inset) * 2));
+      --hero-video-frame-min-height: calc(var(--hero-min-height) - (var(--hero-video-inset-block) * 2));
     {% endif %}
   "
   {% if request.visual_preview_mode %}
@@ -783,12 +784,14 @@
     align-items: stretch;
     justify-content: center;
     background: transparent;
-    padding-block: var(--hero-video-inset);
+    box-sizing: border-box;
+    padding-block: var(--hero-video-inset-block);
+    padding-inline: var(--hero-video-inset-inline);
   }
 
   .hero-video__frame {
     position: relative;
-    width: calc(100% - (var(--hero-video-inset) * 2));
+    width: 100%;
     max-width: 82.5rem;
     margin-inline: auto;
     aspect-ratio: 1320 / 680;
@@ -799,7 +802,7 @@
   }
 
   .hero-video__frame.page-width {
-    width: calc(min(var(--page-width), 100%) - (var(--hero-video-inset) * 2));
+    max-width: min(var(--page-width), 100%);
   }
 
   .hero-video__media-grid {
@@ -1270,19 +1273,24 @@
       "visible_if": "{{ section.settings.section_height == 'custom' }}"
     },
     {
-      "type": "header",
-      "content": "Video frame"
-    },
-    {
       "type": "range",
-      "id": "video_frame_margin",
-      "label": "Margin",
+      "id": "video_frame_margin_inline",
+      "label": "Left and right margin",
       "min": 0,
       "max": 120,
       "step": 4,
       "unit": "px",
-      "default": 60,
-      "info": "Space between the video frame and the section edges."
+      "default": 60
+    },
+    {
+      "type": "range",
+      "id": "video_frame_margin_block",
+      "label": "Top and bottom margin",
+      "min": 0,
+      "max": 120,
+      "step": 4,
+      "unit": "px",
+      "default": 60
     },
     {
       "type": "range",
@@ -1419,7 +1427,8 @@
         "gap": 0,
         "section_width": "page-width",
         "section_height": "auto",
-        "video_frame_margin": 60,
+        "video_frame_margin_inline": 60,
+        "video_frame_margin_block": 60,
         "video_frame_border_radius": 34,
         "color_scheme": "scheme-1",
         "toggle_overlay": false,
