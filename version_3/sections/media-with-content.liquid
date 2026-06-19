@@ -18,7 +18,7 @@
   data-testid="media-with-content"
   style="
     {%- render 'spacing-style', settings: section.settings %}
-    {% render 'border-override', block: section.settings %}
+    {% render 'border-override', settings: section.settings %}
     --media-height: {{ section.settings.media_height }};
     {%- case section.settings.media_height %}
       {% when '50svh' %}
@@ -421,7 +421,7 @@
                 "alignment": "right",
                 "line_height": "0.8",
                 "letter_spacing": "-0.03em",
-                "case": "none"
+                "case": "uppercase"
               }
             }
           },

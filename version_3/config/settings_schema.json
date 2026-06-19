@@ -1,7 +1,7 @@
 [
   {
     "name": "theme_info",
-    "theme_name": "Ritual",
+    "theme_name": "Horizon",
     "theme_version": "3.5.1",
     "theme_author": "Shopify",
     "theme_documentation_url": "https://help.shopify.com/manual/online-store/themes",
@@ -1379,17 +1379,6 @@
           }
         ],
         "default": "narrow"
-      },
-      {
-        "type": "range",
-        "id": "block_corner_radius",
-        "label": "t:settings.block_corner_radius",
-        "info": "t:info.block_corner_radius",
-        "min": 0,
-        "max": 32,
-        "step": 1,
-        "unit": "px",
-        "default": 12
       }
     ]
   },

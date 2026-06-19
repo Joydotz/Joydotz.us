@@ -11,7 +11,7 @@
      --summary-font-line-height: var(--font-{{ block_settings.type_preset }}--line-height);
      --summary-font-case: var(--font-{{ block_settings.type_preset }}--case);
     {% render 'spacing-style', settings: block_settings %}
-    {% render 'border-override', block: block_settings %}
+    {% render 'border-override', settings: block_settings %}
   "
   {{ block.shopify_attributes }}
 >

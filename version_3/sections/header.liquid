@@ -19,16 +19,18 @@
     render 'slideshow-styles'
   endif
 
-  if section.settings.enable_transparent_header_home and template.name == 'index'
-    assign transparent = 'always'
-    assign transparent_color_scheme = section.settings.home_color_scheme
-  elsif section.settings.enable_transparent_header_product and template.name == 'product'
-    assign transparent = 'always'
-    assign transparent_color_scheme = section.settings.product_color_scheme
-  elsif section.settings.enable_transparent_header_collection and template.name == 'collection'
-    assign transparent = 'always'
-    assign transparent_color_scheme = section.settings.collection_color_scheme
-  endif
+  unless section.settings.enable_instant_gradient_header
+    if section.settings.enable_transparent_header_home and template.name == 'index'
+      assign transparent = 'always'
+      assign transparent_color_scheme = section.settings.home_color_scheme
+    elsif section.settings.enable_transparent_header_product and template.name == 'product'
+      assign transparent = 'always'
+      assign transparent_color_scheme = section.settings.product_color_scheme
+    elsif section.settings.enable_transparent_header_collection and template.name == 'collection'
+      assign transparent = 'always'
+      assign transparent_color_scheme = section.settings.collection_color_scheme
+    endif
+  endunless
 
   if section.settings.enable_sticky_header == 'always'
     assign sticky = 'always'
@@ -313,6 +315,9 @@
   {% endif %}
   {% if transparent_color_scheme_value %}
     data-transparent-color-scheme="{{ transparent_color_scheme_value }}"
+  {% endif %}
+  {% if section.settings.enable_instant_gradient_header %}
+    data-instant-gradient-header
   {% endif %}
   style="
     --color-scheme-top-row: rgba({{ section.settings.color_scheme_top.settings.background.rgba }});
@@ -1113,6 +1118,24 @@
     font-family: var(--menu-localization-font);
     font-size: var(--menu-localization-font-size);
   }
+
+  /* Instant-style gradient header (matches Instant SVG: pink → blue → pink) */
+  #header-group:has([data-instant-gradient-header]) {
+    background: linear-gradient(90deg, #fad5ed 0%, #b3c8fc 50.48%, #fad5ed 100%);
+    border-radius: 0 0 34px 34px;
+    overflow: hidden;
+  }
+
+  #header-group:has([data-instant-gradient-header]) .section-background,
+  #header-group:has([data-instant-gradient-header]) .announcement-bar,
+  #header-group:has([data-instant-gradient-header]) .header__row,
+  #header-group:has([data-instant-gradient-header]) .header__underlay {
+    background: transparent;
+  }
+
+  #header-group:has([data-instant-gradient-header]) .announcement-bar {
+    border-block-end: none;
+  }
 {% endstylesheet %}
 
 {% unless request.design_mode %}
@@ -1130,6 +1153,17 @@
   "tag": "header",
   "class": "header-section",
   "settings": [
+    {
+      "type": "header",
+      "content": "Instant style"
+    },
+    {
+      "type": "checkbox",
+      "id": "enable_instant_gradient_header",
+      "label": "Instant gradient header",
+      "info": "Pink-to-blue gradient background on the header group, including the announcement bar.",
+      "default": true
+    },
     {
       "type": "header",
       "content": "t:content.logo"

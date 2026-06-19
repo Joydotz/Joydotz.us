@@ -27,7 +27,7 @@
     {% endif %}
     {% if block_settings.border_radius > 0 %} has-border-radius{% endif %}
   "
-  style="{% render 'border-override', block: block_settings %}"
+  style="{% render 'border-override', settings: block_settings %}"
   {{ block.shopify_attributes }}
 >
   <div class="{{ cart_summary_inner_class }}">

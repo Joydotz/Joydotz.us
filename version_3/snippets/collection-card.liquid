@@ -49,7 +49,7 @@
     data-placeholder="true"
   {% endif %}
   style="
-    {% render 'border-override', block: block_settings %}
+    {% render 'border-override', settings: block_settings %}
     --horizontal-alignment: {{ block_settings.horizontal_alignment }};
     --vertical-alignment: {{ block_settings.vertical_alignment }};
     --background-overlay-color: {{ block_settings.overlay_color }};
