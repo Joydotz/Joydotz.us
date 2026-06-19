@@ -1,0 +1,723 @@
+
+<div class="section-background color-{{ section.settings.color_scheme }}"></div>
+<div
+  class="section section--{{ section.settings.section_width }} color-{{ section.settings.color_scheme }} mood-bento spacing-style"
+  style="
+    {% render 'spacing-style', settings: section.settings %}
+    --mood-bento-gap: {{ section.settings.gap }}px;
+    --mood-bento-grid-height: {{ section.settings.grid_height }}px;
+  "
+>
+  <div class="mood-bento__inner">
+    <header class="mood-bento__header">
+      <div class="mood-bento__header-text">
+        {% if section.settings.heading != blank %}
+          <div class="mood-bento__heading h2 rte">
+            {{ section.settings.heading }}
+          </div>
+        {% endif %}
+        {% if section.settings.subheading != blank %}
+          <div class="mood-bento__subheading rte">
+            {{ section.settings.subheading }}
+          </div>
+        {% endif %}
+      </div>
+      {% if section.settings.link_label != blank and section.settings.link_url != blank %}
+        <a href="{{ section.settings.link_url }}" class="mood-bento__link link">
+          <span>{{ section.settings.link_label }}</span>
+          <span class="mood-bento__link-icon" aria-hidden="true">
+            {{- 'icon-arrow.svg' | inline_asset_content -}}
+          </span>
+        </a>
+      {% endif %}
+    </header>
+
+    <div class="mood-bento__grid">
+      {% for block in section.blocks %}
+        {% liquid
+          assign tile_product = block.settings.product
+          assign tile_link = block.settings.link
+          if tile_link == blank and tile_product != blank
+            assign tile_link = tile_product.url
+          endif
+
+          assign tile_image = block.settings.image
+          if tile_image == blank and tile_product != blank and tile_product.featured_image != blank
+            assign tile_image = tile_product.featured_image
+          endif
+
+          assign tile_image_hover = block.settings.image_hover
+          if tile_image_hover == blank and tile_product != blank and tile_product.media.size > 1
+            assign tile_image_hover = tile_product.media[1]
+          endif
+
+          assign tile_has_primary = false
+          assign tile_has_hover = false
+          if block.settings.layout != 'quote'
+            if tile_image != blank
+              assign tile_has_primary = true
+            endif
+            if tile_image_hover != blank
+              assign tile_has_hover = true
+            endif
+          endif
+
+          assign tile_has_media = false
+          if tile_has_primary or tile_has_hover
+            assign tile_has_media = true
+          endif
+
+          assign tile_hover_only = false
+          if tile_has_hover and tile_has_primary == false
+            assign tile_hover_only = true
+          endif
+        %}
+
+        <article
+          class="mood-bento__tile mood-bento__tile--{{ block.settings.layout }} color-{{ block.settings.color_scheme }}{% if tile_has_media %} mood-bento__tile--has-media{% endif %}{% if tile_has_hover %} mood-bento__tile--has-hover-image{% endif %}{% if tile_hover_only %} mood-bento__tile--hover-only{% endif %}"
+          {{ block.shopify_attributes }}
+          style="border-radius: var(--global-block-corner-radius, 12px);"
+        >
+          {% if tile_link != blank %}
+            <a class="mood-bento__tile-link" href="{{ tile_link }}" {% if block.settings.open_in_new_tab %}target="_blank" rel="noopener"{% endif %}></a>
+          {% endif %}
+
+          {% if tile_has_media %}
+            <div class="mood-bento__tile-media" aria-hidden="true">
+              {% if tile_has_primary %}
+                {{
+                  tile_image
+                  | image_url: width: 1600
+                  | image_tag:
+                    class: 'mood-bento__tile-image mood-bento__tile-image--primary',
+                    loading: 'lazy',
+                    sizes: '(min-width: 750px) 50vw, 100vw',
+                    widths: '400, 800, 1200, 1600',
+                    alt: ''
+                }}
+              {% endif %}
+              {% if tile_has_hover %}
+                {{
+                  tile_image_hover
+                  | image_url: width: 1600
+                  | image_tag:
+                    class: 'mood-bento__tile-image mood-bento__tile-image--hover',
+                    loading: 'lazy',
+                    sizes: '(min-width: 750px) 50vw, 100vw',
+                    widths: '400, 800, 1200, 1600',
+                    alt: ''
+                }}
+              {% endif %}
+            </div>
+          {% endif %}
+
+          <div class="mood-bento__tile-content mood-bento__tile-content--{{ block.settings.layout }}">
+            {% if block.settings.layout == 'quote' and block.settings.show_icons %}
+              <div class="mood-bento__quote-icons" aria-hidden="true">
+                <span class="mood-bento__quote-icon mood-bento__quote-icon--primary"></span>
+                <span class="mood-bento__quote-icon mood-bento__quote-icon--secondary"></span>
+                <span class="mood-bento__quote-icon mood-bento__quote-icon--tertiary"></span>
+              </div>
+            {% endif %}
+
+            {% if block.settings.eyebrow != blank and block.settings.layout != 'quote' %}
+              <span class="mood-bento__eyebrow">{{ block.settings.eyebrow }}</span>
+            {% endif %}
+
+            {% if block.settings.title != blank %}
+              <h3 class="mood-bento__tile-title {% if block.settings.layout == 'quote' %}h3{% else %}h4{% endif %}">
+                {{ block.settings.title }}
+              </h3>
+            {% endif %}
+
+            {% if block.settings.description != blank %}
+              <div class="mood-bento__tile-description rte">
+                {{ block.settings.description }}
+              </div>
+            {% endif %}
+
+            {% if block.settings.layout == 'quote' and block.settings.author_name != blank %}
+              <div class="mood-bento__quote-author">
+                {% if block.settings.author_image != blank %}
+                  <div class="mood-bento__quote-avatar">
+                    {{
+                      block.settings.author_image
+                      | image_url: width: 80
+                      | image_tag: loading: 'lazy', widths: '40, 80', alt: block.settings.author_name
+                    }}
+                  </div>
+                {% endif %}
+                <div>
+                  <p class="mood-bento__quote-name">{{ block.settings.author_name }}</p>
+                  {% if block.settings.author_role != blank %}
+                    <p class="mood-bento__quote-role">{{ block.settings.author_role }}</p>
+                  {% endif %}
+                </div>
+              </div>
+            {% endif %}
+
+          </div>
+        </article>
+      {% endfor %}
+    </div>
+  </div>
+</div>
+
+{% stylesheet %}
+  .mood-bento__inner {
+    display: flex;
+    flex-direction: column;
+    gap: var(--padding-2xl);
+  }
+
+  .mood-bento__header {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: var(--padding-lg);
+  }
+
+  @media screen and (min-width: 750px) {
+    .mood-bento__header {
+      flex-direction: row;
+      align-items: flex-end;
+    }
+  }
+
+  .mood-bento__header-text {
+    max-width: 36rem;
+  }
+
+  .mood-bento__heading {
+    margin: 0;
+    letter-spacing: -0.03em;
+    line-height: 1.05;
+  }
+
+  .mood-bento__heading :is(em, strong, span) {
+    color: rgb(var(--color-primary-rgb));
+    font-style: normal;
+  }
+
+  .mood-bento__heading p {
+    margin: 0;
+  }
+
+  .mood-bento__subheading {
+    margin-block-start: var(--padding-sm);
+    color: rgb(var(--color-foreground-rgb) / var(--opacity-subdued-text));
+    font-size: var(--font-size--lg);
+  }
+
+  .mood-bento__link {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--padding-xs);
+    font-weight: 700;
+    color: rgb(var(--color-primary-rgb));
+    text-decoration: none;
+    white-space: nowrap;
+  }
+
+  .mood-bento__link-icon {
+    display: flex;
+    width: 1.25rem;
+    height: 1.25rem;
+    transition: transform var(--animation-speed) var(--animation-easing);
+  }
+
+  .mood-bento__link:hover .mood-bento__link-icon {
+    transform: translateX(0.2em);
+  }
+
+  .mood-bento__grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: var(--mood-bento-gap);
+  }
+
+  @media screen and (min-width: 750px) {
+    .mood-bento__grid {
+      grid-template-columns: repeat(12, 1fr);
+      grid-template-rows: 1fr 1fr;
+      min-height: var(--mood-bento-grid-height);
+    }
+
+    .mood-bento__tile--featured {
+      grid-column: 1 / 9;
+      grid-row: 1;
+    }
+
+    .mood-bento__tile--side {
+      grid-column: 9 / 13;
+      grid-row: 1;
+    }
+
+    .mood-bento__tile--medium {
+      grid-column: 1 / 6;
+      grid-row: 2;
+    }
+
+    .mood-bento__tile--quote {
+      grid-column: 6 / 13;
+      grid-row: 2;
+    }
+  }
+
+  .mood-bento__tile {
+    position: relative;
+    overflow: hidden;
+    min-height: 16rem;
+    background: rgb(var(--color-background-rgb));
+    color: rgb(var(--color-foreground-rgb));
+  }
+
+  .mood-bento__tile-link {
+    position: absolute;
+    inset: 0;
+    z-index: 2;
+  }
+
+  .mood-bento__tile-media {
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    overflow: hidden;
+  }
+
+  .mood-bento__tile-media::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    pointer-events: none;
+    background: linear-gradient(
+      to top,
+      rgb(var(--color-background-rgb) / 0.75) 0%,
+      rgb(var(--color-background-rgb) / 0.2) 45%,
+      transparent 100%
+    );
+  }
+
+  .mood-bento__tile--medium .mood-bento__tile-media::after {
+    background: rgb(var(--color-background-rgb) / 0.45);
+  }
+
+  .mood-bento__tile-image {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: opacity var(--animation-speed-medium) var(--animation-easing);
+  }
+
+  .mood-bento__tile-image--primary {
+    z-index: 0;
+    opacity: 1;
+  }
+
+  .mood-bento__tile-image--hover {
+    z-index: 1;
+    opacity: 0;
+  }
+
+  .mood-bento__tile--has-hover-image:hover .mood-bento__tile-image--hover,
+  .mood-bento__tile--has-hover-image:focus-within .mood-bento__tile-image--hover {
+    opacity: 1;
+  }
+
+  .mood-bento__tile--has-hover-image:hover .mood-bento__tile-image--primary,
+  .mood-bento__tile--has-hover-image:focus-within .mood-bento__tile-image--primary {
+    opacity: 0;
+  }
+
+  /* Hover-only tiles: show color scheme at rest, fade in hover image + text gradient */
+  .mood-bento__tile--hover-only .mood-bento__tile-media::after {
+    opacity: 0;
+    transition: opacity var(--animation-speed-medium) var(--animation-easing);
+  }
+
+  .mood-bento__tile--hover-only:hover .mood-bento__tile-media::after,
+  .mood-bento__tile--hover-only:focus-within .mood-bento__tile-media::after {
+    opacity: 1;
+  }
+
+  .mood-bento__tile-content {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    padding: var(--padding-xl);
+  }
+
+  .mood-bento__tile-content--featured {
+    justify-content: flex-start;
+    max-width: 28rem;
+  }
+
+  .mood-bento__tile-content--side {
+    justify-content: flex-end;
+    background: linear-gradient(to top, rgb(var(--color-background-rgb)) 0%, transparent 70%);
+  }
+
+  .mood-bento__tile--has-media .mood-bento__tile-content--side {
+    background: none;
+  }
+
+  .mood-bento__tile-content--medium {
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+  }
+
+  .mood-bento__tile-content--quote {
+    justify-content: center;
+    padding: var(--padding-2xl);
+    border: 1px solid rgb(var(--color-border-rgb) / var(--opacity-10));
+    box-shadow: 0 40px 80px rgb(var(--color-shadow-rgb) / 0.02);
+  }
+
+  .mood-bento__eyebrow {
+    display: inline-block;
+    width: fit-content;
+    margin-block-end: var(--padding-sm);
+    padding: var(--padding-2xs) var(--padding-sm);
+    border-radius: var(--style-border-radius-pills);
+    background: rgb(var(--color-background-rgb) / 0.5);
+    backdrop-filter: blur(8px);
+    font-size: var(--font-size--xs);
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: lowercase;
+  }
+
+  .mood-bento__tile-title {
+    margin: 0 0 var(--padding-sm);
+    line-height: 1.1;
+  }
+
+  .mood-bento__tile-content--quote .mood-bento__tile-title {
+    font-style: italic;
+    letter-spacing: -0.02em;
+  }
+
+  .mood-bento__tile-description {
+    color: rgb(var(--color-foreground-rgb) / var(--opacity-subdued-text));
+    max-width: 22rem;
+  }
+
+  .mood-bento__tile-content--side .mood-bento__tile-description {
+    font-size: var(--font-size--sm);
+  }
+
+  .mood-bento__tile-content--medium .mood-bento__tile-description {
+    font-size: var(--font-size--sm);
+    max-width: 16rem;
+  }
+
+  .mood-bento__quote-icons {
+    display: flex;
+    gap: var(--padding-sm);
+    margin-block-end: var(--padding-lg);
+  }
+
+  .mood-bento__quote-icon {
+    width: 3rem;
+    height: 3rem;
+    border-radius: 50%;
+  }
+
+  .mood-bento__quote-icon--primary {
+    background: rgb(var(--color-primary-rgb) / 0.1);
+  }
+
+  .mood-bento__quote-icon--secondary {
+    background: color-mix(in srgb, var(--color-secondary-button-background) 15%, transparent);
+  }
+
+  .mood-bento__quote-icon--tertiary {
+    background: rgb(var(--color-foreground-rgb) / 0.08);
+  }
+
+  .mood-bento__quote-author {
+    display: flex;
+    align-items: center;
+    gap: var(--padding-sm);
+    margin-block-start: var(--padding-md);
+  }
+
+  .mood-bento__quote-avatar {
+    width: 2.5rem;
+    height: 2.5rem;
+    border-radius: 50%;
+    overflow: hidden;
+    flex-shrink: 0;
+  }
+
+  .mood-bento__quote-avatar img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  .mood-bento__quote-name {
+    margin: 0;
+    font-size: var(--font-size--sm);
+    font-weight: 700;
+  }
+
+  .mood-bento__quote-role {
+    margin: 0;
+    font-size: var(--font-size--xs);
+    color: rgb(var(--color-foreground-rgb) / var(--opacity-subdued-text));
+  }
+{% endstylesheet %}
+
+{% schema %}
+{
+  "name": "Mood bento",
+  "tag": "section",
+  "class": "mood-bento-section",
+  "disabled_on": {
+    "groups": ["header", "footer"]
+  },
+  "settings": [
+    {
+      "type": "header",
+      "content": "Header"
+    },
+    {
+      "type": "richtext",
+      "id": "heading",
+      "label": "Heading",
+      "default": "<p>Pick your <em>Mood</em>, find your Glow.</p>"
+    },
+    {
+      "type": "richtext",
+      "id": "subheading",
+      "label": "Subheading",
+      "default": "<p>Every product is a collectible piece of joy, designed to fit the phase your skin is in today.</p>"
+    },
+    {
+      "type": "text",
+      "id": "link_label",
+      "label": "Link label",
+      "default": "Explore all SKU's"
+    },
+    {
+      "type": "url",
+      "id": "link_url",
+      "label": "Link"
+    },
+    {
+      "type": "header",
+      "content": "Layout"
+    },
+    {
+      "type": "range",
+      "id": "gap",
+      "label": "Gap between tiles",
+      "min": 8,
+      "max": 48,
+      "step": 4,
+      "unit": "px",
+      "default": 32
+    },
+    {
+      "type": "range",
+      "id": "grid_height",
+      "label": "Grid height (desktop)",
+      "min": 400,
+      "max": 1000,
+      "step": 50,
+      "unit": "px",
+      "default": 800
+    },
+    {
+      "type": "select",
+      "id": "section_width",
+      "label": "t:settings.width",
+      "options": [
+        { "value": "page-width", "label": "t:options.page" },
+        { "value": "full-width", "label": "t:options.full" }
+      ],
+      "default": "page-width"
+    },
+    {
+      "type": "color_scheme",
+      "id": "color_scheme",
+      "label": "t:settings.color_scheme",
+      "default": "scheme-1"
+    },
+    {
+      "type": "header",
+      "content": "t:content.padding"
+    },
+    {
+      "type": "range",
+      "id": "padding-block-start",
+      "label": "t:settings.top",
+      "min": 0,
+      "max": 120,
+      "step": 4,
+      "unit": "px",
+      "default": 80
+    },
+    {
+      "type": "range",
+      "id": "padding-block-end",
+      "label": "t:settings.bottom",
+      "min": 0,
+      "max": 120,
+      "step": 4,
+      "unit": "px",
+      "default": 80
+    }
+  ],
+  "blocks": [
+    {
+      "type": "tile",
+      "name": "Bento tile",
+      "settings": [
+        {
+          "type": "select",
+          "id": "layout",
+          "label": "Grid position",
+          "options": [
+            { "value": "featured", "label": "Large left (top)" },
+            { "value": "side", "label": "Tall right (top)" },
+            { "value": "medium", "label": "Medium (bottom left)" },
+            { "value": "quote", "label": "Quote card (bottom right)" }
+          ],
+          "default": "featured"
+        },
+        {
+          "type": "color_scheme",
+          "id": "color_scheme",
+          "label": "t:settings.color_scheme",
+          "default": "scheme-2"
+        },
+        {
+          "type": "text",
+          "id": "eyebrow",
+          "label": "Eyebrow label"
+        },
+        {
+          "type": "text",
+          "id": "title",
+          "label": "Title",
+          "default": "Tile title"
+        },
+        {
+          "type": "richtext",
+          "id": "description",
+          "label": "Description"
+        },
+        {
+          "type": "url",
+          "id": "link",
+          "label": "Link"
+        },
+        {
+          "type": "product",
+          "id": "product",
+          "label": "Product (optional image & link)"
+        },
+        {
+          "type": "image_picker",
+          "id": "image",
+          "label": "Default image",
+          "info": "Shown as the tile background. Required for image tiles."
+        },
+        {
+          "type": "image_picker",
+          "id": "image_hover",
+          "label": "Hover image",
+          "info": "Replaces the default image on hover. If empty and a product is selected, uses the product's second image."
+        },
+        {
+          "type": "checkbox",
+          "id": "open_in_new_tab",
+          "label": "t:settings.open_new_tab",
+          "default": false
+        },
+        {
+          "type": "header",
+          "content": "Quote card only"
+        },
+        {
+          "type": "checkbox",
+          "id": "show_icons",
+          "label": "Show decorative icons",
+          "default": true
+        },
+        {
+          "type": "text",
+          "id": "author_name",
+          "label": "Author name"
+        },
+        {
+          "type": "text",
+          "id": "author_role",
+          "label": "Author role"
+        },
+        {
+          "type": "image_picker",
+          "id": "author_image",
+          "label": "Author image"
+        }
+      ]
+    }
+  ],
+  "presets": [
+    {
+      "name": "Mood bento",
+      "category": "t:categories.products",
+      "blocks": [
+        {
+          "type": "tile",
+          "settings": {
+            "layout": "featured",
+            "color_scheme": "scheme-2",
+            "eyebrow": "The Soother",
+            "title": "Cloud Phase",
+            "description": "<p>For those days when you need a gentle embrace. Hydrating, airy, and light.</p>"
+          }
+        },
+        {
+          "type": "tile",
+          "settings": {
+            "layout": "side",
+            "color_scheme": "scheme-3",
+            "title": "Butterfly Phase",
+            "description": "<p>Brightening and revitalizing for a transformative glow.</p>"
+          }
+        },
+        {
+          "type": "tile",
+          "settings": {
+            "layout": "medium",
+            "color_scheme": "scheme-4",
+            "title": "Flower Phase",
+            "description": "<p>Nurturing and deep-acting recovery for tired skin.</p>"
+          }
+        },
+        {
+          "type": "tile",
+          "settings": {
+            "layout": "quote",
+            "color_scheme": "scheme-1",
+            "title": "Skincare should feel like a gift to yourself, every single day.",
+            "show_icons": true,
+            "author_name": "Joy, Founder",
+            "author_role": "Skin Advocate"
+          }
+        }
+      ]
+    }
+  ]
+}
+{% endschema %}
