@@ -274,6 +274,30 @@
     "section_7n3Wfm": {
       "type": "section",
       "blocks": {
+        "image_ea3LwC": {
+          "type": "image-framed",
+          "settings": {
+            "link": "",
+            "color_scheme": "scheme-3",
+            "frame_border_radius": 30,
+            "frame_padding": 52,
+            "image_ratio": "square",
+            "width": "fill",
+            "custom_width": 100,
+            "width_mobile": "fill",
+            "custom_width_mobile": 100,
+            "height": "fit",
+            "border": "none",
+            "border_width": 1,
+            "border_opacity": 100,
+            "border_radius": 0,
+            "padding-block-start": 0,
+            "padding-block-end": 0,
+            "padding-inline-start": 0,
+            "padding-inline-end": 0
+          },
+          "blocks": {}
+        },
         "group_WFAVhA": {
           "type": "group",
           "settings": {
@@ -283,7 +307,7 @@
             "vertical_alignment": "center",
             "align_baseline": false,
             "horizontal_alignment_flex_direction_column": "flex-start",
-            "vertical_alignment_flex_direction_column": "flex-start",
+            "vertical_alignment_flex_direction_column": "flex-end",
             "gap": 12,
             "width": "custom",
             "custom_width": 100,
@@ -291,26 +315,26 @@
             "custom_width_mobile": 100,
             "height": "fill",
             "custom_height": 100,
-            "inherit_color_scheme": true,
-            "color_scheme": "",
+            "inherit_color_scheme": false,
+            "color_scheme": "scheme-2d5ca46f-d123-41f0-8fe4-7fb718434130",
             "background_media": "none",
             "video_position": "cover",
             "background_image_position": "cover",
             "border": "none",
             "border_width": 1,
             "border_opacity": 100,
-            "border_radius": 0,
+            "border_radius": 30,
             "toggle_overlay": false,
-            "overlay_color": "#00000026",
+            "overlay_color": "#F5EFE6",
             "overlay_style": "solid",
             "gradient_direction": "to top",
             "link": "",
             "open_in_new_tab": false,
             "placeholder": "",
-            "padding-block-start": 0,
-            "padding-block-end": 0,
-            "padding-inline-start": 0,
-            "padding-inline-end": 0
+            "padding-block-start": 40,
+            "padding-block-end": 40,
+            "padding-inline-start": 40,
+            "padding-inline-end": 40
           },
           "blocks": {
             "image_WeRwGd": {
@@ -340,7 +364,7 @@
               "type": "text",
               "name": "t:names.heading",
               "settings": {
-                "text": "<h2>Our signature product</h2>",
+                "text": "<h2>Daydream Cloud</h2>",
                 "width": "fit-content",
                 "max_width": "normal",
                 "alignment": "left",
@@ -368,7 +392,7 @@
                 "label": "Shop now",
                 "link": "shopify://collections/all",
                 "open_in_new_tab": false,
-                "style_class": "button",
+                "style_class": "button-secondary",
                 "width": "fit-content",
                 "custom_width": 100,
                 "width_mobile": "fit-content",
@@ -382,35 +406,14 @@
             "text_MQCGPD",
             "button_CDNpJy"
           ]
-        },
-        "image_ea3LwC": {
-          "type": "image-framed",
-          "settings": {
-            "link": "",
-            "color_scheme": "scheme-3",
-            "frame_border_radius": 12,
-            "frame_padding": 28,
-            "image_ratio": "square",
-            "width": "fill",
-            "custom_width": 100,
-            "width_mobile": "fill",
-            "custom_width_mobile": 100,
-            "height": "fit",
-            "border": "none",
-            "border_width": 1,
-            "border_opacity": 100,
-            "border_radius": 0,
-            "padding-block-start": 0,
-            "padding-block-end": 0,
-            "padding-inline-start": 0,
-            "padding-inline-end": 0
-          },
-          "blocks": {}
         }
       },
       "block_order": [
-        "group_WFAVhA",
-        "image_ea3LwC"
+        "image_ea3LwC",
+        "group_WFAVhA"
+      ],
+      "custom_css": [
+        ".button {border: 1.5px;}"
       ],
       "name": "t:names.image_with_text",
       "settings": {
