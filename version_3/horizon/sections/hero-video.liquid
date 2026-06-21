@@ -468,11 +468,13 @@
       --hero-min-height: var(--section-height-{{ section.settings.section_height }});
     {% endif %}
     --hero-video-radius: {{ section.settings.video_frame_border_radius }}px;
-    --hero-video-inset: {{ section.settings.video_frame_margin }}px;
+    --hero-video-inset-inline: {{ section.settings.video_frame_margin_inline }}px;
+    --hero-video-inset-block: {{ section.settings.video_frame_margin_block }}px;
+    --hero-video-frame-color: {{ section.settings.video_frame_background }};
     {% if section.settings.section_height == 'auto' %}
       --hero-video-frame-min-height: auto;
     {% else %}
-      --hero-video-frame-min-height: calc(var(--hero-min-height) - (var(--hero-video-inset) * 2));
+      --hero-video-frame-min-height: calc(var(--hero-min-height) - (var(--hero-video-inset-block) * 2));
     {% endif %}
   "
   {% if request.visual_preview_mode %}
@@ -759,23 +761,6 @@
     }
   }
 
-  .hero-video {
-    --hero-video-bg: #fff8e5;
-    --hero-video-frame: #d2d1eb;
-    --hero-video-title: #ff6bbe;
-    background: var(--hero-video-bg);
-  }
-
-  .hero-video.color-scheme-1,
-  .hero-video.color-scheme-2,
-  .hero-video.color-scheme-3,
-  .hero-video.color-scheme-4,
-  .hero-video.color-scheme-5,
-  .hero-video.color-scheme-6,
-  .hero-video.color-scheme-7 {
-    background: var(--hero-video-bg);
-  }
-
   .hero-video__container {
     overflow: visible;
     border: none;
@@ -783,23 +768,25 @@
     align-items: stretch;
     justify-content: center;
     background: transparent;
-    padding-block: var(--hero-video-inset);
+    box-sizing: border-box;
+    padding-block: var(--hero-video-inset-block);
+    padding-inline: var(--hero-video-inset-inline);
   }
 
   .hero-video__frame {
     position: relative;
-    width: calc(100% - (var(--hero-video-inset) * 2));
+    width: 100%;
     max-width: 82.5rem;
     margin-inline: auto;
     aspect-ratio: 1320 / 680;
     min-height: var(--hero-video-frame-min-height);
-    background: var(--hero-video-frame);
+    background: var(--hero-video-frame-color, var(--color-border));
     border-radius: var(--hero-video-radius);
     overflow: hidden;
   }
 
   .hero-video__frame.page-width {
-    width: calc(min(var(--page-width), 100%) - (var(--hero-video-inset) * 2));
+    max-width: min(var(--page-width), 100%);
   }
 
   .hero-video__media-grid {
@@ -850,7 +837,7 @@
   }
 
   .hero-video__content :is(h1, h2, h3, h4, .h1, .h2, .h3, .h4, p, .text-block) {
-    color: var(--hero-video-title);
+    color: var(--color-foreground-heading);
     font-family: 'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', monospace;
     font-size: clamp(1.5rem, 3.33vw, 3rem);
     font-weight: 700;
@@ -1270,19 +1257,24 @@
       "visible_if": "{{ section.settings.section_height == 'custom' }}"
     },
     {
-      "type": "header",
-      "content": "Video frame"
-    },
-    {
       "type": "range",
-      "id": "video_frame_margin",
-      "label": "Margin",
+      "id": "video_frame_margin_inline",
+      "label": "Left and right margin",
       "min": 0,
       "max": 120,
       "step": 4,
       "unit": "px",
-      "default": 60,
-      "info": "Space between the video frame and the section edges."
+      "default": 60
+    },
+    {
+      "type": "range",
+      "id": "video_frame_margin_block",
+      "label": "Top and bottom margin",
+      "min": 0,
+      "max": 120,
+      "step": 4,
+      "unit": "px",
+      "default": 60
     },
     {
       "type": "range",
@@ -1303,6 +1295,12 @@
       "id": "color_scheme",
       "label": "t:settings.color_scheme",
       "default": "scheme-1"
+    },
+    {
+      "type": "color",
+      "id": "video_frame_background",
+      "label": "Video frame color",
+      "default": "#d2d1eb"
     },
     {
       "type": "checkbox",
@@ -1419,7 +1417,8 @@
         "gap": 0,
         "section_width": "page-width",
         "section_height": "auto",
-        "video_frame_margin": 60,
+        "video_frame_margin_inline": 60,
+        "video_frame_margin_block": 60,
         "video_frame_border_radius": 34,
         "color_scheme": "scheme-1",
         "toggle_overlay": false,
