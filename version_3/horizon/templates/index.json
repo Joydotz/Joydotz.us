@@ -283,13 +283,13 @@
             "vertical_alignment": "center",
             "align_baseline": false,
             "horizontal_alignment_flex_direction_column": "flex-start",
-            "vertical_alignment_flex_direction_column": "center",
+            "vertical_alignment_flex_direction_column": "flex-start",
             "gap": 12,
             "width": "custom",
             "custom_width": 100,
             "width_mobile": "fill",
             "custom_width_mobile": 100,
-            "height": "fit",
+            "height": "fill",
             "custom_height": 100,
             "inherit_color_scheme": true,
             "color_scheme": "",
@@ -313,6 +313,29 @@
             "padding-inline-end": 0
           },
           "blocks": {
+            "image_WeRwGd": {
+              "type": "image",
+              "name": "t:names.image",
+              "settings": {
+                "image": "shopify://shop_images/blush_flower.png",
+                "link": "",
+                "image_ratio": "adapt",
+                "width": "custom",
+                "custom_width": 30,
+                "width_mobile": "custom",
+                "custom_width_mobile": 30,
+                "height": "fit",
+                "border": "none",
+                "border_width": 1,
+                "border_opacity": 100,
+                "border_radius": 0,
+                "padding-block-start": 0,
+                "padding-block-end": 0,
+                "padding-inline-start": 0,
+                "padding-inline-end": 0
+              },
+              "blocks": {}
+            },
             "text_MQCGPD": {
               "type": "text",
               "name": "t:names.heading",
@@ -322,31 +345,6 @@
                 "max_width": "normal",
                 "alignment": "left",
                 "type_preset": "h3",
-                "font": "var(--font-body--family)",
-                "font_size": "1rem",
-                "line_height": "normal",
-                "letter_spacing": "normal",
-                "case": "none",
-                "wrap": "pretty",
-                "color": "var(--color-foreground)",
-                "background": false,
-                "background_color": "#00000026",
-                "corner_radius": 0,
-                "padding-block-start": 0,
-                "padding-block-end": 0,
-                "padding-inline-start": 0,
-                "padding-inline-end": 0
-              },
-              "blocks": {}
-            },
-            "text_wnbJt9": {
-              "type": "text",
-              "settings": {
-                "text": "<p>Made with care and unconditionally loved by our customers, this signature bestseller exceeds all expectations.</p>",
-                "width": "fit-content",
-                "max_width": "narrow",
-                "alignment": "left",
-                "type_preset": "rte",
                 "font": "var(--font-body--family)",
                 "font_size": "1rem",
                 "line_height": "normal",
@@ -380,15 +378,18 @@
             }
           },
           "block_order": [
+            "image_WeRwGd",
             "text_MQCGPD",
-            "text_wnbJt9",
             "button_CDNpJy"
           ]
         },
         "image_ea3LwC": {
-          "type": "image",
+          "type": "image-framed",
           "settings": {
             "link": "",
+            "color_scheme": "scheme-3",
+            "frame_border_radius": 12,
+            "frame_padding": 28,
             "image_ratio": "square",
             "width": "fill",
             "custom_width": 100,
