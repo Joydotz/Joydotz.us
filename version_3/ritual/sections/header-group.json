@@ -47,6 +47,7 @@
           "blocks": {}
         }
       },
+      "custom_css": [],
       "settings": {
         "logo_position": "center",
         "menu_position": "left",
@@ -59,7 +60,7 @@
         "country_selector_style": false,
         "show_language": true,
         "localization_font": "heading",
-        "localization_font_size": "1rem",
+        "localization_font_size": "1.125rem",
         "localization_position": "right",
         "localization_row": "top",
         "section_width": "page-width",
@@ -74,7 +75,7 @@
         "actions_text_case": "none",
         "color_scheme_top": "scheme-3",
         "color_scheme_bottom": "",
-        "color_scheme_transparent": "scheme-6",
+        "color_scheme_transparent": "scheme-2",
         "enable_transparent_header_home": true,
         "home_color_scheme": "default",
         "enable_transparent_header_product": true,

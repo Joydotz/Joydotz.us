@@ -109,11 +109,11 @@
 
   .color-scheme-3,
   .color-scheme-3.section-background {
-    background: var(--joy-instant-gradient) !important;
-    background-color: transparent !important;
+    background: var(--joy-instant-gradient);
   }
 
-  .section.color-scheme-3 {
-    background-color: transparent;
+  .header[transparent]:not([data-sticky-state='active']) .color-scheme-3 {
+    background: transparent !important;
   }
+
 {% endstyle %}

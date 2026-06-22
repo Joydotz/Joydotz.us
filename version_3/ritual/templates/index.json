@@ -70,14 +70,14 @@
         "horizontal_alignment": "flex-start",
         "vertical_alignment": "center",
         "align_baseline": false,
-        "horizontal_alignment_flex_direction_column": "flex-start",
+        "horizontal_alignment_flex_direction_column": "center",
         "vertical_alignment_flex_direction_column": "center",
         "gap": 80,
         "section_width": "page-width",
         "section_height": "custom",
         "section_height_custom": 65,
         "color_scheme": "scheme-3",
-        "background_media": "video",
+        "background_media": "image",
         "video_position": "cover",
         "background_image_position": "cover",
         "border": "none",
@@ -126,7 +126,7 @@
             "overlay_color": "#00000026",
             "overlay_style": "solid",
             "gradient_direction": "to top",
-            "link": "",
+            "link": "shopify://products/daydream-cloud",
             "open_in_new_tab": false,
             "placeholder": "",
             "padding-block-start": 0,
@@ -139,7 +139,7 @@
               "type": "text",
               "name": "t:names.text",
               "settings": {
-                "text": "<p>. . .</p>",
+                "text": "<p><a href=\"/products/daydream-cloud\" title=\"Daydream Cloud\">. . .</a></p>",
                 "width": "fit-content",
                 "max_width": "normal",
                 "alignment": "left",
@@ -389,7 +389,7 @@
                   "type": "button",
                   "settings": {
                     "label": "add to cart",
-                    "link": "shopify://collections/all",
+                    "link": "shopify://products/daydream-cloud",
                     "open_in_new_tab": false,
                     "style_class": "button-secondary",
                     "width": "fit-content",
@@ -446,8 +446,8 @@
         "overlay_color": "#00000026",
         "overlay_style": "solid",
         "gradient_direction": "to top",
-        "padding-block-start": 40,
-        "padding-block-end": 40
+        "padding-block-start": 60,
+        "padding-block-end": 0
       }
     },
     "section_pGn3wg": {
@@ -541,7 +541,7 @@
                     "width": "custom",
                     "custom_width": 40,
                     "width_mobile": "custom",
-                    "custom_width_mobile": 0,
+                    "custom_width_mobile": 40,
                     "height": "fit",
                     "border": "none",
                     "border_width": 1,
@@ -628,7 +628,7 @@
                   "type": "button",
                   "settings": {
                     "label": "add to cart",
-                    "link": "shopify://collections/all",
+                    "link": "shopify://products/blush-flower",
                     "open_in_new_tab": false,
                     "style_class": "button-secondary",
                     "width": "fit-content",
@@ -681,7 +681,7 @@
             "overlay_color": "#00000026",
             "overlay_style": "solid",
             "gradient_direction": "to top",
-            "link": "",
+            "link": "shopify://products/blush-flower",
             "open_in_new_tab": false,
             "placeholder": "",
             "padding-block-start": 0,
@@ -694,7 +694,7 @@
               "type": "text",
               "name": "t:names.text",
               "settings": {
-                "text": "<p>. . .</p>",
+                "text": "<p><a href=\"/products/blush-flower\" title=\"Blush Flower\">. . .</a></p>",
                 "width": "fit-content",
                 "max_width": "normal",
                 "alignment": "left",
@@ -805,7 +805,7 @@
         "overlay_style": "solid",
         "gradient_direction": "to top",
         "padding-block-start": 40,
-        "padding-block-end": 40
+        "padding-block-end": 0
       }
     },
     "section_czpiLT": {
@@ -820,7 +820,7 @@
             "horizontal_alignment": "flex-start",
             "vertical_alignment": "center",
             "align_baseline": false,
-            "horizontal_alignment_flex_direction_column": "flex-start",
+            "horizontal_alignment_flex_direction_column": "center",
             "vertical_alignment_flex_direction_column": "center",
             "gap": 12,
             "width": "custom",
@@ -842,7 +842,7 @@
             "overlay_color": "#00000026",
             "overlay_style": "solid",
             "gradient_direction": "to top",
-            "link": "",
+            "link": "shopify://products/softwing-butterfly",
             "open_in_new_tab": false,
             "placeholder": "",
             "padding-block-start": 0,
@@ -878,10 +878,10 @@
               "type": "text",
               "name": "t:names.text",
               "settings": {
-                "text": "<p>. . .</p>",
+                "text": "<p><a href=\"/products/softwing-butterfly\" title=\"Softwing Butterfly\">. . .</a></p>",
                 "width": "fit-content",
                 "max_width": "normal",
-                "alignment": "left",
+                "alignment": "center",
                 "type_preset": "h1",
                 "font": "var(--font-body--family)",
                 "font_size": "1rem",
@@ -975,7 +975,7 @@
                 "overlay_color": "#00000026",
                 "overlay_style": "solid",
                 "gradient_direction": "to top",
-                "link": "",
+                "link": "shopify://products/softwing-butterfly",
                 "open_in_new_tab": false,
                 "placeholder": "",
                 "padding-block-start": 0,
@@ -994,7 +994,7 @@
                     "width": "custom",
                     "custom_width": 40,
                     "width_mobile": "custom",
-                    "custom_width_mobile": 0,
+                    "custom_width_mobile": 40,
                     "height": "fit",
                     "border": "none",
                     "border_width": 1,
@@ -1081,7 +1081,7 @@
                   "type": "button",
                   "settings": {
                     "label": "add to cart",
-                    "link": "shopify://collections/all",
+                    "link": "shopify://products/softwing-butterfly",
                     "open_in_new_tab": false,
                     "style_class": "button-secondary",
                     "width": "fit-content",
@@ -1109,9 +1109,9 @@
         "group_feqcWb"
       ],
       "custom_css": [
-        ".color-scheme-3 > .group-block-content {display: grid; place-items: end; justify-content: start; min-height: 600px;}",
-        ".color-scheme-3 .image-block {grid-area: 1/1; margin-right: auto;}",
-        ".color-scheme-3 .text-block {grid-area: 1/1; align-self: end; padding-bottom: 24px;}"
+        ".color-scheme-3 > .group-block-content {display: grid; place-items: center; justify-content: start; min-height: 600px; position: relative;}",
+        ".color-scheme-3 .image-block {grid-area: 1/1;}",
+        ".color-scheme-3 .text-block {position: absolute; bottom: 24px; text-align: center;}"
       ],
       "name": "t:names.image_with_text",
       "settings": {
@@ -1139,7 +1139,7 @@
         "overlay_style": "solid",
         "gradient_direction": "to top",
         "padding-block-start": 40,
-        "padding-block-end": 40
+        "padding-block-end": 60
       }
     },
     "product_list_8kR3Hb": {
