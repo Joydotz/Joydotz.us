@@ -4,6 +4,11 @@
   class="social-icons__wrapper"
   {{ block.shopify_attributes }}
 >
+  {% if block.settings.heading != blank %}
+    <p class="social-icons__heading {{ block.settings.heading_preset }}">
+      {{ block.settings.heading }}
+    </p>
+  {% endif %}
   {% liquid
     assign social_links = 'facebook_url,instagram_url,youtube_url,tiktok_url,twitter_url,threads_url,linkedin_url,bluesky_url,snapchat_url,pinterest_url,tumblr_url,vimeo_url,custom_url' | split: ','
   %}
@@ -108,10 +113,15 @@
 </div>
 
 {% stylesheet %}
+  .social-icons__heading {
+    width: 100%;
+    padding-block-start: var(--padding-sm);
+  }
+  
   .social-icons__wrapper {
     display: flex;
     gap: var(--gap-sm);
-    flex-wrap: wrap;
+    flex-direction: column;
     justify-content: center;
 
     @media screen and (min-width: 750px) {
@@ -166,6 +176,25 @@
   "name": "t:names.social_media_links",
   "tag": null,
   "settings": [
+    {
+      "type": "text",
+      "id": "heading",
+      "label": "t:settings.heading"
+    },
+    {
+      "type": "select",
+      "id": "heading_preset",
+      "label": "t:settings.heading_preset",
+      "options": [
+        { "value": "", "label": "t:options.default" },
+        { "value": "h3", "label": "t:options.h3" },
+        { "value": "h4", "label": "t:options.h4" },
+        { "value": "h5", "label": "t:options.h5" },
+        { "value": "h6", "label": "t:options.h6" },
+        { "value": "paragraph", "label": "t:options.paragraph" }
+      ],
+      "default": "h3"
+    },
     {
       "type": "url",
       "id": "facebook_url",
