@@ -4238,3 +4238,9 @@ product-recommendations:has([data-has-recommendations='false']) {
     translate: 0px var(--atc-destination, 0px);
   }
 }
+
+.color-scheme-5 img {
+  filter: drop-shadow(0 2px 2px rgba(0, 0, 0, 0.18));
+  justify-self: center
+  align-self: center
+}

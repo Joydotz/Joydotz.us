@@ -14,16 +14,16 @@
     "footer_QAE7jb": {
       "type": "footer",
       "blocks": {
-        "social_links_9xq846": {
+        "social_links_VwtCKE": {
           "type": "social-links",
           "name": "t:names.social_media_links",
           "settings": {
             "heading": "Social Media",
             "heading_preset": "h5",
-            "facebook_url": "https://www.facebook.com/shopify",
+            "facebook_url": "",
             "instagram_url": "https://www.instagram.com/shopify",
-            "youtube_url": "https://www.youtube.com/shopify",
-            "tiktok_url": "https://www.tiktok.com/@shopify",
+            "youtube_url": "",
+            "tiktok_url": "",
             "twitter_url": "",
             "threads_url": "",
             "linkedin_url": "",
@@ -36,46 +36,20 @@
           },
           "blocks": {}
         },
-        "menu_EU6dHG": {
+        "menu_BVeGCA": {
           "type": "menu",
           "name": "t:names.menu",
           "settings": {
             "menu": "footer",
-            "heading": "Help",
+            "heading": "",
             "menu_spacing": 12,
             "show_as_accordion": false,
             "accordion_icon": "caret",
             "accordion_dividers": false,
             "inherit_color_scheme": true,
             "color_scheme": "",
-            "heading_preset": "h6",
-            "link_preset": "paragraph",
-            "padding-block-start": 0,
-            "padding-block-end": 0,
-            "padding-inline-start": 0,
-            "padding-inline-end": 0
-          },
-          "blocks": {}
-        },
-        "email_signup_tBDzRh": {
-          "type": "email-signup",
-          "name": "t:names.email_signup",
-          "settings": {
-            "width": "fill",
-            "custom_width": 32,
-            "inherit_color_scheme": true,
-            "color_scheme": "scheme-1",
-            "heading": "Get on the list",
             "heading_preset": "h5",
-            "border_style": "underline",
-            "border_width": 2,
-            "border_radius": 0,
-            "input_type_preset": "paragraph",
-            "style_class": "button-unstyled",
-            "display_type": "text",
-            "label": "OK",
-            "integrated_button": true,
-            "button_type_preset": "paragraph",
+            "link_preset": "paragraph",
             "padding-block-start": 0,
             "padding-block-end": 0,
             "padding-inline-start": 0,
@@ -85,10 +59,10 @@
         }
       },
       "block_order": [
-        "social_links_9xq846",
-        "menu_EU6dHG",
-        "email_signup_tBDzRh"
+        "social_links_VwtCKE",
+        "menu_BVeGCA"
       ],
+      "custom_css": [],
       "name": "t:names.footer",
       "settings": {
         "section_width": "page-width",
