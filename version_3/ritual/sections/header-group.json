@@ -47,7 +47,10 @@
           "blocks": {}
         }
       },
-      "custom_css": [],
+      "custom_css": [
+        ".header__row {height: 80px;}",
+        "header-component[data-sticky-state=\"active\"] {border-radius: 0 0 30px 30px; overflow: hidden;}"
+      ],
       "settings": {
         "logo_position": "center",
         "menu_position": "left",
