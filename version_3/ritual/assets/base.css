@@ -4239,8 +4239,23 @@ product-recommendations:has([data-has-recommendations='false']) {
   }
 }
 
-.color-scheme-5 img {
+img[src*="need_shadow"] {
   filter: drop-shadow(0 2px 2px rgba(0, 0, 0, 0.18));
   justify-self: center
   align-self: center
+}
+
+#daydream-cloud #daydream-cloud-icon img,
+body:has(a[href*="daydream-cloud"]:hover) #daydream-cloud-icon img {
+  filter: brightness(0) saturate(100%) invert(88%) sepia(15%) saturate(600%) hue-rotate(295deg) drop-shadow(0 2px 2px rgba(0, 0, 0, 0.18));
+}
+
+#blush-flower #blush-flower-icon img,
+body:has(a[href*="blush-flower"]:hover) #blush-flower-icon img {
+  filter: brightness(0) saturate(100%) invert(88%) sepia(15%) saturate(600%) hue-rotate(295deg) drop-shadow(0 2px 2px rgba(0, 0, 0, 0.18));
+}
+
+#softwing-butterfly #softwing-butterfly-icon img,
+body:has(a[href*="softwing-butterfly"]:hover) #softwing-butterfly-icon img {
+  filter: brightness(0) saturate(100%) invert(88%) sepia(15%) saturate(600%) hue-rotate(295deg) drop-shadow(0 2px 2px rgba(0, 0, 0, 0.18));
 }

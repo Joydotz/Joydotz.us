@@ -54,7 +54,7 @@
         sizes: sizes
     }}
   {%- else -%}
-    <div class="placeholder-image border-style size-style" style="{{ image_border_style }}">
+    <div id="{{ block_settings.custom_id }}" class="placeholder-image border-style size-style" style="{{ image_border_style }}">
       {{ 'detailed-apparel-1' | placeholder_svg_tag: 'image-block__placeholder' }}
     </div>
   {%- endif -%}
@@ -62,6 +62,7 @@
 
 {% if block_settings.link == blank %}
   <div
+    id="{{ block_settings.custom_id }}"
     class="{{ class }}"
     style="{{ style }}"
     {{ block.shopify_attributes }}
@@ -117,6 +118,11 @@
   "name": "t:names.image",
   "tag": null,
   "settings": [
+    {
+      "type": "text",
+      "id": "custom_id",
+      "label": "Section ID",
+    },
     {
       "type": "image_picker",
       "id": "image",
