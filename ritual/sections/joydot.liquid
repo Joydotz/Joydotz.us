@@ -1,0 +1,104 @@
+
+{% assign s = section.settings %}
+{% assign eye_id = 'joydot-' | append: section.id %}
+
+<div class="joydot-wrapper" id="{{ eye_id }}">
+  <svg width="1440" height="1005" viewBox="0 0 1440 1005" fill="none" xmlns="http://www.w3.org/2000/svg" style="width:100%;display:block;">
+    <g filter="url(#{{ eye_id }}-f0)">
+      <ellipse cx="712.5" cy="857.9" rx="809.5" ry="775" fill="#AAB3F4"/>
+    </g>
+    <g filter="url(#{{ eye_id }}-f1)">
+      <circle cx="708" cy="857.9" r="720" fill="url(#{{ eye_id }}-grad)"/>
+    </g>
+    <g id="{{ eye_id }}-left">
+      <path d="M521.143 269.356C521.508 266.964 522.692 266.964 523.058 269.356C525.594 285.961 533.372 308.782 556.126 322.399C577.419 335.143 630.472 346.888 647.087 350.356C648.818 350.717 648.818 352.056 647.087 352.417C630.472 355.886 577.419 367.631 556.126 380.374C533.372 393.992 525.594 416.812 523.058 433.418C522.692 435.81 521.508 435.81 521.143 433.418C518.607 416.812 510.829 393.992 488.074 380.374C466.77 367.625 415.33 355.874 399.277 352.412C397.574 352.045 397.574 350.728 399.277 350.361C415.33 346.9 466.77 335.149 488.074 322.399C510.829 308.782 518.607 285.962 521.143 269.356Z" fill="{{ s.eye_color }}"/>
+    </g>
+    <g id="{{ eye_id }}-right">
+      <path d="M897.758 278.383C898.123 275.991 899.308 275.991 899.673 278.383C902.209 294.989 909.987 317.809 932.741 331.427C954.035 344.17 1007.09 355.915 1023.7 359.383C1025.43 359.745 1025.43 361.083 1023.7 361.445C1007.09 364.913 954.035 376.658 932.741 389.402C909.987 403.019 902.209 425.839 899.673 442.445C899.308 444.837 898.123 444.837 897.758 442.445C895.222 425.839 887.444 403.019 864.689 389.402C843.385 376.652 791.945 364.901 775.892 361.44C774.189 361.072 774.189 359.756 775.892 359.388C791.945 355.927 843.385 344.176 864.689 331.427C887.444 317.809 895.222 294.989 897.758 278.383Z" fill="{{ s.eye_color }}"/>
+    </g>
+    <defs>
+      <filter id="{{ eye_id }}-f0" x="-179.9" y="0" width="1784.8" height="1715.8" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
+        <feFlood flood-opacity="0" result="BackgroundImageFix"/>
+        <feBlend mode="normal" in="SourceGraphic" in2="BackgroundImageFix" result="shape"/>
+        <feGaussianBlur stdDeviation="41.45" result="effect1_foregroundBlur"/>
+      </filter>
+      <filter id="{{ eye_id }}-f1" x="-39.2" y="110.7" width="1494.4" height="1494.4" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
+        <feFlood flood-opacity="0" result="BackgroundImageFix"/>
+        <feBlend mode="normal" in="SourceGraphic" in2="BackgroundImageFix" result="shape"/>
+        <feGaussianBlur stdDeviation="13.6" result="effect1_foregroundBlur"/>
+      </filter>
+      <radialGradient id="{{ eye_id }}-grad" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(708 857.9) rotate(90) scale(720)">
+        <stop stop-color="#B3C8FC"/>
+        <stop offset="1" stop-color="#FAD5ED"/>
+      </radialGradient>
+    </defs>
+  </svg>
+</div>
+
+<script>
+  (function() {
+    var wrapper = document.getElementById('{{ eye_id }}');
+    if (!wrapper) return;
+
+    var svg = wrapper.querySelector('svg');
+    var leftStar = document.getElementById('{{ eye_id }}-left');
+    var rightStar = document.getElementById('{{ eye_id }}-right');
+    var maxTravel = {{ s.eye_travel }};
+
+    function trackCursor(e) {
+      var svgRect = svg.getBoundingClientRect();
+      var scaleX = svgRect.width / 1440;
+      var scaleY = svgRect.height / 1005;
+
+      var cx = svgRect.left + 720 * scaleX;
+      var cy = svgRect.top + 857.9 * scaleY;
+      var angle = Math.atan2(e.clientY - cy, e.clientX - cx);
+      var raw = Math.hypot(e.clientX - cx, e.clientY - cy) * 0.3;
+      var dist = Math.min(maxTravel, raw);
+      var dx = Math.cos(angle) * dist / scaleX;
+      var dy = Math.sin(angle) * dist / scaleY;
+      var transform = 'translate(' + dx + ',' + dy + ')';
+      leftStar.setAttribute('transform', transform);
+      rightStar.setAttribute('transform', transform);
+    }
+
+    document.addEventListener('mousemove', trackCursor);
+  })();
+</script>
+
+{% stylesheet %}
+  .joydot-wrapper {
+    width: 100%;
+    overflow: hidden;
+  }
+{% endstylesheet %}
+
+{% schema %}
+{
+  "name": "Joydot",
+  "settings": [
+    {
+      "type": "color",
+      "id": "eye_color",
+      "label": "Eye color",
+      "default": "#F4F0C1"
+    },
+    {
+      "type": "range",
+      "id": "eye_travel",
+      "label": "Max travel distance",
+      "min": 2,
+      "max": 100,
+      "step": 2,
+      "unit": "px",
+      "default": 40
+    }
+  ],
+  "presets": [
+    {
+      "name": "Joydot",
+      "category": "t:categories.custom"
+    }
+  ]
+}
+{% endschema %}

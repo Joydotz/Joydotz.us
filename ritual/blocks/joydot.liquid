@@ -1,0 +1,196 @@
+
+{% assign block_settings = block.settings %}
+{% assign eye_id = 'joydot-' | append: block.id %}
+
+<div
+  class="joydot-wrapper"
+  id="{{ eye_id }}"
+  style="
+    --eye-color: {{ block_settings.eye_color }};
+    --eye-size: {{ block_settings.eye_size }}px;
+    --eye-gap: {{ block_settings.eye_gap }}px;
+    --blob-color-1: {{ block_settings.blob_color_1 }};
+    --blob-color-2: {{ block_settings.blob_color_2 }};
+    --blob-size: {{ block_settings.blob_size }}px;
+  "
+  {{ block.shopify_attributes }}
+>
+  <div class="joydot-blob"></div>
+  <div class="joydot-eyes">
+    <div class="joydot-eye" id="{{ eye_id }}-left">
+      <div class="joydot-eye__pupil">
+        <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+          <path d="M12 2 L13.5 10.5 L22 12 L13.5 13.5 L12 22 L10.5 13.5 L2 12 L10.5 10.5 Z" fill="var(--eye-color)"/>
+        </svg>
+      </div>
+    </div>
+    <div class="joydot-eye" id="{{ eye_id }}-right">
+      <div class="joydot-eye__pupil">
+        <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+          <path d="M12 2 L13.5 10.5 L22 12 L13.5 13.5 L12 22 L10.5 13.5 L2 12 L10.5 10.5 Z" fill="var(--eye-color)"/>
+        </svg>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  (function() {
+    var container = document.getElementById('{{ eye_id }}');
+    if (!container) return;
+
+    var leftEye = document.getElementById('{{ eye_id }}-left');
+    var rightEye = document.getElementById('{{ eye_id }}-right');
+    var maxTravel = {{ block_settings.eye_travel }};
+
+    function trackCursor(e) {
+      [leftEye, rightEye].forEach(function(eye) {
+        var rect = eye.getBoundingClientRect();
+        var cx = rect.left + rect.width / 2;
+        var cy = rect.top + rect.height / 2;
+        var angle = Math.atan2(e.clientY - cy, e.clientX - cx);
+        var raw = Math.hypot(e.clientX - cx, e.clientY - cy) * 0.15;
+        var dist = Math.min(maxTravel, raw);
+        var pupil = eye.querySelector('.joydot-eye__pupil');
+        pupil.style.transform = 'translate(' + (Math.cos(angle) * dist) + 'px, ' + (Math.sin(angle) * dist) + 'px)';
+      });
+    }
+
+    document.addEventListener('mousemove', trackCursor);
+  })();
+</script>
+
+{% stylesheet %}
+  .joydot-wrapper {
+    position: relative;
+    width: var(--blob-size);
+    height: calc(var(--blob-size) / 2);
+    overflow: hidden;
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+  }
+
+  .joydot-blob {
+    position: absolute;
+    bottom: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: var(--blob-size);
+    height: var(--blob-size);
+    border-radius: 50%;
+    background: radial-gradient(circle at 60% 40%, var(--blob-color-2), var(--blob-color-1));
+    filter: blur(2px);
+  }
+
+  .joydot-eyes {
+    position: relative;
+    display: flex;
+    gap: var(--eye-gap);
+    align-items: center;
+    justify-content: center;
+    padding-top: calc(var(--blob-size) * 0.12);
+    z-index: 1;
+  }
+
+  .joydot-eye {
+    width: var(--eye-size);
+    height: var(--eye-size);
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .joydot-eye__pupil {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    transition: transform 0.1s ease-out;
+  }
+
+  .joydot-eye__pupil svg {
+    width: 100%;
+    height: 100%;
+  }
+{% endstylesheet %}
+
+{% schema %}
+{
+  "name": "Joydot",
+  "settings": [
+    {
+      "type": "header",
+      "content": "Blob"
+    },
+    {
+      "type": "color",
+      "id": "blob_color_1",
+      "label": "Blob color (outer)",
+      "default": "#b8c4e8"
+    },
+    {
+      "type": "color",
+      "id": "blob_color_2",
+      "label": "Blob color (inner)",
+      "default": "#f0b8d8"
+    },
+    {
+      "type": "range",
+      "id": "blob_size",
+      "label": "Blob size",
+      "min": 100,
+      "max": 800,
+      "step": 10,
+      "unit": "px",
+      "default": 400
+    },
+    {
+      "type": "header",
+      "content": "Eyes"
+    },
+    {
+      "type": "color",
+      "id": "eye_color",
+      "label": "Eye color",
+      "default": "#fffde0"
+    },
+    {
+      "type": "range",
+      "id": "eye_size",
+      "label": "Eye size",
+      "min": 20,
+      "max": 200,
+      "step": 4,
+      "unit": "px",
+      "default": 60
+    },
+    {
+      "type": "range",
+      "id": "eye_gap",
+      "label": "Gap between eyes",
+      "min": 0,
+      "max": 200,
+      "step": 4,
+      "unit": "px",
+      "default": 40
+    },
+    {
+      "type": "range",
+      "id": "eye_travel",
+      "label": "Max travel distance",
+      "min": 2,
+      "max": 20,
+      "step": 1,
+      "unit": "px",
+      "default": 8
+    }
+  ],
+  "presets": [
+    {
+      "name": "Joydot",
+      "category": "t:categories.custom"
+    }
+  ]
+}
+{% endschema %}
