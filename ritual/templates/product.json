@@ -282,18 +282,11 @@
               },
               "block_order": []
             },
-            "button_NVPkt8": {
-              "type": "button",
-              "name": "t:names.button",
+            "subscription_button": {
+              "type": "subscription-button",
+              "name": "Subscription dropdown",
               "settings": {
-                "label": "subscribe & save 15%",
-                "link": "shopify://collections/all",
-                "open_in_new_tab": false,
-                "style_class": "button",
-                "width": "custom",
-                "custom_width": 100,
-                "width_mobile": "fit-content",
-                "custom_width_mobile": 100
+                "button_label": "Subscribe & save 15%"
               },
               "blocks": {}
             }
@@ -303,7 +296,7 @@
             "variant_picker",
             "spacer_AVdxPQ",
             "buy_buttons",
-            "button_NVPkt8"
+            "subscription_button"
           ]
         }
       },
