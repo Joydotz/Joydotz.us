@@ -368,13 +368,7 @@
         "group_UWhLM7",
         "group_WFAVhA"
       ],
-      "custom_css": [
-        ".color-scheme-3 > .group-block-content {display: grid; place-items: center;}",
-        ".color-scheme-3 .image-block {grid-area: 1/1; justify-content: center;}",
-        ".color-scheme-3 .text-block {grid-area: 1/1; align-self: end; justify-self: center; padding-bottom: 24px; z-index: 5;}",
-        ".button {font-size: 20px;}",
-        ".button-secondary {font-size: 20px;}"
-      ],
+      "custom_css": [],
       "name": "t:names.image_with_text",
       "settings": {
         "custom_id": "",
@@ -654,9 +648,9 @@
                 "image": "shopify://shop_images/ChatGPT_Image_Jun_29_2026_03_22_17_PM.png",
                 "link": "",
                 "image_ratio": "adapt",
-                "width": "custom",
+                "width": "fill",
                 "custom_width": 100,
-                "width_mobile": "custom",
+                "width_mobile": "fill",
                 "custom_width_mobile": 100,
                 "height": "fill",
                 "border": "none",
@@ -680,13 +674,7 @@
         "group_UUtUmL",
         "group_LL7ifL"
       ],
-      "custom_css": [
-        ".color-scheme-3 > .group-block-content {display: grid; place-items: center;}",
-        ".color-scheme-3 .image-block {grid-area: 1/1; justify-content: center;}",
-        ".color-scheme-3 .text-block {grid-area: 1/1; align-self: end; justify-self: center; padding-bottom: 24px; z-index: 5;}",
-        ".button {font-size: 20px;}",
-        ".button-secondary {font-size: 20px;}"
-      ],
+      "custom_css": [],
       "name": "t:names.image_with_text",
       "settings": {
         "custom_id": "",
@@ -992,13 +980,7 @@
         "group_qAcFzJ",
         "group_feqcWb"
       ],
-      "custom_css": [
-        ".color-scheme-3 > .group-block-content {display: grid; place-items: center; justify-content: start; position: relative;}",
-        ".color-scheme-3 .image-block {grid-area: 1/1;}",
-        ".color-scheme-3 .text-block {position: absolute; bottom: 24px; text-align: center;}",
-        ".button {font-size: 20px;}",
-        ".button-secondary {font-size: 20px;}"
-      ],
+      "custom_css": [],
       "name": "t:names.image_with_text",
       "settings": {
         "custom_id": "",

@@ -9,10 +9,10 @@
  */
 {
   "sections": {
-    "section_HLAkLX": {
+    "section_4iMr6B": {
       "type": "section",
       "blocks": {
-        "group_kM77Yc": {
+        "group_WH9crj": {
           "type": "group",
           "name": "t:names.group",
           "settings": {
@@ -52,18 +52,18 @@
             "padding-inline-end": 10
           },
           "blocks": {
-            "image_GiL7Mz": {
+            "image_LXVFRW": {
               "type": "image",
               "name": "t:names.image",
               "settings": {
                 "custom_id": "blush-flower-icon",
-                "image": "shopify://shop_images/66666.png",
+                "image": "shopify://shop_images/66666_need_shadow.png",
                 "link": "",
                 "image_ratio": "adapt",
                 "width": "custom",
                 "custom_width": 25,
                 "width_mobile": "custom",
-                "custom_width_mobile": 30,
+                "custom_width_mobile": 55,
                 "height": "fit",
                 "border": "none",
                 "border_width": 1,
@@ -76,18 +76,18 @@
               },
               "blocks": {}
             },
-            "image_YKQi3e": {
+            "image_gtA9GE": {
               "type": "image",
               "name": "t:names.image",
               "settings": {
                 "custom_id": "daydream-cloud-icon",
-                "image": "shopify://shop_images/0da9c23eae7928e56d16329467a80e23.png",
+                "image": "shopify://shop_images/rainbow_cloud_need_shadow.png",
                 "link": "",
                 "image_ratio": "adapt",
                 "width": "custom",
                 "custom_width": 30,
                 "width_mobile": "custom",
-                "custom_width_mobile": 30,
+                "custom_width_mobile": 70,
                 "height": "fit",
                 "border": "none",
                 "border_width": 1,
@@ -100,7 +100,7 @@
               },
               "blocks": {}
             },
-            "image_RiatQQ": {
+            "image_nB3DWn": {
               "type": "image",
               "name": "t:names.image",
               "settings": {
@@ -111,7 +111,7 @@
                 "width": "custom",
                 "custom_width": 20,
                 "width_mobile": "custom",
-                "custom_width_mobile": 30,
+                "custom_width_mobile": 50,
                 "height": "fit",
                 "border": "none",
                 "border_width": 1,
@@ -126,14 +126,14 @@
             }
           },
           "block_order": [
-            "image_GiL7Mz",
-            "image_YKQi3e",
-            "image_RiatQQ"
+            "image_LXVFRW",
+            "image_gtA9GE",
+            "image_nB3DWn"
           ]
         }
       },
       "block_order": [
-        "group_kM77Yc"
+        "group_WH9crj"
       ],
       "custom_css": [
         ".group-block-content {display: grid; grid-template-columns: repeat(3, 1fr); place-items: center;}"
@@ -388,18 +388,18 @@
       "settings": {
         "layout_type": "grid",
         "product_card_size": "large",
-        "mobile_product_card_size": "small",
+        "mobile_product_card_size": "large",
         "enable_infinite_scroll": true,
         "products_per_page": 24,
         "product_grid_width": "centered",
-        "full_width_on_mobile": true,
+        "full_width_on_mobile": false,
         "columns_gap_horizontal": 16,
         "columns_gap_vertical": 16,
         "padding-inline-start": 0,
         "padding-inline-end": 0,
         "color_scheme": "scheme-1",
-        "padding-block-start": 38,
-        "padding-block-end": 48
+        "padding-block-start": 24,
+        "padding-block-end": 36
       }
     },
     "hero_ACFtGc": {
@@ -781,7 +781,7 @@
       "name": "t:names.carousel",
       "settings": {
         "columns": 3,
-        "mobile_columns": "1",
+        "mobile_columns": "2",
         "section_width": "page-width",
         "columns_gap": 30,
         "color_scheme": "scheme-1",
@@ -793,7 +793,7 @@
     }
   },
   "order": [
-    "section_HLAkLX",
+    "section_4iMr6B",
     "main",
     "hero_ACFtGc",
     "carousel_VircHG"

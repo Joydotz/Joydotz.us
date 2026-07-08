@@ -40,7 +40,7 @@
     "type_size_h6": "14",
     "type_letter_spacing_h6": "heading-loose",
     "type_case_h6": "none",
-    "page_width": "wide",
+    "page_width": "normal",
     "block_corner_radius": 12,
     "card_hover_effect": "subtle-zoom",
     "badge_position": "top-right",

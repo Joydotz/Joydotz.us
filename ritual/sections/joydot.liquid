@@ -1,14 +1,90 @@
-
+    
 {% assign s = section.settings %}
 {% assign eye_id = 'joydot-' | append: section.id %}
+{% assign ellipse_cx = s.ellipse_cx %}
+{% assign ellipse_cy = s.ellipse_cy %}
+{% assign ellipse_rx = s.ellipse_rx %}
+{% assign circle_cy = s.circle_cy %}
+{% assign filter_0_blur = s.filter_0_blur %}
+{% assign filter_1_blur = s.filter_1_blur %}
+{% assign eye_sensitivity = s.eye_sensitivity | divided_by: 10.0 %}
 
-<div class="joydot-wrapper" id="{{ eye_id }}">
-  <svg width="1440" height="1005" viewBox="0 0 1440 1005" fill="none" xmlns="http://www.w3.org/2000/svg" style="width:100%;display:block;">
+{% assign glow_pad = filter_0_blur | times: 3 | plus: 24 %}
+{% assign circle_pad = filter_1_blur | times: 3 | plus: 24 %}
+{% assign auto_min_y = ellipse_cy | minus: s.ellipse_ry | minus: glow_pad %}
+{% assign circle_min_y = circle_cy | minus: s.circle_r | minus: circle_pad %}
+{% if circle_min_y < auto_min_y %}
+  {% assign auto_min_y = circle_min_y %}
+{% endif %}
+{% assign viewbox_min_y = auto_min_y %}
+{% if s.viewbox_min_y < viewbox_min_y %}
+  {% assign viewbox_min_y = s.viewbox_min_y %}
+{% endif %}
+{% assign circle_top_y = circle_cy | minus: s.circle_r %}
+{% assign visible_height = s.circle_r | times: 2 | times: s.visible_percent | divided_by: 100 %}
+{% assign viewbox_max_y = circle_top_y | plus: visible_height %}
+{% assign viewbox_height = viewbox_max_y | minus: viewbox_min_y %}
+
+{% assign filter_0_auto_x = ellipse_cx | minus: ellipse_rx | minus: glow_pad %}
+{% assign filter_0_auto_y = ellipse_cy | minus: s.ellipse_ry | minus: glow_pad %}
+{% assign filter_0_auto_width = ellipse_rx | times: 2 | plus: glow_pad | times: 2 %}
+{% assign filter_0_auto_height = s.ellipse_ry | times: 2 | plus: glow_pad | times: 2 %}
+{% assign filter_0_x = filter_0_auto_x %}
+{% if s.filter_0_x < filter_0_x %}
+  {% assign filter_0_x = s.filter_0_x %}
+{% endif %}
+{% assign filter_0_y = filter_0_auto_y %}
+{% if s.filter_0_y < filter_0_y %}
+  {% assign filter_0_y = s.filter_0_y %}
+{% endif %}
+{% assign filter_0_width = filter_0_auto_width %}
+{% if s.filter_0_width > filter_0_width %}
+  {% assign filter_0_width = s.filter_0_width %}
+{% endif %}
+{% assign filter_0_height = filter_0_auto_height %}
+{% if s.filter_0_height > filter_0_height %}
+  {% assign filter_0_height = s.filter_0_height %}
+{% endif %}
+
+{% assign filter_1_auto_x = s.circle_cx | minus: s.circle_r | minus: circle_pad %}
+{% assign filter_1_auto_y = circle_cy | minus: s.circle_r | minus: circle_pad %}
+{% assign filter_1_auto_width = s.circle_r | times: 2 | plus: circle_pad | times: 2 %}
+{% assign filter_1_auto_height = s.circle_r | times: 2 | plus: circle_pad | times: 2 %}
+{% assign filter_1_x = filter_1_auto_x %}
+{% if s.filter_1_x < filter_1_x %}
+  {% assign filter_1_x = s.filter_1_x %}
+{% endif %}
+{% assign filter_1_y = filter_1_auto_y %}
+{% if s.filter_1_y < filter_1_y %}
+  {% assign filter_1_y = s.filter_1_y %}
+{% endif %}
+{% assign filter_1_width = filter_1_auto_width %}
+{% if s.filter_1_width > filter_1_width %}
+  {% assign filter_1_width = s.filter_1_width %}
+{% endif %}
+{% assign filter_1_height = filter_1_auto_height %}
+{% if s.filter_1_height > filter_1_height %}
+  {% assign filter_1_height = s.filter_1_height %}
+{% endif %}
+
+<div
+  class="joydot-wrapper"
+  id="{{ eye_id }}"
+  style="aspect-ratio: {{ s.viewbox_width }} / {{ viewbox_height }};"
+>
+  <svg
+    width="{{ s.viewbox_width }}"
+    height="{{ viewbox_height }}"
+    viewBox="{{ s.viewbox_min_x }} {{ viewbox_min_y }} {{ s.viewbox_width }} {{ viewbox_height }}"
+    fill="none"
+    xmlns="http://www.w3.org/2000/svg"
+    aria-hidden="true"
+  >
     <g filter="url(#{{ eye_id }}-f0)">
-      <ellipse cx="712.5" cy="857.9" rx="809.5" ry="775" fill="#AAB3F4"/>
+      <ellipse cx="{{ ellipse_cx }}" cy="{{ ellipse_cy }}" rx="{{ ellipse_rx }}" ry="{{ s.ellipse_ry }}" fill="{{ s.ellipse_color }}"/>
     </g>
     <g filter="url(#{{ eye_id }}-f1)">
-      <circle cx="708" cy="857.9" r="720" fill="url(#{{ eye_id }}-grad)"/>
+      <circle cx="{{ s.circle_cx }}" cy="{{ circle_cy }}" r="{{ s.circle_r }}" fill="url(#{{ eye_id }}-grad)"/>
     </g>
     <g id="{{ eye_id }}-left">
       <path d="M521.143 269.356C521.508 266.964 522.692 266.964 523.058 269.356C525.594 285.961 533.372 308.782 556.126 322.399C577.419 335.143 630.472 346.888 647.087 350.356C648.818 350.717 648.818 352.056 647.087 352.417C630.472 355.886 577.419 367.631 556.126 380.374C533.372 393.992 525.594 416.812 523.058 433.418C522.692 435.81 521.508 435.81 521.143 433.418C518.607 416.812 510.829 393.992 488.074 380.374C466.77 367.625 415.33 355.874 399.277 352.412C397.574 352.045 397.574 350.728 399.277 350.361C415.33 346.9 466.77 335.149 488.074 322.399C510.829 308.782 518.607 285.962 521.143 269.356Z" fill="{{ s.eye_color }}"/>
@@ -17,19 +93,19 @@
       <path d="M897.758 278.383C898.123 275.991 899.308 275.991 899.673 278.383C902.209 294.989 909.987 317.809 932.741 331.427C954.035 344.17 1007.09 355.915 1023.7 359.383C1025.43 359.745 1025.43 361.083 1023.7 361.445C1007.09 364.913 954.035 376.658 932.741 389.402C909.987 403.019 902.209 425.839 899.673 442.445C899.308 444.837 898.123 444.837 897.758 442.445C895.222 425.839 887.444 403.019 864.689 389.402C843.385 376.652 791.945 364.901 775.892 361.44C774.189 361.072 774.189 359.756 775.892 359.388C791.945 355.927 843.385 344.176 864.689 331.427C887.444 317.809 895.222 294.989 897.758 278.383Z" fill="{{ s.eye_color }}"/>
     </g>
     <defs>
-      <filter id="{{ eye_id }}-f0" x="-179.9" y="0" width="1784.8" height="1715.8" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
+      <filter id="{{ eye_id }}-f0" x="{{ filter_0_x }}" y="{{ filter_0_y }}" width="{{ filter_0_width }}" height="{{ filter_0_height }}" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
         <feFlood flood-opacity="0" result="BackgroundImageFix"/>
         <feBlend mode="normal" in="SourceGraphic" in2="BackgroundImageFix" result="shape"/>
-        <feGaussianBlur stdDeviation="41.45" result="effect1_foregroundBlur"/>
+        <feGaussianBlur stdDeviation="{{ filter_0_blur }}" result="effect1_foregroundBlur"/>
       </filter>
-      <filter id="{{ eye_id }}-f1" x="-39.2" y="110.7" width="1494.4" height="1494.4" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
+      <filter id="{{ eye_id }}-f1" x="{{ filter_1_x }}" y="{{ filter_1_y }}" width="{{ filter_1_width }}" height="{{ filter_1_height }}" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
         <feFlood flood-opacity="0" result="BackgroundImageFix"/>
         <feBlend mode="normal" in="SourceGraphic" in2="BackgroundImageFix" result="shape"/>
-        <feGaussianBlur stdDeviation="13.6" result="effect1_foregroundBlur"/>
+        <feGaussianBlur stdDeviation="{{ filter_1_blur }}" result="effect1_foregroundBlur"/>
       </filter>
-      <radialGradient id="{{ eye_id }}-grad" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(708 857.9) rotate(90) scale(720)">
-        <stop stop-color="#B3C8FC"/>
-        <stop offset="1" stop-color="#FAD5ED"/>
+      <radialGradient id="{{ eye_id }}-grad" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate({{ s.circle_cx }} {{ circle_cy }}) rotate(90) scale({{ s.circle_r }})">
+        <stop stop-color="{{ s.gradient_inner }}"/>
+        <stop offset="1" stop-color="{{ s.gradient_outer }}"/>
       </radialGradient>
     </defs>
   </svg>
@@ -44,16 +120,24 @@
     var leftStar = document.getElementById('{{ eye_id }}-left');
     var rightStar = document.getElementById('{{ eye_id }}-right');
     var maxTravel = {{ s.eye_travel }};
+    var eyeSensitivity = {{ eye_sensitivity }};
+
+    var viewBoxWidth = {{ s.viewbox_width }};
+    var viewBoxHeight = {{ viewbox_height }};
+    var viewBoxMinX = {{ s.viewbox_min_x }};
+    var viewBoxMinY = {{ viewbox_min_y }};
+    var circleCenterX = {{ s.circle_cx }};
+    var equatorY = {{ circle_cy }};
 
     function trackCursor(e) {
       var svgRect = svg.getBoundingClientRect();
-      var scaleX = svgRect.width / 1440;
-      var scaleY = svgRect.height / 1005;
+      var scaleX = svgRect.width / viewBoxWidth;
+      var scaleY = svgRect.height / viewBoxHeight;
 
-      var cx = svgRect.left + 720 * scaleX;
-      var cy = svgRect.top + 857.9 * scaleY;
+      var cx = svgRect.left + (circleCenterX - viewBoxMinX) * scaleX;
+      var cy = svgRect.top + (equatorY - viewBoxMinY) * scaleY;
       var angle = Math.atan2(e.clientY - cy, e.clientX - cx);
-      var raw = Math.hypot(e.clientX - cx, e.clientY - cy) * 0.3;
+      var raw = Math.hypot(e.clientX - cx, e.clientY - cy) * eyeSensitivity;
       var dist = Math.min(maxTravel, raw);
       var dx = Math.cos(angle) * dist / scaleX;
       var dy = Math.sin(angle) * dist / scaleY;
@@ -70,6 +154,13 @@
   .joydot-wrapper {
     width: 100%;
     overflow: hidden;
+    line-height: 0;
+  }
+
+  .joydot-wrapper svg {
+    width: 100%;
+    height: 100%;
+    display: block;
   }
 {% endstylesheet %}
 
@@ -77,6 +168,207 @@
 {
   "name": "Joydot",
   "settings": [
+    {
+      "type": "header",
+      "content": "View & crop"
+    },
+    {
+      "type": "number",
+      "id": "svg_width",
+      "label": "SVG width",
+      "default": 1440
+    },
+    {
+      "type": "number",
+      "id": "svg_height",
+      "label": "SVG height",
+      "default": 818
+    },
+    {
+      "type": "number",
+      "id": "viewbox_min_x",
+      "label": "ViewBox min X",
+      "default": -12
+    },
+    {
+      "type": "number",
+      "id": "viewbox_min_y",
+      "label": "ViewBox min Y",
+      "default": 40,
+      "info": "Auto-expands upward if needed to include blur glow"
+    },
+    {
+      "type": "number",
+      "id": "viewbox_width",
+      "label": "ViewBox width",
+      "default": 1440
+    },
+    {
+      "type": "range",
+      "id": "visible_percent",
+      "label": "Visible portion of glob",
+      "min": 10,
+      "max": 100,
+      "step": 5,
+      "unit": "%",
+      "default": 30,
+      "info": "Percent of full circle height shown (50% = half dome, 100% = full circle)"
+    },
+    {
+      "type": "number",
+      "id": "viewbox_height",
+      "label": "ViewBox height",
+      "default": 818,
+      "info": "Overridden automatically from visible portion"
+    },
+    {
+      "type": "header",
+      "content": "Outer glow"
+    },
+    {
+      "type": "number",
+      "id": "ellipse_cx",
+      "label": "Ellipse center X",
+      "default": 713
+    },
+    {
+      "type": "number",
+      "id": "ellipse_cy",
+      "label": "Ellipse center Y",
+      "default": 858
+    },
+    {
+      "type": "number",
+      "id": "ellipse_rx",
+      "label": "Ellipse radius X",
+      "default": 810
+    },
+    {
+      "type": "number",
+      "id": "ellipse_ry",
+      "label": "Ellipse radius Y",
+      "default": 775
+    },
+    {
+      "type": "color",
+      "id": "ellipse_color",
+      "label": "Ellipse color",
+      "default": "#AAB3F4"
+    },
+    {
+      "type": "header",
+      "content": "Main blob"
+    },
+    {
+      "type": "number",
+      "id": "circle_cx",
+      "label": "Circle center X",
+      "default": 708
+    },
+    {
+      "type": "number",
+      "id": "circle_cy",
+      "label": "Circle center Y (equator)",
+      "default": 858
+    },
+    {
+      "type": "number",
+      "id": "circle_r",
+      "label": "Circle radius",
+      "default": 720
+    },
+    {
+      "type": "color",
+      "id": "gradient_inner",
+      "label": "Gradient inner color",
+      "default": "#B3C8FC"
+    },
+    {
+      "type": "color",
+      "id": "gradient_outer",
+      "label": "Gradient outer color",
+      "default": "#FAD5ED"
+    },
+    {
+      "type": "header",
+      "content": "Outer glow filter"
+    },
+    {
+      "type": "number",
+      "id": "filter_0_x",
+      "label": "Filter X",
+      "default": -150,
+      "info": "Auto-expands if needed to include blur glow"
+    },
+    {
+      "type": "number",
+      "id": "filter_0_y",
+      "label": "Filter Y",
+      "default": 20,
+      "info": "Auto-expands upward if needed to include blur glow"
+    },
+    {
+      "type": "number",
+      "id": "filter_0_width",
+      "label": "Filter width",
+      "default": 1725,
+      "info": "Auto-expands if needed to include blur glow"
+    },
+    {
+      "type": "number",
+      "id": "filter_0_height",
+      "label": "Filter height",
+      "default": 880,
+      "info": "Auto-expands if needed to include blur glow"
+    },
+    {
+      "type": "number",
+      "id": "filter_0_blur",
+      "label": "Blur amount",
+      "default": 41
+    },
+    {
+      "type": "header",
+      "content": "Main blob filter"
+    },
+    {
+      "type": "number",
+      "id": "filter_1_x",
+      "label": "Filter X",
+      "default": -40,
+      "info": "Auto-expands if needed to include blur glow"
+    },
+    {
+      "type": "number",
+      "id": "filter_1_y",
+      "label": "Filter Y",
+      "default": 60,
+      "info": "Auto-expands upward if needed to include blur glow"
+    },
+    {
+      "type": "number",
+      "id": "filter_1_width",
+      "label": "Filter width",
+      "default": 1520,
+      "info": "Auto-expands if needed to include blur glow"
+    },
+    {
+      "type": "number",
+      "id": "filter_1_height",
+      "label": "Filter height",
+      "default": 840,
+      "info": "Auto-expands if needed to include blur glow"
+    },
+    {
+      "type": "number",
+      "id": "filter_1_blur",
+      "label": "Blur amount",
+      "default": 14
+    },
+    {
+      "type": "header",
+      "content": "Eyes"
+    },
     {
       "type": "color",
       "id": "eye_color",
@@ -92,6 +384,15 @@
       "step": 2,
       "unit": "px",
       "default": 40
+    },
+    {
+      "type": "range",
+      "id": "eye_sensitivity",
+      "label": "Cursor sensitivity",
+      "min": 1,
+      "max": 10,
+      "step": 1,
+      "default": 3
     }
   ],
   "presets": [

@@ -43,7 +43,7 @@
         "gap": 24,
         "divider_thickness": 1,
         "color_scheme": "scheme-1",
-        "padding-block-start": 0,
+        "padding-block-start": 36,
         "padding-block-end": 36
       }
     },
@@ -152,15 +152,43 @@
         "gap": 24,
         "color_scheme": "scheme-1",
         "padding-block-start": 46,
-        "padding-block-end": 36
+        "padding-block-end": 0
       }
     },
     "joydot_6mELVD": {
       "type": "joydot",
       "name": "Joydot",
       "settings": {
+        "svg_width": 1440,
+        "svg_height": 818,
+        "viewbox_min_x": -12,
+        "viewbox_min_y": 40,
+        "viewbox_width": 1440,
+        "visible_percent": 30,
+        "viewbox_height": 818,
+        "ellipse_cx": 713,
+        "ellipse_cy": 858,
+        "ellipse_rx": 810,
+        "ellipse_ry": 775,
+        "ellipse_color": "#aab3f4",
+        "circle_cx": 708,
+        "circle_cy": 858,
+        "circle_r": 720,
+        "gradient_inner": "#b3c8fc",
+        "gradient_outer": "#fad5ed",
+        "filter_0_x": -150,
+        "filter_0_y": 20,
+        "filter_0_width": 1725,
+        "filter_0_height": 880,
+        "filter_0_blur": 41,
+        "filter_1_x": -40,
+        "filter_1_y": 60,
+        "filter_1_width": 1520,
+        "filter_1_height": 840,
+        "filter_1_blur": 14,
         "eye_color": "#f4f0c1",
-        "eye_travel": 40
+        "eye_travel": 50,
+        "eye_sensitivity": 10
       }
     }
   },
