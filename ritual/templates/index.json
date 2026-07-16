@@ -168,6 +168,7 @@
         "group_WFAVhA": {
           "type": "group",
           "settings": {
+            "enable_hover_media": true,
             "content_direction": "column",
             "vertical_on_mobile": true,
             "horizontal_alignment": "flex-start",
@@ -371,7 +372,7 @@
       "custom_css": [],
       "name": "t:names.image_with_text",
       "settings": {
-        "custom_id": "",
+        "custom_id": "featured-card-daydream-cloud",
         "content_direction": "row",
         "vertical_on_mobile": true,
         "horizontal_alignment": "flex-start",
@@ -405,6 +406,7 @@
         "group_UUtUmL": {
           "type": "group",
           "settings": {
+            "enable_hover_media": true,
             "content_direction": "column",
             "vertical_on_mobile": true,
             "horizontal_alignment": "flex-start",
@@ -677,7 +679,7 @@
       "custom_css": [],
       "name": "t:names.image_with_text",
       "settings": {
-        "custom_id": "",
+        "custom_id": "featured-card-blush-flower",
         "content_direction": "row",
         "vertical_on_mobile": true,
         "horizontal_alignment": "flex-start",
@@ -780,6 +782,7 @@
         "group_feqcWb": {
           "type": "group",
           "settings": {
+            "enable_hover_media": true,
             "content_direction": "column",
             "vertical_on_mobile": true,
             "horizontal_alignment": "flex-start",
@@ -983,7 +986,7 @@
       "custom_css": [],
       "name": "t:names.image_with_text",
       "settings": {
-        "custom_id": "",
+        "custom_id": "featured-card-softwing-butterfly",
         "content_direction": "row",
         "vertical_on_mobile": true,
         "horizontal_alignment": "flex-start",

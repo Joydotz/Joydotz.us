@@ -23,6 +23,18 @@
   ],
   "settings": [
     {
+      "type": "checkbox",
+      "id": "enable_hover_media",
+      "label": "Show alternate image on hover",
+      "default": false
+    },
+    {
+      "type": "image_picker",
+      "id": "hover_image",
+      "label": "Hover image",
+      "visible_if": "{{ block.settings.enable_hover_media }}"
+    },
+    {
       "type": "header",
       "content": "t:content.layout"
     },
