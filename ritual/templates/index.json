@@ -65,6 +65,7 @@
       ],
       "name": "Logo banner",
       "settings": {
+        "hide_on_mobile": false,
         "custom_id": "",
         "content_direction": "column",
         "vertical_on_mobile": true,
@@ -100,6 +101,7 @@
           "type": "group",
           "name": "t:names.group",
           "settings": {
+            "hide_on_mobile": true,
             "enable_hover_media": false,
             "content_direction": "column",
             "vertical_on_mobile": true,
@@ -169,6 +171,7 @@
         "group_WFAVhA": {
           "type": "group",
           "settings": {
+            "hide_on_mobile": false,
             "enable_hover_media": true,
             "hover_image": "shopify://shop_images/model_1.png",
             "content_direction": "column",
@@ -203,7 +206,7 @@
             "placeholder": "",
             "padding-block-start": 40,
             "padding-block-end": 40,
-            "padding-inline-start": 40,
+            "padding-inline-start": 20,
             "padding-inline-end": 40
           },
           "blocks": {
@@ -286,6 +289,7 @@
       "custom_css": [],
       "name": "t:names.image_with_text",
       "settings": {
+        "hide_on_mobile": false,
         "custom_id": "",
         "content_direction": "row",
         "vertical_on_mobile": true,
@@ -296,7 +300,7 @@
         "vertical_alignment_flex_direction_column": "center",
         "gap": 32,
         "section_width": "page-width",
-        "section_height": "custom",
+        "section_height": "",
         "section_height_custom": 0,
         "color_scheme": "scheme-1",
         "background_media": "none",
@@ -320,6 +324,7 @@
         "group_UUtUmL": {
           "type": "group",
           "settings": {
+            "hide_on_mobile": false,
             "enable_hover_media": true,
             "hover_image": "shopify://shop_images/model_1.png",
             "content_direction": "column",
@@ -354,8 +359,8 @@
             "placeholder": "",
             "padding-block-start": 40,
             "padding-block-end": 40,
-            "padding-inline-start": 40,
-            "padding-inline-end": 40
+            "padding-inline-start": 20,
+            "padding-inline-end": 20
           },
           "blocks": {
             "image_VQmMVw": {
@@ -433,6 +438,7 @@
           "type": "group",
           "name": "t:names.group",
           "settings": {
+            "hide_on_mobile": true,
             "enable_hover_media": false,
             "content_direction": "column",
             "vertical_on_mobile": true,
@@ -507,6 +513,7 @@
       "custom_css": [],
       "name": "t:names.image_with_text",
       "settings": {
+        "hide_on_mobile": false,
         "custom_id": "",
         "content_direction": "row",
         "vertical_on_mobile": true,
@@ -542,6 +549,7 @@
           "type": "group",
           "name": "t:names.group",
           "settings": {
+            "hide_on_mobile": true,
             "enable_hover_media": false,
             "content_direction": "column",
             "vertical_on_mobile": true,
@@ -611,6 +619,7 @@
         "group_feqcWb": {
           "type": "group",
           "settings": {
+            "hide_on_mobile": false,
             "enable_hover_media": true,
             "hover_image": "shopify://shop_images/model_1.png",
             "content_direction": "column",
@@ -643,10 +652,10 @@
             "link": "",
             "open_in_new_tab": false,
             "placeholder": "",
-            "padding-block-start": 80,
+            "padding-block-start": 40,
             "padding-block-end": 40,
-            "padding-inline-start": 40,
-            "padding-inline-end": 40
+            "padding-inline-start": 20,
+            "padding-inline-end": 20
           },
           "blocks": {
             "image_yz6pDt": {
@@ -728,6 +737,7 @@
       "custom_css": [],
       "name": "t:names.image_with_text",
       "settings": {
+        "hide_on_mobile": false,
         "custom_id": "",
         "content_direction": "row",
         "vertical_on_mobile": true,
@@ -738,7 +748,7 @@
         "vertical_alignment_flex_direction_column": "center",
         "gap": 32,
         "section_width": "page-width",
-        "section_height": "custom",
+        "section_height": "",
         "section_height_custom": 50,
         "color_scheme": "scheme-1",
         "background_media": "none",

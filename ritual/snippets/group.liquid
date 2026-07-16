@@ -19,6 +19,7 @@
     border-style
     spacing-style
     size-style
+    {% if settings.hide_on_mobile %} hide-on-mobile{% endif %}
     {% if settings.inherit_color_scheme == false %} color-{{ settings.color_scheme }}{% endif %}
     {{ class }}
   "

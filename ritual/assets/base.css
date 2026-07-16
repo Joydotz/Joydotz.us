@@ -4351,3 +4351,9 @@ body:has(a[href*="softwing-butterfly"]:hover) #softwing-butterfly-icon img {
     transition-duration: 0.01ms;
   }
 }
+
+@media screen and (max-width: 749px) {
+  .hide-on-mobile {
+    display: none !important;
+  }
+}
